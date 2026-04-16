@@ -50,6 +50,13 @@ export default {
             unpipe: () => {},
             resume: () => {},
             pause: () => {},
+            pipe(dest) {
+                if (this._bodyBuffer) {
+                    dest.write(this._bodyBuffer);
+                    dest.end();
+                }
+                return dest;
+            },
             protocol: 'https',
             secure: true,
             get: (name) => request.headers.get(name),
@@ -58,11 +65,13 @@ export default {
 
         if (request.method !== 'GET' && request.method !== 'HEAD') {
             try {
-                const text = await request.clone().text();
-                mockReq._bodyStr = text;
+                const arrayBuffer = await request.clone().arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                mockReq._bodyBuffer = buffer;
+                mockReq._bodyStr = buffer.toString('utf-8');
                 const contentType = request.headers.get('content-type') || '';
                 if (contentType.includes('application/json')) {
-                    mockReq.body = JSON.parse(text);
+                    mockReq.body = JSON.parse(mockReq._bodyStr);
                 }
                 mockReq.complete = true;
                 mockReq._bodyDone = true;
