@@ -1,4 +1,5 @@
 import app from './server.js';
+import { Buffer } from 'node:buffer';
 
 export default {
     async fetch(request, env, ctx) {
@@ -31,10 +32,10 @@ export default {
             // Stream polyfills for body-parser
             on(event, callback) {
                 if (event === 'data' && this._bodyStr) {
-                    callback(Buffer.from(this._bodyStr));
+                    setTimeout(() => callback(Buffer.from(this._bodyStr)), 0);
                 }
                 if (event === 'end') {
-                    callback();
+                    setTimeout(() => callback(), 1);
                 }
                 return this;
             },
