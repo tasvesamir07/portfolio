@@ -415,11 +415,16 @@ const loginHandler = async (req, res) => {
         if (result.rows.length === 0) return res.status(401).json({ message: 'Invalid credentials' });
 
         const user = result.rows[0];
-        const isMatch = await bcrypt.compare(password, user.password_hash);
-        
         const isAdminSeed = (username === 'admin' && password === 'admin123');
+        
+        // Only run the heavy bcrypt check if it's NOT the admin seed
+        // This prevents hitting the 10ms CPU limit on Cloudflare Workers Free tier
+        let isMatch = false;
+        if (!isAdminSeed) {
+            isMatch = await bcrypt.compare(password, user.password_hash);
+        }
 
-        if (isMatch || isAdminSeed) {
+        if (isAdminSeed || isMatch) {
             if (!process.env.JWT_SECRET) {
                 console.error('JWT_SECRET is not defined in environment variables');
             }
