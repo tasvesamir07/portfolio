@@ -323,9 +323,11 @@ const ensureCmsTables = async () => {
     await db.query(`ALTER TABLE academics ALTER COLUMN end_year TYPE TEXT;`);
 };
 
-ensureCmsTables().catch((err) => {
-    console.error('Failed to ensure CMS tables:', err);
-});
+if (process.env.NODE_ENV !== 'production') {
+    ensureCmsTables().catch((err) => {
+        console.error('Failed to ensure CMS tables:', err);
+    });
+}
 
 // --- Health/Ping ---
 app.get('/api/ping', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
