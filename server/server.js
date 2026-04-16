@@ -59,6 +59,19 @@ const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
+// Cloudflare-Express Compatibility Middleware
+app.use((req, res, next) => {
+    if (!res.setHeader) {
+        res.setHeader = (name, value) => {
+            res.set ? res.set(name, value) : (res.headers ? res.headers.set(name, value) : null);
+        };
+    }
+    if (!res.getHeader) {
+        res.getHeader = (name) => res.get ? res.get(name) : (res.headers ? res.headers.get(name) : null);
+    }
+    next();
+});
 if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
     app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 }
