@@ -1,5 +1,4 @@
 const multer = require('multer');
-const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
@@ -9,9 +8,9 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 const processFile = async (file) => {
-    const isImage = file.mimetype.startsWith('image/');
-    const extension = isImage ? '.webp' : path.extname(file.originalname);
-    const filename = `${Date.now()}-${path.parse(file.originalname).name}${extension}`;
+    // We use the original extension since sharp (native resizing) 
+    // is not supported in the Cloudflare Worker environment.
+    const filename = `${Date.now()}-${file.originalname.replace(/[^a-z0-9.]/gi, '_').toLowerCase()}`;
     
     // Check if we are running in Cloudflare/Production with Supabase
     const supabaseUrl = process.env.SUPABASE_URL;
@@ -19,24 +18,12 @@ const processFile = async (file) => {
 
     if (supabaseUrl && supabaseKey) {
         const supabase = createClient(supabaseUrl, supabaseKey);
-        let buffer = file.buffer;
-
-        if (isImage) {
-            try {
-                // Try to optimize image if sharp works
-                buffer = await sharp(file.buffer)
-                    .resize(1200, null, { withoutEnlargement: true })
-                    .webp({ quality: 80 })
-                    .toBuffer();
-            } catch (e) {
-                console.warn('Sharp failed on Edge (fallback to original):', e);
-            }
-        }
+        const buffer = file.buffer;
 
         const { data, error } = await supabase.storage
             .from('portfolio-uploads')
             .upload(filename, buffer, {
-                contentType: isImage ? 'image/webp' : file.mimetype,
+                contentType: file.mimetype,
                 upsert: true
             });
 
@@ -51,17 +38,16 @@ const processFile = async (file) => {
     }
 
     // Local Fallback (Development only)
-    const filepath = path.join(__dirname, 'uploads', filename);
-    if (isImage) {
-        await sharp(file.buffer)
-            .resize(1200, null, { withoutEnlargement: true })
-            .webp({ quality: 80 })
-            .toFile(filepath);
-    } else {
+    if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
+        const filepath = path.join(__dirname, 'uploads', filename);
+        if (!fs.existsSync(path.join(__dirname, 'uploads'))) {
+            fs.mkdirSync(path.join(__dirname, 'uploads'));
+        }
         fs.writeFileSync(filepath, file.buffer);
+        return `/uploads/${filename}`;
     }
 
-    return `/uploads/${filename}`;
+    throw new Error('File upload failed: Supabase storage is not configured.');
 };
 
 module.exports = { upload, processFile };

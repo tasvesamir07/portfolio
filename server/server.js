@@ -1,4 +1,6 @@
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
+    require('dotenv').config();
+}
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -12,6 +14,15 @@ const { translateTexts } = require('./translate');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Root route for API health check
+app.get('/', (req, res) => {
+    res.json({ 
+        message: "Portfolio API is running successfully!",
+        status: "online",
+        time: new Date().toISOString()
+    });
+});
 const LANGUAGE_HEADER = 'x-translate-language';
 const SKIP_TRANSLATION_HEADER = 'x-skip-auto-translate';
 const RESPONSE_TRANSLATED_HEADER = 'X-Response-Translated';
@@ -48,7 +59,9 @@ const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 app.use(cors());
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
+    app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+}
 
 const normalizeTargetLanguage = (language = 'en') => {
     if (language === 'bn') return 'bn';
@@ -1066,7 +1079,7 @@ app.put('/api/reorder/:table', authenticateToken, async (req, res) => {
     }
 });
 
-if (process.env.NODE_ENV !== 'production' || !process.env.CF_PAGES) {
+if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
