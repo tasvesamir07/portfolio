@@ -24,7 +24,8 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
-    "pg": "^8.20.0"
+    "pg": "^8.20.0",
+    "serverless-http": "^4.0.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260416.2",
