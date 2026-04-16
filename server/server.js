@@ -56,11 +56,7 @@ const URLISH_REGEX = /^(https?:\/\/|mailto:|tel:|data:|\/uploads\/)/i;
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 
-app.use(cors());
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
-
-// Cloudflare-Express Compatibility Middleware
+// Cloudflare-Express Compatibility Middleware (MUST BE AT TOP)
 app.use((req, res, next) => {
     if (!res.setHeader) {
         res.setHeader = (name, value) => {
@@ -70,8 +66,36 @@ app.use((req, res, next) => {
     if (!res.getHeader) {
         res.getHeader = (name) => res.get ? res.get(name) : (res.headers ? res.headers.get(name) : null);
     }
+    // Fix for some middleware that might call res.header()
+    if (!res.header) res.header = res.setHeader;
     next();
 });
+
+const allowedOrigins = [
+    'https://portfolio-site-amu.pages.dev',
+    'http://localhost:5173',
+    'http://localhost:3000'
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            // Allow all for now during setup to prevent blockage, 
+            // but we'll keep the list for reference.
+            return callback(null, true); 
+        }
+        return callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-translate-language', 'x-skip-auto-translate']
+}));
+
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
 if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
     app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 }
