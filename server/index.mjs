@@ -4,8 +4,10 @@ export default {
     async fetch(request, env, ctx) {
         Object.assign(process.env, env);
 
+        // 🛡️ SMART CORS: Echo origin for better stability
+        const origin = request.headers.get('Origin') || '*';
         const corsHeaders = {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-translate-language, x-skip-auto-translate',
             'Access-Control-Allow-Credentials': 'true',
@@ -15,10 +17,10 @@ export default {
             return new Response(null, { status: 204, headers: corsHeaders });
         }
 
-        // 🛠️ DETACHED REQUEST: Create a plain JS object
-        // We copy ONLY the data from the Cloudflare request.
-        // This makes the object 100% mutable for Express.
         const url = new URL(request.url);
+        
+        // 🛠️ ADVANCED BRIDGE: Mocking Node.js Stream methods
+        // This prevents body-parser from hanging or crashing
         const mockReq = {
             method: request.method,
             url: url.pathname + url.search,
@@ -26,25 +28,37 @@ export default {
             query: Object.fromEntries(url.searchParams),
             params: {},
             body: {},
-            // Mocking EventEmitter methods that Express/Middleware might use
-            on: () => {},
-            once: () => {},
+            // Stream polyfills for body-parser
+            on(event, callback) {
+                if (event === 'data' && this._bodyStr) {
+                    callback(Buffer.from(this._bodyStr));
+                }
+                if (event === 'end') {
+                    callback();
+                }
+                return this;
+            },
+            once: function(event, callback) { return this.on(event, callback); },
             emit: () => {},
+            unpipe: () => {},
+            resume: () => {},
+            pause: () => {},
             protocol: 'https',
             secure: true,
             get: (name) => request.headers.get(name),
-            header: (name) => request.headers.get(name),
         };
 
-        // Try to parse body if it exists
+        // Pre-parse body for Express
         if (request.method !== 'GET' && request.method !== 'HEAD') {
             try {
+                const text = await request.clone().text();
+                mockReq._bodyStr = text;
                 const contentType = request.headers.get('content-type') || '';
                 if (contentType.includes('application/json')) {
-                    mockReq.body = await request.clone().json();
+                    mockReq.body = JSON.parse(text);
                 }
             } catch (e) {
-                // If body parsing fails, we just leave it as empty
+                console.warn('Body parse failed:', e.message);
             }
         }
 
@@ -71,9 +85,7 @@ export default {
                 get(name) { return this.getHeader(name); },
                 set(name, value) { return this.setHeader(name, value); },
                 end(data) {
-                    // Update status if it was set via .statusCode directly
                     if (this.statusCode !== 200 && resStatus === 200) resStatus = this.statusCode;
-                    
                     resolve(new Response(data || resBody, {
                         status: resStatus,
                         headers: resHeaders
@@ -86,7 +98,6 @@ export default {
             };
 
             try {
-                // Pass the DETACHED request to Express
                 app(mockReq, mockRes, (err) => {
                     if (err) {
                         resolve(new Response(JSON.stringify({ error: err.message }), {

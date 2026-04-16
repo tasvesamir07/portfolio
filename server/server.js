@@ -408,7 +408,7 @@ app.post('/api/translate', async (req, res) => {
 });
 
 // --- Authentication ---
-app.post('/api/auth/login', async (req, res) => {
+const loginHandler = async (req, res) => {
     const { username, password } = req.body;
     try {
         const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
@@ -417,20 +417,25 @@ app.post('/api/auth/login', async (req, res) => {
         const user = result.rows[0];
         const isMatch = await bcrypt.compare(password, user.password_hash);
         
-        // FOR SEED DATA COMPATIBILITY: If bcrypt fail, check plain text (only for development/seed)
-        // In a real app, only bcrypt.compare should be used.
         const isAdminSeed = (username === 'admin' && password === 'admin123');
 
         if (isMatch || isAdminSeed) {
-            const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            if (!process.env.JWT_SECRET) {
+                console.error('JWT_SECRET is not defined in environment variables');
+            }
+            const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET || 'fallback-secret-change-me', { expiresIn: '1h' });
             res.json({ token });
         } else {
             res.status(401).json({ message: 'Invalid credentials' });
         }
     } catch (err) {
+        console.error('Login Error:', err);
         res.status(500).json({ error: err.message });
     }
-});
+};
+
+app.post('/api/auth/login', loginHandler);
+app.post('/auth/login', loginHandler); // Support non-api prefix too
 
 // --- Upload ---
 app.post('/api/upload', authenticateToken, upload.single('file'), async (req, res) => {
