@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
+    require('dotenv').config();
+}
 
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
