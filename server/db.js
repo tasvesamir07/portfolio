@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+const { Pool } = require('@neondatabase/serverless');
 if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
     require('dotenv').config();
 }
