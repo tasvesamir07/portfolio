@@ -369,6 +369,28 @@ if (process.env.NODE_ENV !== 'production') {
 // --- Health/Ping ---
 app.get('/api/ping', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
+// Database Health Check
+app.get('/api/health', async (req, res) => {
+    try {
+        // Run a simple query to see if DB is responsive
+        const result = await db.query('SELECT NOW() as now');
+        res.json({ 
+            status: 'online', 
+            database: 'connected', 
+            db_server_time: result.rows[0].now,
+            environment: process.env.NODE_ENV || 'production'
+        });
+    } catch (err) {
+        console.error('Database Health Check Failed:', err);
+        res.status(500).json({ 
+            status: 'error', 
+            database: 'disconnected', 
+            error: err.message,
+            suggestion: "Check your DATABASE_URL secret in Cloudflare"
+        });
+    }
+});
+
 // --- Translation ---
 app.post('/api/translate', async (req, res) => {
     const { texts = [], targetLang = 'en' } = req.body || {};
