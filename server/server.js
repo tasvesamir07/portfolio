@@ -448,7 +448,7 @@ app.post('/api/upload', authenticateToken, upload.single('file'), async (req, re
         if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
         const filePath = await processFile(req.file);
         // Important: Return absolute URL for frontend consumption
-        const fullUrl = `${req.protocol}://${req.get('host')}${filePath}`;
+        const fullUrl = filePath.startsWith('http') ? filePath : `${req.protocol}://${req.get('host')}${filePath}`;
         res.json({ url: fullUrl });
     } catch (err) {
         res.status(500).json({ error: err.message });
