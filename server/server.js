@@ -97,7 +97,7 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
-    app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+    app.use('/uploads', express.static(path.join(typeof __dirname !== 'undefined' ? __dirname : '', 'uploads')));
 }
 
 const normalizeTargetLanguage = (language = 'en') => {
@@ -1150,7 +1150,7 @@ app.put('/api/reorder/:table', authenticateToken, async (req, res) => {
     }
 });
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && typeof process !== 'undefined' && process.release && process.release.name === 'node') {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });

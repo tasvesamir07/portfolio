@@ -5,7 +5,6 @@ export default {
     async fetch(request, env, ctx) {
         Object.assign(process.env, env);
 
-        // 🛡️ SMART CORS: Echo origin for better stability
         const origin = request.headers.get('Origin') || '*';
         const corsHeaders = {
             'Access-Control-Allow-Origin': origin,
@@ -20,8 +19,8 @@ export default {
 
         const url = new URL(request.url);
         
-        // 🛠️ ADVANCED BRIDGE: Mocking Node.js Stream methods
-        // This prevents body-parser from hanging or crashing
+        // 🛠️ ROBUST REQUEST BRIDGE
+        const listeners = { data: [], end: [] };
         const mockReq = {
             method: request.method,
             url: url.pathname + url.search,
@@ -29,27 +28,34 @@ export default {
             query: Object.fromEntries(url.searchParams),
             params: {},
             body: {},
-            // Stream polyfills for body-parser
+            complete: true,
             on(event, callback) {
+                if (listeners[event]) listeners[event].push(callback);
                 if (event === 'data' && this._bodyStr) {
-                    setTimeout(() => callback(Buffer.from(this._bodyStr)), 0);
+                    setTimeout(() => callback(Buffer.from(this._bodyStr)), 10);
                 }
-                if (event === 'end') {
-                    setTimeout(() => callback(), 1);
+                if (event === 'end' && this._bodyDone) {
+                    setTimeout(() => callback(), 20);
                 }
                 return this;
             },
-            once: function(event, callback) { return this.on(event, callback); },
-            emit: () => {},
+            once(event, callback) { return this.on(event, callback); },
+            removeListener() { return this; },
+            removeAllListeners() { return this; },
+            emit(event, data) {
+                if (listeners[event]) {
+                    listeners[event].forEach(cb => cb(data));
+                }
+            },
             unpipe: () => {},
             resume: () => {},
             pause: () => {},
             protocol: 'https',
             secure: true,
             get: (name) => request.headers.get(name),
+            header: (name) => request.headers.get(name),
         };
 
-        // Pre-parse body for Express
         if (request.method !== 'GET' && request.method !== 'HEAD') {
             try {
                 const text = await request.clone().text();
@@ -58,8 +64,13 @@ export default {
                 if (contentType.includes('application/json')) {
                     mockReq.body = JSON.parse(text);
                 }
+                mockReq.complete = true;
+                mockReq._bodyDone = true;
+                mockReq._body = true;
             } catch (e) {
                 console.warn('Body parse failed:', e.message);
+                mockReq._bodyDone = true;
+                mockReq._body = true;
             }
         }
 
@@ -93,22 +104,34 @@ export default {
                     }));
                 },
                 locals: {},
-                on: () => {},
-                emit: () => {},
+                on() { return this; },
+                once() { return this; },
+                removeListener() { return this; },
+                removeAllListeners() { return this; },
+                emit() { return this; },
                 removeHeader: (name) => { resHeaders.delete(name); }
             };
 
             try {
+                console.log(`[Bridge] Processing ${mockReq.method} ${mockReq.url}`);
                 app(mockReq, mockRes, (err) => {
                     if (err) {
+                        console.error('[Bridge] Express Fallthrough Error:', err);
                         resolve(new Response(JSON.stringify({ error: err.message }), {
                             status: 500,
+                            headers: resHeaders
+                        }));
+                    } else {
+                        console.log('[Bridge] Route not found by Express');
+                        resolve(new Response(JSON.stringify({ error: 'Route not found', path: mockReq.url }), {
+                            status: 404,
                             headers: resHeaders
                         }));
                     }
                 });
             } catch (err) {
-                resolve(new Response(JSON.stringify({ error: 'Worker Crash', detail: err.message }), {
+                console.error('[Bridge] Worker Bridge Crash:', err);
+                resolve(new Response(JSON.stringify({ error: 'Worker Bridge Crash', detail: err.message }), {
                     status: 500,
                     headers: resHeaders
                 }));
