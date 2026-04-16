@@ -1,28 +1,33 @@
 const { Pool } = require('@neondatabase/serverless');
-if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
-    require('dotenv').config();
-}
 
-const isProduction = process.env.NODE_ENV === 'production' || process.env.CF_PAGES;
+// We use a "lazy" variable so we only connect when needed
+let pool;
 
-const poolConfig = {
-    connectionString: process.env.DATABASE_URL,
-    // SSL is required for Neon and other cloud providers
-    ssl: isProduction ? { rejectUnauthorized: false } : false
+const getPool = () => {
+    if (pool) return pool;
+
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.CF_PAGES;
+    
+    const poolConfig = {
+        connectionString: process.env.DATABASE_URL,
+        ssl: isProduction ? { rejectUnauthorized: false } : false
+    };
+
+    // Fallback for local development
+    if (!poolConfig.connectionString) {
+        poolConfig.user = process.env.DB_USER;
+        poolConfig.host = process.env.DB_HOST;
+        poolConfig.database = process.env.DB_NAME;
+        poolConfig.password = process.env.DB_PASSWORD;
+        poolConfig.port = process.env.DB_PORT;
+    }
+
+    pool = new Pool(poolConfig);
+    return pool;
 };
 
-// Fallback to individual vars if connectionString is missing (for local dev)
-if (!poolConfig.connectionString) {
-    poolConfig.user = process.env.DB_USER;
-    poolConfig.host = process.env.DB_HOST;
-    poolConfig.database = process.env.DB_NAME;
-    poolConfig.password = process.env.DB_PASSWORD;
-    poolConfig.port = process.env.DB_PORT;
-}
-
-const pool = new Pool(poolConfig);
-
 module.exports = {
-    query: (text, params) => pool.query(text, params),
-    connect: () => pool.connect(),
+    // We wrap the queries to use the lazy pool
+    query: (text, params) => getPool().query(text, params),
+    connect: () => getPool().connect(),
 };
