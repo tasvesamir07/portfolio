@@ -16,7 +16,8 @@ const Login = () => {
         setLoading(true);
         setError('');
         try {
-            const res = await api.post('/auth/login', { username, password });
+            // Use a Vercel-safe login route (avoid /api/auth/* path conflicts).
+            const res = await api.post('/admin-login', { username, password });
             localStorage.setItem('samir_portfolio_token', res.data.token);
             navigate('/admin/dashboard');
         } catch (err) {

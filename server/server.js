@@ -582,6 +582,10 @@ const loginHandler = async (req, res) => {
     }
 };
 
+// NOTE: On some Vercel setups, /api/auth/* can be intercepted before Express.
+// Keep legacy routes, but add a safe non-auth path for production clients.
+app.post('/api/admin-login', loginHandler);
+app.post('/api/login', loginHandler);
 app.post('/api/auth/login', loginHandler);
 app.post('/auth/login', loginHandler); // Support non-api prefix too
 
