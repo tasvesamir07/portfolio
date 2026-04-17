@@ -131,11 +131,21 @@ const translateText = async (text = '', language = 'en') => {
 
 const translateTexts = async (texts = [], language = 'en') => {
     const results = [];
-    for (const text of texts || []) {
-        results.push(await translateText(text, language));
-        // 100ms cooldown to prevent Google 429 Too Many Requests IP bans
-        await new Promise((resolve) => setTimeout(resolve, 100));
+    const CHUNK_SIZE = 5;
+    
+    for (let i = 0; i < texts.length; i += CHUNK_SIZE) {
+        const chunk = texts.slice(i, i + CHUNK_SIZE);
+        const chunkResults = await Promise.all(
+            chunk.map(text => translateText(text, language))
+        );
+        results.push(...chunkResults);
+        
+        // Add a delay between chunks if there are more to process
+        if (i + CHUNK_SIZE < texts.length) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
     }
+    
     return results;
 };
 

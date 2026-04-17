@@ -141,7 +141,20 @@ api.interceptors.response.use(
                 && response.config?.headers?.['X-Skip-Auto-Translate'] !== '1';
 
             if (shouldTranslate) {
-                response.data = await translateApiData(response.data, language);
+                // Add a global timeout to the translation process to prevent hung requests from blocking the UI
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Auto-translation timed out')), 15000)
+                );
+                
+                try {
+                    response.data = await Promise.race([
+                        translateApiData(response.data, language),
+                        timeoutPromise
+                    ]);
+                } catch (timeoutOrError) {
+                    console.warn(timeoutOrError.message);
+                    // Continue with original data if translation fails or times out
+                }
             }
         } catch (translationError) {
             console.error('Auto-translation failed:', translationError);

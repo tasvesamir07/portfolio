@@ -8,13 +8,12 @@ const TRANSLATE_API_URL = `${defaultBaseUrl}/translate`;
 const STORAGE_KEY = 'portfolio-language';
 const MAX_BATCH_ITEMS = 20;
 const BATCH_FLUSH_DELAY_MS = 12;
-const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v4';
-const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v4';
+const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v5';
+const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v5';
 const MAX_PERSISTED_CACHE_ENTRIES = 250;
 
 const textCache = new Map();
 const htmlCache = new Map();
-const dataCache = new Map();
 const pendingTextBatches = new Map();
 
 const readPersistentCache = (storageKey) => {
@@ -80,7 +79,11 @@ const SKIP_TRANSLATION_KEYS = new Set([
     'show_in_nav',
     'token',
     'password_hash',
-    'custom_nav'
+    'custom_nav',
+    'file_path',
+    'file_name',
+    'mimetype',
+    'size'
 ]);
 
 const HTML_REGEX = /<[a-z][\s\S]*>/i;
@@ -349,11 +352,6 @@ export const translateApiData = async (value, language = getCurrentLanguage(), k
         return value;
     }
 
-    const cacheKey = `${language}::${key || 'root'}::${JSON.stringify(value)}`;
-    if (dataCache.has(cacheKey)) {
-        return dataCache.get(cacheKey);
-    }
-
     const translationPromise = (async () => {
         if (typeof value === 'string') {
             if (shouldSkipStringTranslation(key, value)) return value;
@@ -380,6 +378,5 @@ export const translateApiData = async (value, language = getCurrentLanguage(), k
         return value;
     })();
 
-    dataCache.set(cacheKey, translationPromise);
     return translationPromise;
 };
