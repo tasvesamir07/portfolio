@@ -6,6 +6,7 @@ import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 const iconMap = {
     FileText,
@@ -17,6 +18,7 @@ const iconMap = {
 const ResearchInterests = () => {
     const [interests, setInterests] = useState([]);
     const { language, t } = useI18n();
+    const translatedInterests = useTranslatedDataRows(interests, ['interest'], language);
 
     useEffect(() => {
         const fetchInterests = async () => {
@@ -36,7 +38,7 @@ const ResearchInterests = () => {
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center">{t('researchInterests.kicker')}</span>
                 <h2 className="text-5xl md:text-7xl font-bold text-center mb-16 text-gray-900 tracking-tight">{t('researchInterests.titleMain')} <span className="text-brand-blue">{t('researchInterests.titleAccent')}</span></h2>
                 <div className="grid grid-cols-1 gap-8">
-                    {interests.map((item, index) => {
+                    {translatedInterests.map((item, index) => {
                         const detailItems = parseStructuredItems(getLocalizedFirstField(item, ['details_json', 'details'], language, ''));
                         const interest = getLocalizedField(item, 'interest', language, item.interest);
 

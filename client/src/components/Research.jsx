@@ -6,10 +6,12 @@ import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 const Research = () => {
     const [research, setResearch] = useState([]);
     const { language, t } = useI18n();
+    const translatedResearch = useTranslatedDataRows(research, ['title', 'status', 'date_text'], language);
 
     useEffect(() => {
         const fetchResearch = async () => {
@@ -40,7 +42,7 @@ const Research = () => {
                 <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('research.titleMain')} <span className="text-brand-blue font-black">{t('research.titleAccent')}</span></h2>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                    {research.map((item, index) => {
+                    {translatedResearch.map((item, index) => {
                         // Merge both structured data and legacy description to prevent content being hidden
                         const structuredData = getLocalizedField(item, 'details_json', language, '');
                         const descriptionText = getLocalizedField(item, 'description', language, '');

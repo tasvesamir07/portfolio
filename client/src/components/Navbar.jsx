@@ -5,6 +5,7 @@ import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedNavName, normalizeLabel } from '../i18n/localize';
 import LanguageSwitcher from './LanguageSwitcher';
+import { useTranslatedText } from '../i18n/translator';
 
 const isBlogMenuLink = (link = {}, t) => {
     const label = normalizeLabel(link.name);
@@ -104,7 +105,8 @@ const Navbar = () => {
     ];
     const localizedSiteName = getLocalizedField(about, 'site_name', language, about?.site_name || '');
     const localizedOwnerName = getLocalizedField(about, 'name', language, about?.name || '');
-    const brandLabel = localizedSiteName?.trim() || localizedOwnerName?.trim() || 'Portfolio';
+    const rawBrandLabel = localizedSiteName?.trim() || localizedOwnerName?.trim() || 'Portfolio';
+    const brandLabel = useTranslatedText(rawBrandLabel, language);
 
     const activeNavLinks = (() => {
         const normalizedLinks = baseNavLinks.map((link) => ({ ...link }));

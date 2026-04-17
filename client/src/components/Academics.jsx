@@ -6,10 +6,12 @@ import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 const Academics = () => {
     const [academics, setAcademics] = useState([]);
     const { language, t } = useI18n();
+    const translatedAcademics = useTranslatedDataRows(academics, ['degree', 'institution', 'location'], language);
 
     useEffect(() => {
         const fetchAcademics = async () => {
@@ -36,7 +38,7 @@ const Academics = () => {
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('academics.kicker')}</span>
                 <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('academics.titleMain')} {t('academics.titleAccent') ? <span className="text-brand-gold font-black">{t('academics.titleAccent')}</span> : null}</h2>
                 <div className="flex flex-col gap-10">
-                    {academics.map((item, index) => (
+                    {translatedAcademics.map((item, index) => (
                         (() => {
                             const hasSavedStructuredJson =
                                 typeof item.details_json === 'string' && item.details_json.trim().startsWith('[');

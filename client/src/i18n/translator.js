@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useState, useEffect, useRef } from 'react';
 
 let defaultBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 if (defaultBaseUrl && !defaultBaseUrl.endsWith('/api') && !defaultBaseUrl.endsWith('/api/')) {
@@ -6,11 +7,37 @@ if (defaultBaseUrl && !defaultBaseUrl.endsWith('/api') && !defaultBaseUrl.endsWi
 }
 const TRANSLATE_API_URL = `${defaultBaseUrl}/translate`;
 const STORAGE_KEY = 'portfolio-language';
-const MAX_BATCH_ITEMS = 20;
-const BATCH_FLUSH_DELAY_MS = 12;
-const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v7';
-const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v7';
+const MAX_BATCH_ITEMS = 60;
+const BATCH_FLUSH_DELAY_MS = 4;
+const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v8';
+const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v8';
 const MAX_PERSISTED_CACHE_ENTRIES = 250;
+const MAX_CONCURRENT_CHUNKS = 5;
+const MAX_PARALLEL_BATCH_REQUESTS = 3;
+const CIRCUIT_BREAKER_THRESHOLD = 3;
+const CIRCUIT_BREAKER_RESET_MS = 60000; // 1 minute
+
+let consecutiveFailures = 0;
+let circuitBreakerUntil = 0;
+
+const isCircuitOpen = () => {
+    if (Date.now() < circuitBreakerUntil) return true;
+    if (consecutiveFailures >= CIRCUIT_BREAKER_THRESHOLD) {
+        circuitBreakerUntil = Date.now() + 10000; // Only block for 10 seconds to avoid long periods of no translation
+        consecutiveFailures = 0;
+        console.warn('Translation circuit breaker opened momentarily.');
+        return true;
+    }
+    return false;
+};
+
+const recordFailure = () => {
+    consecutiveFailures++;
+};
+
+const recordSuccess = () => {
+    consecutiveFailures = 0;
+};
 
 const textCache = new Map();
 const htmlCache = new Map();
@@ -79,15 +106,46 @@ const SKIP_TRANSLATION_KEYS = new Set([
     'show_in_nav',
     'token',
     'password_hash',
-    'custom_nav',
     'file_path',
     'file_name',
     'mimetype',
     'size'
 ]);
 
+const BANGLA_REGEX = /[\u0980-\u09FF]/;
+const HANGUL_REGEX = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uD7B0-\uD7FF]/;
+const LATIN_REGEX = /[A-Za-z]/;
+
+const isLikelyAlreadyInTargetLanguage = (text = '', language = 'en') => {
+    const trimmed = text.trim();
+    if (!trimmed) return true;
+
+    const hasBangla = BANGLA_REGEX.test(trimmed);
+    const hasHangul = HANGUL_REGEX.test(trimmed);
+    const hasLatin = LATIN_REGEX.test(trimmed);
+
+    if (language === 'en') {
+        // English target still needs translation whenever Bangla/Korean scripts are present.
+        return !hasBangla && !hasHangul;
+    }
+
+    if (language === 'bn') {
+        // Mixed Bangla+English content should still be translated to fully Bangla.
+        return hasBangla && !hasHangul && !hasLatin;
+    }
+
+    if (language === 'ko') {
+        // Mixed Korean+English content should still be translated to fully Korean.
+        return hasHangul && !hasBangla && !hasLatin;
+    }
+
+    return false;
+};
+
 const HTML_REGEX = /<[a-z][\s\S]*>/i;
 const URLISH_REGEX = /^(https?:\/\/|mailto:|tel:|data:|\/uploads\/)/i;
+const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+const NON_TRANSLATABLE_SYMBOLIC_REGEX = /^[\d\s.,:/()\-+%]+$/;
 
 const getCurrentLanguage = () => {
     if (typeof window === 'undefined') return 'en';
@@ -96,28 +154,65 @@ const getCurrentLanguage = () => {
 
 const shouldSkipStringTranslation = (key = '', value = '') => {
     if (!value || !value.trim()) return true;
+    const trimmed = value.trim();
     if (SKIP_TRANSLATION_KEYS.has(key) || key.endsWith('_url')) return true;
-    if (URLISH_REGEX.test(value.trim())) return true;
+    if (URLISH_REGEX.test(trimmed)) return true;
+    if (EMAIL_REGEX.test(trimmed)) return true;
+    if (NON_TRANSLATABLE_SYMBOLIC_REGEX.test(trimmed)) return true;
     return false;
 };
+
+const requestTranslatedTexts = async (texts, language) => {
+    if (isCircuitOpen()) {
+        return texts;
+    }
 
     try {
         const response = await axios.post(TRANSLATE_API_URL, {
             texts,
             targetLang: language
         }, {
-            timeout: 25000
+            timeout: 35000 // Increased timeout for heavier chunks
         });
 
         if (!response.data?.translations) {
             console.warn('Translate API returned no translations:', response.data);
+            return texts;
         }
 
+        recordSuccess();
         return Array.isArray(response.data?.translations) ? response.data.translations : texts;
     } catch (error) {
+        recordFailure();
         console.error('Translate API request failed:', error.response?.data || error.message);
         throw error;
     }
+};
+
+const processInChunks = async (items, chunkSize, processor) => {
+    const results = [];
+    for (let i = 0; i < items.length; i += chunkSize) {
+        const chunk = items.slice(i, i + chunkSize);
+        const chunkResults = await Promise.all(chunk.map(item => processor(item)));
+        results.push(...chunkResults);
+    }
+    return results;
+};
+
+const runWithConcurrency = async (items, concurrency, worker) => {
+    const safeConcurrency = Math.max(1, Math.min(concurrency, items.length || 1));
+    const results = new Array(items.length);
+    let nextIndex = 0;
+
+    const workers = Array.from({ length: safeConcurrency }, async () => {
+        while (nextIndex < items.length) {
+            const currentIndex = nextIndex++;
+            results[currentIndex] = await worker(items[currentIndex], currentIndex);
+        }
+    });
+
+    await Promise.all(workers);
+    return results;
 };
 
 const batchTranslateTexts = async (texts, language) => {
@@ -128,14 +223,23 @@ const batchTranslateTexts = async (texts, language) => {
     const uniqueTexts = [...new Set(texts)];
     const translationMap = new Map();
 
+    const chunks = [];
     for (let index = 0; index < uniqueTexts.length; index += MAX_BATCH_ITEMS) {
-        const chunk = uniqueTexts.slice(index, index + MAX_BATCH_ITEMS);
-        const translatedChunk = await requestTranslatedTexts(chunk, language);
-
-        chunk.forEach((text, chunkIndex) => {
-            translationMap.set(text, translatedChunk[chunkIndex] || text);
-        });
+        chunks.push(uniqueTexts.slice(index, index + MAX_BATCH_ITEMS));
     }
+
+    const chunkEntries = await runWithConcurrency(chunks, MAX_PARALLEL_BATCH_REQUESTS, async (chunk) => {
+        try {
+            const translatedChunk = await requestTranslatedTexts(chunk, language);
+            return chunk.map((text, chunkIndex) => [text, translatedChunk[chunkIndex] || text]);
+        } catch {
+            return chunk.map((text) => [text, text]);
+        }
+    });
+
+    chunkEntries.flat().forEach(([text, translated]) => {
+        translationMap.set(text, translated);
+    });
 
     return texts.map((text) => translationMap.get(text) || text);
 };
@@ -195,19 +299,43 @@ const queueTextTranslation = (text, language) => {
     return promise;
 };
 
-export const translateText = async (value = '', language = getCurrentLanguage()) => {
-    if (!value || !value.trim()) return value;
-
-    const trimmed = value.trim();
+export const translateText = async (text = '', language = 'en') => {
+    if (!text || !text.trim()) return text;
     
-    // For long text blocks (like the Bio), split into sentences on the frontend
-    // to ensure we never hit backend limits or timeout processing one giant string.
-    if (trimmed.length > 300) {
-        // Splitting by periods, question marks, and exclamation marks followed by whitespace
+    const trimmed = text.trim();
+    if (isLikelyAlreadyInTargetLanguage(trimmed, language)) return text;
+
+    // Preserve newlines and formatting by splitting into fragments
+    // This also helps avoid hitting character limits for long blocks
+    if (text.includes('\n') || text.length > 500) {
+        // Split by lines but keep empty lines/newlines by using a regex that captures separators
+        const fragments = text.split(/(\r?\n)/);
+        if (fragments.length > 1) {
+            const translatedFragments = await processInChunks(
+                fragments,
+                10,
+                async (frag) => {
+                    // Don't translate line breaks or empty whitespace strings
+                    if (!frag || frag.match(/^\r?\n$/) || !frag.trim()) return frag;
+                    
+                    // If a single paragraph is still too long, recursively call translateText
+                    // so it can handle sentence splitting if needed.
+                    return translateText(frag, language);
+                }
+            );
+            return translatedFragments.join('');
+        }
+    }
+
+    // Sentence splitting for individual long paragraphs that haven't been broken down by line breaks
+    if (trimmed.length > 350) {
+        // Split by major punctuation followed by whitespace
         const sentences = trimmed.split(/(?<=[.!?])\s+(?=[A-Z\u0980-\u09FF\uAC00-\uD7AF])/);
         if (sentences.length > 1) {
-            const translatedSentences = await Promise.all(
-                sentences.map(s => translateText(s, language))
+            const translatedSentences = await processInChunks(
+                sentences,
+                MAX_CONCURRENT_CHUNKS,
+                s => translateText(s, language)
             );
             return translatedSentences.join(' ');
         }
@@ -233,15 +361,28 @@ export const translateText = async (value = '', language = getCurrentLanguage())
     }
 
     const translated = await textCache.get(cacheKey);
-    const leadingWhitespace = value.match(/^\s*/)?.[0] || '';
-    const trailingWhitespace = value.match(/\s*$/)?.[0] || '';
+    const leadingWhitespace = text.match(/^\s*/)?.[0] || '';
+    const trailingWhitespace = text.match(/\s*$/)?.[0] || '';
     return `${leadingWhitespace}${translated}${trailingWhitespace}`;
 };
 
+const isAdminRoute = () =>
+    typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+
+export const shouldRunLiveClientTranslation = () => isAdminRoute();
+
 export const translateHtml = async (html = '', language = getCurrentLanguage()) => {
-    if (!html || !HTML_REGEX.test(html) || typeof window === 'undefined') {
-        return html;
+    if (!html) return html;
+
+    // If it's not really HTML, just treat it as a long text block
+    if (!HTML_REGEX.test(html)) {
+        return translateText(html, language);
     }
+
+    const plainText = html.replace(/<[^>]+>/g, ' ');
+    if (isLikelyAlreadyInTargetLanguage(plainText, language)) return html;
+
+    if (typeof window === 'undefined') return html;
 
     const cacheKey = `${language}::html::${html}`;
     const persistedValue = getPersistentTranslation(HTML_CACHE_STORAGE_KEY, cacheKey);
@@ -280,7 +421,9 @@ export const translateHtml = async (html = '', language = getCurrentLanguage()) 
         collectTextNodes(doc.body);
 
         const uniqueTexts = [...new Set(textNodes.map((node) => (node.textContent || '').trim()).filter(Boolean))];
-        const translatedTexts = await batchTranslateTexts(uniqueTexts, language);
+        
+        // Use translateText for each unique text fragment to benefit from paragraph splitting and script detection
+        const translatedTexts = await Promise.all(uniqueTexts.map(text => translateText(text, language)));
         const translationMap = new Map(uniqueTexts.map((text, index) => [text, translatedTexts[index] || text]));
 
         textNodes.forEach((node) => {
@@ -381,6 +524,9 @@ export const translateApiData = async (value, language = getCurrentLanguage(), k
     const translationPromise = (async () => {
         if (typeof value === 'string') {
             if (shouldSkipStringTranslation(key, value)) return value;
+            const detectionSample = HTML_REGEX.test(value) ? value.replace(/<[^>]+>/g, ' ') : value;
+            // Don't re-translate content already in the target language
+            if (isLikelyAlreadyInTargetLanguage(detectionSample, language)) return value;
             if (looksLikeStructuredJson(value, key)) return translateStructuredJson(value, language);
             if (HTML_REGEX.test(value)) return translateHtml(value, language);
             return translateText(value, language);
@@ -405,4 +551,97 @@ export const translateApiData = async (value, language = getCurrentLanguage(), k
     })();
 
     return translationPromise;
+};
+
+/**
+ * Call this whenever the user switches languages.
+ * Clears in-memory translation caches so the new language is fully re-translated.
+ */
+export const clearTranslationCaches = () => {
+    textCache.clear();
+    htmlCache.clear();
+    pendingTextBatches.clear();
+    // Reset circuit breaker so stale failures don't block the new language
+    consecutiveFailures = 0;
+    circuitBreakerUntil = 0;
+};
+
+/**
+ * React hook: translate a single string.
+ * Returns the original value immediately, then updates when translation arrives.
+ */
+export const useTranslatedText = (text, language, options = {}) => {
+    const [translated, setTranslated] = useState(text);
+    const prevKey = useRef(null);
+    const force = options?.force === true;
+
+    useEffect(() => {
+        const key = `${language}::${text}`;
+        if (prevKey.current === key) return;
+        prevKey.current = key;
+
+        if (!text || (!force && !shouldRunLiveClientTranslation())) {
+            setTranslated(text);
+            return;
+        }
+
+        setTranslated(text); // Show original while loading
+        translateText(text, language).then(setTranslated).catch(() => setTranslated(text));
+    }, [text, language, force]);
+
+    return translated;
+};
+
+/**
+ * React hook: translate an array of strings in batch.
+ * Returns originals immediately, then updates each as translations arrive.
+ */
+export const useTranslatedTexts = (texts, language, options = {}) => {
+    const [translated, setTranslated] = useState(texts);
+    const prevKey = useRef(null);
+    const force = options?.force === true;
+
+    useEffect(() => {
+        const key = `${language}::${JSON.stringify(texts)}`;
+        if (prevKey.current === key) return;
+        prevKey.current = key;
+
+        if (!texts?.length || (!force && !shouldRunLiveClientTranslation())) {
+            setTranslated(texts);
+            return;
+        }
+
+        setTranslated(texts); // Show originals while loading
+        Promise.all(texts.map(t => translateText(t, language)))
+            .then(setTranslated)
+            .catch(() => setTranslated(texts));
+    }, [JSON.stringify(texts), language, force]);
+
+    return translated;
+};
+
+/**
+ * React hook: translate a block of HTML.
+ * Returns the original HTML immediately, then updates when translated.
+ */
+export const useTranslatedHtml = (html, language, options = {}) => {
+    const [translated, setTranslated] = useState(html);
+    const prevKey = useRef(null);
+    const force = options?.force === true;
+
+    useEffect(() => {
+        const key = `${language}::html::${html}`;
+        if (prevKey.current === key) return;
+        prevKey.current = key;
+
+        if (!html || (!force && !shouldRunLiveClientTranslation())) {
+            setTranslated(html);
+            return;
+        }
+
+        setTranslated(html); // Show original while loading
+        translateHtml(html, language).then(setTranslated).catch(() => setTranslated(html));
+    }, [html, language, force]);
+
+    return translated;
 };

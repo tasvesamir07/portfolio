@@ -1,3 +1,6 @@
+import { useState, useEffect, useRef } from 'react';
+import { shouldRunLiveClientTranslation, translateText } from '../i18n/translator';
+
 const createId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 export const createStructuredItem = (type = 'pair') => ({
@@ -255,3 +258,55 @@ export const buildStructuredFallbackText = (items = []) =>
         })
         .filter(Boolean)
         .join(', ');
+
+/**
+ * Universal hook: takes a list of parsed structured items and translates every
+ * text/title/value string in batch. Returns translated items reactively.
+ * 
+ * Usage:  const translatedItems = useTranslatedStructuredItems(parsedItems, language);
+ */
+export const useTranslatedStructuredItems = (items, language, options = {}) => {
+    const [translated, setTranslated] = useState(items);
+    const keyRef = useRef(null);
+    const force = options?.force === true;
+
+    useEffect(() => {
+        if (!items?.length || (!force && !shouldRunLiveClientTranslation())) {
+            setTranslated(items);
+            return;
+        }
+
+        // Build a flat list of every string that needs translating with its location
+        const jobs = [];
+        items.forEach((item, i) => {
+            if (item.title) jobs.push({ i, field: 'title', text: extractStructuredPlainText(item.title) });
+            if (item.text) jobs.push({ i, field: 'text', text: extractStructuredPlainText(item.text) });
+            if (Array.isArray(item.values)) {
+                item.values.forEach((v, vi) => {
+                    const plain = extractStructuredPlainText(v);
+                    if (plain) jobs.push({ i, field: 'values', vi, text: plain });
+                });
+            }
+        });
+
+        const key = `${language}::${JSON.stringify(jobs.map(j => j.text))}`;
+        if (keyRef.current === key) return;
+        keyRef.current = key;
+
+        setTranslated(items); // show originals while loading
+
+        Promise.all(jobs.map(j => translateText(j.text, language))).then(results => {
+            // Deep-clone items and patch translated strings back in
+            const next = items.map(item => ({ ...item, values: item.values ? [...item.values] : [] }));
+            results.forEach((result, idx) => {
+                const { i, field, vi } = jobs[idx];
+                if (field === 'title') next[i].title = result;
+                else if (field === 'text') next[i].text = result;
+                else if (field === 'values') next[i].values[vi] = result;
+            });
+            setTranslated(next);
+        }).catch(() => setTranslated(items));
+    }, [language, JSON.stringify(items?.map(it => ({ t: it.title, x: it.text, v: it.values }))), force]);
+
+    return translated;
+};

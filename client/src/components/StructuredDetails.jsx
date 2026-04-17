@@ -1,7 +1,10 @@
 import React from 'react';
+import { useI18n } from '../i18n/I18nContext';
+import { useTranslatedStructuredItems } from '../utils/structuredItems';
 
 const StructuredDetails = ({
     items = [],
+    forceTranslate = false,
     className = 'space-y-4',
     titleClassName = 'text-xl font-bold text-[#0b3b75] leading-tight',
     textClassName = 'text-gray-700 leading-8 text-base break-words [&_a]:text-sky-500 [&_a]:underline [&_a]:underline-offset-4',
@@ -10,11 +13,15 @@ const StructuredDetails = ({
     valueStackClassName = 'space-y-2',
     layoutClassName = 'grid grid-cols-1 md:grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 items-start'
 }) => {
-    if (!items.length) return null;
+    const { language } = useI18n();
+    // Translate all text/title/value strings automatically — covers every page that uses StructuredDetails
+    const translatedItems = useTranslatedStructuredItems(items, language, { force: forceTranslate });
+
+    if (!translatedItems.length) return null;
 
     return (
         <div className={className}>
-            {items.map((item, index) => {
+            {translatedItems.map((item, index) => {
                 if (item.type === 'title') {
                     return (
                         <h4 key={item.id || index} className={titleClassName}>

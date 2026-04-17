@@ -1,6 +1,24 @@
-const axios = require('axios');
+let translator = null;
+const translationCache = new Map();
+const MAX_CACHE_ENTRIES = 6000;
+const CHUNK_CONCURRENCY = 8;
+const CACHE_VERSION = 'v2';
+const BANGLA_REGEX = /[\u0980-\u09FF]/;
+const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 
-const TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
+/**
+ * Lazy-load the ESM 'translate' package.
+ */
+const getTranslator = async () => {
+    if (!translator) {
+        // Dynamic import is required because 'translate' is an ESM-only package
+        // and this project is currently CommonJS.
+        const { default: translate } = await import('translate');
+        translate.engine = 'google';
+        translator = translate;
+    }
+    return translator;
+};
 
 const normalizeTargetLanguage = (language = 'en') => {
     if (language === 'bn') return 'bn';
@@ -8,39 +26,67 @@ const normalizeTargetLanguage = (language = 'en') => {
     return 'en';
 };
 
-const fetchTranslatedChunk = async (text, targetLanguage) => {
-    const params = {
-        client: 'gtx',
-        sl: 'auto',
-        tl: targetLanguage,
-        dt: 't',
-        q: text
-    };
+const detectSourceLanguage = (text = '', targetLanguage = 'en') => {
+    const sample = String(text || '');
+    if (BANGLA_REGEX.test(sample)) return 'bn';
+    if (HANGUL_REGEX.test(sample)) return 'ko';
+    return targetLanguage === 'en' ? 'en' : 'en';
+};
 
-    const response = await axios.get(TRANSLATE_ENDPOINT, {
-        params,
-        timeout: 25000
-    });
+const getCacheKey = (text = '', targetLanguage = 'en', sourceLanguage = 'en') =>
+    `${CACHE_VERSION}::${sourceLanguage}::${normalizeTargetLanguage(targetLanguage)}::${text}`;
 
-    const segments = Array.isArray(response.data?.[0]) ? response.data[0] : [];
-    return segments.map((segment) => segment?.[0] || '').join('');
+const trimCache = () => {
+    while (translationCache.size > MAX_CACHE_ENTRIES) {
+        const oldestKey = translationCache.keys().next().value;
+        if (!oldestKey) break;
+        translationCache.delete(oldestKey);
+    }
+};
+
+const readCachedTranslation = (text = '', targetLanguage = 'en', sourceLanguage = 'en') => {
+    const key = getCacheKey(text, targetLanguage, sourceLanguage);
+    if (!translationCache.has(key)) return null;
+
+    const value = translationCache.get(key);
+    // Refresh insertion order for basic LRU behavior.
+    translationCache.delete(key);
+    translationCache.set(key, value);
+    return value;
+};
+
+const writeCachedTranslation = (text = '', targetLanguage = 'en', sourceLanguage = 'en', translated = '') => {
+    const key = getCacheKey(text, targetLanguage, sourceLanguage);
+    translationCache.set(key, translated);
+    trimCache();
 };
 
 /**
  * Single-string translation proxy. 
- * Optimized for speed and low CPU usage on Cloudflare Workers.
+ * Now uses the 'translate' package for more robust processing.
  */
 const translateText = async (text = '', language = 'en') => {
     const targetLanguage = normalizeTargetLanguage(language);
+    const sourceLanguage = detectSourceLanguage(text, targetLanguage);
     
     if (!text || !text.trim()) {
         return text;
     }
 
+    if (sourceLanguage === targetLanguage) {
+        return text;
+    }
+
+    const cached = readCachedTranslation(text, targetLanguage, sourceLanguage);
+    if (cached != null) {
+        return cached;
+    }
+
     try {
-        // We no longer protect tokens here to save CPU. 
-        // Simple sentences usually don't contain complex tokens.
-        return await fetchTranslatedChunk(text, targetLanguage);
+        const translate = await getTranslator();
+        const translated = await translate(text, { from: sourceLanguage, to: targetLanguage });
+        writeCachedTranslation(text, targetLanguage, sourceLanguage, translated || text);
+        return translated || text;
     } catch (error) {
         console.error(`Translation proxy failed:`, error.message);
         return text;
@@ -48,16 +94,49 @@ const translateText = async (text = '', language = 'en') => {
 };
 
 /**
+ * Helper to process an array in chunks.
+ */
+const processInChunks = async (items, chunkSize, processor) => {
+    const results = [];
+    for (let i = 0; i < items.length; i += chunkSize) {
+        const chunk = items.slice(i, i + chunkSize);
+        const chunkResults = await Promise.all(chunk.map((item) => processor(item)));
+        results.push(...chunkResults);
+    }
+    return results;
+};
+
+/**
  * Batch translation proxy.
- * Processes small batches incoming from the frontend.
+ * Processes small batches incoming from the frontend with chunked concurrency.
  */
 const translateTexts = async (texts = [], language = 'en') => {
     if (!texts || texts.length === 0) return [];
-    
-    // Process in parallel since strings are now small sentences
-    return Promise.all(
-        texts.map(text => translateText(String(text || ''), language))
-    );
+
+    const normalizedTexts = texts.map((text) => String(text || ''));
+    const uniqueTexts = [...new Set(normalizedTexts)];
+    const unresolved = uniqueTexts.filter((text) => {
+        const targetLanguage = normalizeTargetLanguage(language);
+        const sourceLanguage = detectSourceLanguage(text, targetLanguage);
+        if (sourceLanguage === targetLanguage) return false;
+        return readCachedTranslation(text, targetLanguage, sourceLanguage) == null;
+    });
+
+    if (unresolved.length > 0) {
+        await processInChunks(
+            unresolved,
+            CHUNK_CONCURRENCY,
+            (text) => translateText(text, language)
+        );
+    }
+
+    return normalizedTexts.map((text) => {
+        const targetLanguage = normalizeTargetLanguage(language);
+        const sourceLanguage = detectSourceLanguage(text, targetLanguage);
+        if (sourceLanguage === targetLanguage) return text;
+        const cached = readCachedTranslation(text, targetLanguage, sourceLanguage);
+        return cached != null ? cached : text;
+    });
 };
 
 module.exports = {

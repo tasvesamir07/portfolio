@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
 const LANGUAGE_HEADER = 'x-translate-language';
 const SKIP_TRANSLATION_HEADER = 'x-skip-auto-translate';
 const RESPONSE_TRANSLATED_HEADER = 'X-Response-Translated';
-const MAX_RESPONSE_CACHE_ENTRIES = 120;
+const MAX_RESPONSE_CACHE_ENTRIES = 400;
 const responseTranslationCache = new Map();
 const SKIP_TRANSLATION_KEYS = new Set([
     'id',
@@ -55,6 +55,9 @@ const HTML_REGEX = /<[a-z][\s\S]*>/i;
 const URLISH_REGEX = /^(https?:\/\/|mailto:|tel:|data:|\/uploads\/)/i;
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
+const HTML_SEGMENT_JOIN_TOKEN = '\n[[__PORTFOLIO_HTML_SEGMENT_SPLIT__]]\n';
+const HTML_SEGMENT_GROUP_CHAR_LIMIT = 1200;
+const HTML_SEGMENT_GROUP_SIZE_LIMIT = 8;
 
 // Cloudflare-Express Compatibility Middleware (MUST BE AT TOP)
 app.use((req, res, next) => {
@@ -95,6 +98,15 @@ app.use(cors({
 
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
+// Invalidate translated response cache on any mutation request.
+app.use((req, res, next) => {
+    const method = String(req.method || 'GET').toUpperCase();
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+        responseTranslationCache.clear();
+    }
+    next();
+});
 
 if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
     app.use('/uploads', express.static(path.join(typeof __dirname !== 'undefined' ? __dirname : '', 'uploads')));
@@ -145,7 +157,72 @@ const translateHtmlContent = async (html = '', language = 'en') => {
     if (!textSegments.length) return html;
 
     const uniqueTexts = [...new Set(textSegments.map((segment) => segment.trim()))];
-    const translatedTexts = await translateTexts(uniqueTexts, language);
+
+    const buildSegmentGroups = (values = []) => {
+        const groups = [];
+        let currentGroup = [];
+        let currentChars = 0;
+
+        values.forEach((value) => {
+            const tokenCost = currentGroup.length ? HTML_SEGMENT_JOIN_TOKEN.length : 0;
+            const nextChars = currentChars + tokenCost + value.length;
+
+            if (
+                currentGroup.length >= HTML_SEGMENT_GROUP_SIZE_LIMIT
+                || nextChars > HTML_SEGMENT_GROUP_CHAR_LIMIT
+            ) {
+                if (currentGroup.length) {
+                    groups.push(currentGroup);
+                }
+                currentGroup = [value];
+                currentChars = value.length;
+                return;
+            }
+
+            currentGroup.push(value);
+            currentChars = nextChars;
+        });
+
+        if (currentGroup.length) {
+            groups.push(currentGroup);
+        }
+
+        return groups;
+    };
+
+    const translateSegmentGroup = async (group = []) => {
+        if (!group.length) return [];
+        if (group.length === 1) {
+            const [single] = await translateTexts(group, language);
+            return [single || group[0]];
+        }
+
+        const joined = group.join(HTML_SEGMENT_JOIN_TOKEN);
+        const [translatedJoined] = await translateTexts([joined], language);
+        const normalizedJoined = String(joined).trim();
+        const normalizedTranslatedJoined = String(translatedJoined || joined).trim();
+
+        // If bulk translation returns essentially unchanged text while translation is needed,
+        // fall back to per-segment translation for correctness.
+        if (
+            normalizedTranslatedJoined === normalizedJoined
+            && !isLikelyAlreadyInTargetLanguage(joined, language)
+        ) {
+            return translateTexts(group, language);
+        }
+
+        const parts = String(translatedJoined || joined).split(HTML_SEGMENT_JOIN_TOKEN);
+
+        if (parts.length === group.length) {
+            return parts;
+        }
+
+        return translateTexts(group, language);
+    };
+
+    const segmentGroups = buildSegmentGroups(uniqueTexts);
+    const translatedGroupResults = await Promise.all(segmentGroups.map((group) => translateSegmentGroup(group)));
+    const translatedTexts = translatedGroupResults.flat();
     const translationMap = new Map(uniqueTexts.map((text, index) => [text, translatedTexts[index] || text]));
 
     return segments.map((segment) => {
@@ -198,6 +275,58 @@ const trimResponseTranslationCache = () => {
 
 const buildResponseTranslationCacheKey = (req, language = 'en') =>
     `${language}::${req.originalUrl || req.path || ''}`;
+
+const shouldServerTranslateResponse = (req, language = 'en') => {
+    const normalizedLanguage = normalizeTargetLanguage(language);
+    if (!['en', 'bn', 'ko'].includes(normalizedLanguage)) return false;
+    if (req.headers?.[SKIP_TRANSLATION_HEADER] === '1') return false;
+    return true;
+};
+
+const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
+    const normalizedLanguage = normalizeTargetLanguage(language);
+    if (!shouldServerTranslateResponse(req, normalizedLanguage)) {
+        return payload;
+    }
+
+    const cacheKey = buildResponseTranslationCacheKey(req, normalizedLanguage);
+    if (responseTranslationCache.has(cacheKey)) {
+        res.setHeader(RESPONSE_TRANSLATED_HEADER, '1');
+        return responseTranslationCache.get(cacheKey);
+    }
+
+    const translated = await translateResponseData(payload, normalizedLanguage);
+    responseTranslationCache.set(cacheKey, translated);
+    trimResponseTranslationCache();
+    res.setHeader(RESPONSE_TRANSLATED_HEADER, '1');
+    return translated;
+};
+
+// Global response translator for public GET API responses.
+// This keeps translation centralized on the server and allows shared caching.
+app.use((req, res, next) => {
+    const originalJson = res.json.bind(res);
+
+    res.json = (payload) => {
+        const method = String(req.method || 'GET').toUpperCase();
+        const isApiPath = String(req.path || '').startsWith('/api/');
+        const isTranslateEndpoint = req.path === '/api/translate';
+
+        if (method !== 'GET' || !isApiPath || isTranslateEndpoint) {
+            return originalJson(payload);
+        }
+
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        return Promise.resolve(maybeTranslateApiPayload(req, res, payload, language))
+            .then((translatedPayload) => originalJson(translatedPayload))
+            .catch((error) => {
+                console.error('Server-side response translation failed:', error?.message || error);
+                return originalJson(payload);
+            });
+    };
+
+    next();
+});
 
 const translateResponseData = async (value, language = 'en', key = '', options = {}) => {
     if (value == null || SKIP_TRANSLATION_KEYS.has(key)) {
@@ -270,7 +399,42 @@ const translateResponseData = async (value, language = 'en', key = '', options =
         return Object.fromEntries(translatedEntries);
     }
 
-    return value;
+};
+
+/**
+ * Recursively localizes a data object by looking for field_language suffixes.
+ * If language is 'bn' and name_bn exists and has a value, it replaces 'name' with 'name_bn'.
+ */
+const localizeDataObject = (data, language = 'en') => {
+    if (data == null || language === 'en') return data;
+
+    if (Array.isArray(data)) {
+        return data.map(item => localizeDataObject(item, language));
+    }
+
+    if (typeof data === 'object') {
+        const result = { ...data };
+        const suffix = `_${language}`;
+
+        Object.keys(result).forEach(key => {
+            // If we find a key with the language suffix (e.g., bio_text_bn)
+            if (key.endsWith(suffix)) {
+                const baseKey = key.slice(0, -suffix.length);
+                const localizedValue = result[key];
+                
+                // If the localized value is non-empty, prioritize it for the base key
+                if (localizedValue && typeof localizedValue === 'string' && localizedValue.trim()) {
+                    result[baseKey] = localizedValue;
+                }
+            } else if (typeof result[key] === 'object') {
+                result[key] = localizeDataObject(result[key], language);
+            }
+        });
+
+        return result;
+    }
+
+    return data;
 };
 
 // Translation interceptor deferred natively to client-side localStorage caching mechanisms instead.
@@ -419,7 +583,8 @@ app.post('/api/upload', authenticateToken, upload.single('file'), async (req, re
 app.get('/api/about', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM about LIMIT 1');
-        res.json(result.rows[0]);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows[0], language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -476,7 +641,8 @@ app.put('/api/about', authenticateToken, async (req, res) => {
 app.get('/api/academics', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM academics ORDER BY sort_order ASC, start_year DESC');
-        res.json(result.rows);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows, language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -521,7 +687,8 @@ app.delete('/api/academics/:id', authenticateToken, async (req, res) => {
 app.get('/api/projects', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM projects ORDER BY sort_order ASC, id DESC');
-        res.json(result.rows);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows, language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -566,7 +733,8 @@ app.delete('/api/projects/:id', authenticateToken, async (req, res) => {
 app.get('/api/publications', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM publications ORDER BY sort_order ASC, pub_year DESC');
-        res.json(result.rows);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows, language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -611,7 +779,8 @@ app.delete('/api/publications/:id', authenticateToken, async (req, res) => {
 app.get('/api/research', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM research ORDER BY sort_order ASC, created_at DESC');
-        res.json(result.rows);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows, language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -845,7 +1014,8 @@ app.delete('/api/social-links/:id', authenticateToken, async (req, res) => {
 app.get('/api/experiences', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM experiences ORDER BY sort_order ASC, start_date DESC');
-        res.json(result.rows);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows, language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -890,7 +1060,8 @@ app.delete('/api/experiences/:id', authenticateToken, async (req, res) => {
 app.get('/api/research-interests', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM research_interests ORDER BY sort_order ASC, interest ASC');
-        res.json(result.rows);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows, language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -935,7 +1106,8 @@ app.delete('/api/research-interests/:id', authenticateToken, async (req, res) =>
 app.get('/api/pages', async (req, res) => {
     try {
         const result = await db.query('SELECT id, title, slug, content, details_json, show_in_nav FROM pages ORDER BY id ASC');
-        res.json(result.rows);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows, language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -945,7 +1117,8 @@ app.get('/api/pages/:slug', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM pages WHERE slug = $1', [req.params.slug]);
         if (result.rows.length === 0) return res.status(404).json({ message: 'Page not found' });
-        res.json(result.rows[0]);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows[0], language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -990,7 +1163,8 @@ app.delete('/api/pages/:id', authenticateToken, async (req, res) => {
 app.get('/api/trainings', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM trainings ORDER BY sort_order ASC, created_at DESC');
-        res.json(result.rows);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows, language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -1035,7 +1209,8 @@ app.delete('/api/trainings/:id', authenticateToken, async (req, res) => {
 app.get('/api/skills', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM skills ORDER BY sort_order ASC, category ASC');
-        res.json(result.rows);
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows, language));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

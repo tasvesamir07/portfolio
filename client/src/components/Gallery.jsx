@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
+import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 const Gallery = () => {
     const [images, setImages] = useState([]);
@@ -11,6 +12,9 @@ const Gallery = () => {
     const [activeCategory, setActiveCategory] = useState('all');
     const [selectedImage, setSelectedImage] = useState(null);
     const { language, t } = useI18n();
+
+    const translatedImages = useTranslatedDataRows(images, ['caption', 'category'], language);
+    const translatedCategories = useTranslatedDataRows(categories, ['name'], language);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -28,13 +32,13 @@ const Gallery = () => {
         fetchData();
     }, [language]);
 
-    const usedCategories = categories.filter(cat => 
-        images.some(img => img.category === cat.name)
+    const usedCategories = translatedCategories.filter(cat => 
+        translatedImages.some(img => img.category === cat.name)
     );
 
     const filteredImages = activeCategory === 'all' 
-        ? images 
-        : images.filter(img => img.category === activeCategory);
+        ? translatedImages 
+        : translatedImages.filter(img => img.category === activeCategory);
 
     return (
         <section id="gallery" className="py-16 md:py-24 bg-[#fcfaf7]">

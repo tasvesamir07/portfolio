@@ -6,6 +6,7 @@ import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 const Experiences = () => {
     const [experiences, setExperiences] = useState([]);
@@ -13,6 +14,9 @@ const Experiences = () => {
     const [skills, setSkills] = useState([]);
     const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
+    const translatedExperiences = useTranslatedDataRows(experiences, ['position', 'company', 'location', 'description'], language);
+    const translatedTrainings = useTranslatedDataRows(trainings, ['title', 'topic', 'instructor', 'date_text'], language);
+    const translatedSkills = useTranslatedDataRows(skills, ['category'], language);
 
     useEffect(() => {
         const fetchAll = async () => {
@@ -45,7 +49,7 @@ const Experiences = () => {
                 <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('experiences.workTitleMain')} <span className="text-brand-gold font-black">{t('experiences.workTitleAccent')}</span></h2>
                 
                 <div className="flex flex-col gap-10 mb-24">
-                    {experiences.length > 0 ? experiences.map((item, index) => (
+                    {translatedExperiences.length > 0 ? translatedExperiences.map((item, index) => (
                         (() => {
                             // Combine both structured details and legacy description to ensure nothing is hidden
                             const structuredPart = getLocalizedField(item, 'details_json', language, '');
@@ -119,7 +123,7 @@ const Experiences = () => {
                         <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-12 text-gray-900 tracking-tight">{t('experiences.trainingTitleMain')} <span className="text-brand-blue">{t('experiences.trainingTitleAccent')}</span></h2>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
-                            {trainings.map((item, index) => (
+                            {translatedTrainings.map((item, index) => (
                                 (() => {
                                     const detailItems = parseStructuredItems(getLocalizedFirstField(item, ['details_json'], language, ''));
                                     const title = getLocalizedField(item, 'title', language, item.title);
@@ -173,7 +177,7 @@ const Experiences = () => {
                         <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-12 text-gray-900 tracking-tight">{t('experiences.skillsTitleMain')} <span className="text-brand-gold font-black">{t('experiences.skillsTitleAccent')}</span></h2>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {skills.map((item, index) => (
+                            {translatedSkills.map((item, index) => (
                                 (() => {
                                     const localizedItemsText = getLocalizedField(item, 'items', language, item.items || '');
                                     const detailItems = parseStructuredItems(

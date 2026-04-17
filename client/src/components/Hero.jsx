@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Github, Twitter, Linkedin, Globe, Mail, Instagram, FileText } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
+import { useTranslatedText } from '../i18n/translator';
 
 const iconMap = {
     Github,
@@ -17,10 +18,14 @@ const iconMap = {
 const Hero = ({ data, socialLinks = [] }) => {
     const { language, t } = useI18n();
 
-    if (!data) return <div className="h-48 bg-[#0a2f5c]" />;
+    const nameVal = getLocalizedField(data, 'name', language, data?.name);
+    const titleVal = getLocalizedField(data, 'title', language, data?.title);
+    
+    // Dynamic translation - Hook must be top-level
+    const name = useTranslatedText(nameVal, language);
+    const title = useTranslatedText(titleVal, language);
 
-    const name = getLocalizedField(data, 'name', language, data.name);
-    const title = getLocalizedField(data, 'title', language, data.title);
+    if (!data) return <div className="h-48 bg-[#0a2f5c]" />;
 
     return (
         <section className="w-full relative bg-gradient-to-br from-[#0a2f5c] to-[#12519e] overflow-hidden flex flex-col items-center justify-center py-12 md:py-20 mt-16 md:mt-20 border-b-4 border-brand-gold">

@@ -4,6 +4,7 @@ import { translateApiData } from './i18n/translator';
 const STORAGE_KEY = 'portfolio-language';
 const LANGUAGE_HEADER = 'X-Translate-Language';
 const MAX_CACHED_GETS = 120;
+const API_RESPONSE_CACHE_VERSION = 'v2';
 
 const getResponseCache = new Map();
 const pendingGetRequests = new Map();
@@ -31,7 +32,7 @@ const buildGetCacheKey = (config, language) => {
     const baseUrl = config.baseURL || '';
     const url = config.url || '';
     const params = config.params ? JSON.stringify(config.params) : '';
-    return `${language}::${baseUrl}::${url}::${params}`;
+    return `${API_RESPONSE_CACHE_VERSION}::${language}::${baseUrl}::${url}::${params}`;
 };
 
 const resolveAdapter = (adapter, config) => {
@@ -61,6 +62,15 @@ const api = axios.create({
     baseURL: defaultBaseUrl,
 });
 
+// Flush response cache immediately when user switches language
+if (typeof window !== 'undefined') {
+    window.addEventListener('portfolio:languageChange', () => {
+        getResponseCache.clear();
+        pendingGetRequests.clear();
+        api._lastCachedLanguage = null;
+    });
+}
+
 // Request interceptor for API calls
 api.interceptors.request.use(
     (config) => {
@@ -77,6 +87,13 @@ api.interceptors.request.use(
             config.headers['X-Skip-Auto-Translate'] = '1';
         }
         config.metadataLanguage = requestLanguage;
+
+        // If language changed since last request, clear stale cache
+        if (api._lastCachedLanguage && api._lastCachedLanguage !== requestLanguage) {
+            getResponseCache.clear();
+            pendingGetRequests.clear();
+        }
+        api._lastCachedLanguage = requestLanguage;
 
         const isCacheableGet = method === 'get'
             && !isAdminRoute
@@ -95,7 +112,8 @@ api.interceptors.request.use(
 
         const cachedResponse = getResponseCache.get(cacheKey);
         if (cachedResponse) {
-            config.adapter = async () => cloneCachedResponse(cachedResponse, config);
+            // Mark as already-translated so response interceptor skips translation
+            config.adapter = async () => ({ ...cloneCachedResponse(cachedResponse, config), _fromCache: true });
             return config;
         }
 
@@ -108,13 +126,9 @@ api.interceptors.request.use(
 
             const requestPromise = Promise.resolve(defaultAdapter(adapterConfig))
                 .then((response) => {
-                    const cacheableResponse = cloneCachedResponse(response, adapterConfig);
-                    getResponseCache.set(cacheKey, cacheableResponse);
-                    trimGetResponseCache();
-                    return cacheableResponse;
-                })
-                .finally(() => {
+                    // Store raw response — translated data will be cached in the response interceptor
                     pendingGetRequests.delete(cacheKey);
+                    return response;
                 });
 
             pendingGetRequests.set(cacheKey, requestPromise);
@@ -135,26 +149,40 @@ api.interceptors.response.use(
         try {
             const method = (response.config?.method || 'get').toLowerCase();
             const language = response.config?.metadataLanguage || response.config?.headers?.[LANGUAGE_HEADER] || 'en';
+            const configUrl = String(response.config?.url || '');
+            const configHeaders = response.config?.headers || {};
+            const fromCache = response._fromCache === true;
+
             const shouldTranslate = method === 'get'
                 && !configUrl.includes('/translate')
+                && !fromCache
                 && response.headers?.['x-response-translated'] !== '1'
                 && configHeaders?.['X-Skip-Auto-Translate'] !== '1'
-                && (configUrl.includes('/api/') || configUrl.startsWith('http'));
+                && ['en', 'bn', 'ko'].includes(language);
 
             if (shouldTranslate) {
-                // Add a global timeout to the translation process to prevent hung requests from blocking the UI
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Auto-translation timed out')), 45000)
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Auto-translation timed out')), 60000)
                 );
-                
+                let translationApplied = false;
+
                 try {
                     response.data = await Promise.race([
                         translateApiData(response.data, language),
                         timeoutPromise
                     ]);
+                    translationApplied = true;
                 } catch (timeoutOrError) {
-                    console.warn(timeoutOrError.message);
-                    // Continue with original data if translation fails or times out
+                    console.warn('Auto-translation deferred or failed:', timeoutOrError.message);
+                }
+
+                // Cache only when translation was actually applied.
+                // Otherwise we'd cache untranslated fallback data and keep serving it.
+                const cacheKey = response.config?.metadataCacheKey;
+                if (cacheKey && translationApplied) {
+                    const translatedSnapshot = cloneCachedResponse(response, response.config);
+                    getResponseCache.set(cacheKey, translatedSnapshot);
+                    trimGetResponseCache();
                 }
             }
         } catch (translationError) {

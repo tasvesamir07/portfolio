@@ -6,6 +6,7 @@ import StructuredDetails from '../components/StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { useTranslatedText, useTranslatedHtml } from '../i18n/translator';
 
 const normalizePageContent = (html = '') => {
     if (!html || typeof window === 'undefined') return html;
@@ -28,6 +29,15 @@ const DynamicPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { language, t } = useI18n();
+
+    // Hooks at top level to satisfy Rules of Hooks
+    const structuredItems = parseStructuredItems(getLocalizedFirstField(page, ['details_json'], language, ''));
+    const renderedContentRaw = normalizePageContent(getLocalizedField(page, 'content', language, page?.content || ''));
+    const pageTitleRaw = getLocalizedField(page, 'title', language, page?.title || '');
+    
+    // Dynamic translation
+    const pageTitle = useTranslatedText(pageTitleRaw, language);
+    const renderedContent = useTranslatedHtml(renderedContentRaw, language);
 
     useEffect(() => {
         const fetchPage = async () => {
@@ -59,10 +69,6 @@ const DynamicPage = () => {
             <Link to="/" className="btn-primary">{t('common.backToHome')}</Link>
         </div>
     );
-
-    const structuredItems = parseStructuredItems(getLocalizedFirstField(page, ['details_json'], language, ''));
-    const renderedContent = normalizePageContent(getLocalizedField(page, 'content', language, page?.content || ''));
-    const pageTitle = getLocalizedField(page, 'title', language, page?.title || '');
 
     return (
         <motion.div 

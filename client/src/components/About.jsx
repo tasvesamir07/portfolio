@@ -1,7 +1,8 @@
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
+import { useTranslatedTexts } from '../i18n/translator';
 
 const About = ({ data }) => {
     const { language, t } = useI18n();
@@ -253,8 +254,42 @@ const About = ({ data }) => {
     const localizedName = getLocalizedField(data, 'name', language, name);
     const localizedSubBio = getLocalizedField(data, 'sub_bio', language, sub_bio);
     const localizedBioText = getLocalizedField(data, 'bio_text', language, bio_text);
-    const highlightItems = extractHighlights(localizedSubBio);
-    const bioBlocks = extractBioBlocks(localizedBioText);
+    const highlightItems = useMemo(() => extractHighlights(localizedSubBio), [localizedSubBio]);
+    const bioBlocks = useMemo(() => extractBioBlocks(localizedBioText), [localizedBioText]);
+
+    // Extract all translatable strings from the parsed items, then translate them in batch
+    const highlightTextsToTranslate = useMemo(() => [
+        ...highlightItems.map(item => item.label || ''),
+        ...highlightItems.map(item => item.text || '')
+    ], [highlightItems]);
+    const bioTextsToTranslate = useMemo(() => bioBlocks.map(b => b.items ? b.items.join('\n') : b.text || ''), [bioBlocks]);
+
+    const translatedHighlightTexts = useTranslatedTexts(highlightTextsToTranslate, language);
+    const translatedBioTexts = useTranslatedTexts(bioTextsToTranslate, language);
+
+    // Rebuild highlight items with translated text
+    const translatedHighlightItems = useMemo(() => {
+        if (!translatedHighlightTexts?.length) return highlightItems;
+        const half = highlightItems.length;
+        return highlightItems.map((item, i) => ({
+            ...item,
+            label: translatedHighlightTexts[i] || item.label,
+            text: translatedHighlightTexts[half + i] || item.text,
+            valueHtmls: item.valueHtmls?.map(() => translatedHighlightTexts[half + i] || '')
+        }));
+    }, [highlightItems, translatedHighlightTexts, language]);
+
+    // Rebuild bio blocks with translated text
+    const translatedBioBlocks = useMemo(() => {
+        if (!translatedBioTexts?.length) return bioBlocks;
+        return bioBlocks.map((block, i) => {
+            if (block.items) {
+                const lines = (translatedBioTexts[i] || '').split('\n').filter(Boolean);
+                return { ...block, items: lines.length ? lines : block.items };
+            }
+            return { ...block, text: translatedBioTexts[i] || block.text };
+        });
+    }, [bioBlocks, translatedBioTexts, language]);
 
     const highlightTextStyle = {
         fontSize: 'var(--about-highlight-font-size, clamp(1.08rem, 1rem + 0.85vw, 1.7rem))',
@@ -360,7 +395,7 @@ const About = ({ data }) => {
             list.style.removeProperty('justify-content');
             list.style.removeProperty('row-gap');
         };
-    }, [hero_image_url, localizedSubBio, language, highlightItems.length]);
+    }, [hero_image_url, localizedSubBio, language, translatedHighlightItems.length]);
 
     if (!data) return null;
 
@@ -400,9 +435,9 @@ const About = ({ data }) => {
                             ref={highlightPanelRef}
                             className="w-full min-w-0 border-l-4 sm:border-l-[6px] border-[#ceb079] pl-4 sm:pl-6 lg:pl-8 xl:pl-10 py-1 sm:py-2 overflow-hidden lg:flex lg:flex-col lg:justify-start"
                         >
-                            {highlightItems.length > 0 && (
+                            {translatedHighlightItems.length > 0 && (
                                 <ul ref={highlightListRef} className="flex flex-col w-full min-w-0" style={highlightListStyle}>
-                                    {highlightItems.map((item, i) => {
+                                    {translatedHighlightItems.map((item, i) => {
                                         const point = item.text;
                                         const label = item.kind === 'pair'
                                             ? item.label
@@ -471,7 +506,7 @@ const About = ({ data }) => {
                     </div>
                 </div>
 
-                {bioBlocks.length > 0 && (
+                {translatedBioBlocks.length > 0 && (
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
@@ -497,7 +532,7 @@ const About = ({ data }) => {
 
                         <div className="w-full max-w-none min-w-0 overflow-hidden">
                             <div className="w-full max-w-none min-w-0 text-gray-600 text-[clamp(1rem,0.95rem+0.3vw,1.22rem)] leading-[1.9] font-medium">
-                                {bioBlocks.map((block, index) => {
+                                {translatedBioBlocks.map((block, index) => {
                                     if (block.type === 'ul' || block.type === 'ol') {
                                         const ListTag = block.type;
                                         return (

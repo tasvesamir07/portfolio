@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supportedLanguages, translations } from './translations';
+import { clearTranslationCaches } from './translator';
 
 const STORAGE_KEY = 'portfolio-language';
 const defaultLanguage = 'en';
@@ -44,6 +45,15 @@ export const I18nProvider = ({ children }) => {
 
     const setLanguage = (nextLanguage) => {
         const resolvedLanguage = supportedLanguages.some((item) => item.code === nextLanguage) ? nextLanguage : defaultLanguage;
+
+        if (resolvedLanguage !== language) {
+            // Flush all in-memory translation caches so content is re-translated in the new language
+            clearTranslationCaches();
+            // Signal api.js to flush its response cache for the old language
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('portfolio:languageChange', { detail: { language: resolvedLanguage } }));
+            }
+        }
 
         if (typeof window !== 'undefined') {
             window.localStorage.setItem(STORAGE_KEY, resolvedLanguage);

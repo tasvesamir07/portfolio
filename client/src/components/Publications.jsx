@@ -6,10 +6,12 @@ import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 const Publications = () => {
     const [publications, setPublications] = useState([]);
     const { language, t } = useI18n();
+    const translatedPublications = useTranslatedDataRows(publications, ['title', 'journal_name', 'authors', 'introduction', 'methods'], language);
 
     useEffect(() => {
         const fetchPublications = async () => {
@@ -39,7 +41,7 @@ const Publications = () => {
                 <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('publications.titleMain')} <span className="text-brand-blue">{t('publications.titleAccent')}</span></h2>
                 
                 <div className="space-y-16 md:space-y-32">
-                    {publications.map((item, index) => {
+                    {translatedPublications.map((item, index) => {
                         let detailItems = parseStructuredItems(getLocalizedFirstField(item, ['details_json'], language, ''));
                         const title = getLocalizedField(item, 'title', language, item.title);
                         const journalName = getLocalizedField(item, 'journal_name', language, item.journal_name);
