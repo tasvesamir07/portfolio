@@ -1,18 +1,21 @@
 export const getLocalizedField = (record, baseKey, language, fallback = '') => {
     if (!record) return fallback;
 
-    // The server now provides translated base fields (e.g. name is already translated to Korean)
-    // We prioritize the baseKey itself.
+    // Prioritize specifically localized table columns (e.g. bio_text_ko) if they exist and are populated
+    const langKey = `${baseKey}_${language}`;
+    if (record[langKey] !== undefined && record[langKey] !== null && record[langKey] !== '') {
+        return record[langKey];
+    }
+
+    // Next, check the baseKey (The server may provide translated base fields in some scenarios)
     if (record[baseKey] !== undefined && record[baseKey] !== null && record[baseKey] !== '') {
         return record[baseKey];
     }
 
-    // Fallback for any legacy keys if they somehow still exist in cached responses
-    const legacyKeys = [`${baseKey}_${language}`, `${baseKey}_en`].filter(k => k !== baseKey);
-    for (const key of legacyKeys) {
-        if (record[key] !== undefined && record[key] !== null && record[key] !== '') {
-            return record[key];
-        }
+    // Final fallback to English key if it exists
+    const enKey = `${baseKey}_en`;
+    if (record[enKey] !== undefined && record[enKey] !== null && record[enKey] !== '') {
+        return record[enKey];
     }
 
     return fallback;

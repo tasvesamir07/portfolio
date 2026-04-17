@@ -130,22 +130,55 @@ const translateText = async (text = '', language = 'en') => {
 };
 
 const translateTexts = async (texts = [], language = 'en') => {
-    const results = [];
-    const CHUNK_SIZE = 5;
+    if (!texts || texts.length === 0) return [];
     
-    for (let i = 0; i < texts.length; i += CHUNK_SIZE) {
-        const chunk = texts.slice(i, i + CHUNK_SIZE);
-        const chunkResults = await Promise.all(
-            chunk.map(text => translateText(text, language))
-        );
-        results.push(...chunkResults);
-        
-        // Add a delay between chunks if there are more to process
-        if (i + CHUNK_SIZE < texts.length) {
-            await new Promise(resolve => setTimeout(resolve, 300));
+    const results = new Array(texts.length);
+    const DELIMITER = ' [[]] ';
+    const MAX_BLOCK_CHARS = 3500;
+    
+    let currentBlock = [];
+    let currentBlockIndices = [];
+    let currentBlockLength = 0;
+    
+    const processBlock = async (block, indices) => {
+        if (!block.length) return;
+        try {
+            const joinedText = block.join(DELIMITER);
+            const translatedJoined = await translateText(joinedText, language);
+            const parts = translatedJoined.split(/\[\[\s*\]\]|\[\]/); // Handle potential spaces added by translate
+            
+            indices.forEach((originalIndex, i) => {
+                results[originalIndex] = (parts[i] || block[i]).trim();
+            });
+        } catch (error) {
+            console.error('Block translation failed:', error);
+            indices.forEach((originalIndex, i) => {
+                results[originalIndex] = block[i];
+            });
         }
+    };
+    
+    for (let i = 0; i < texts.length; i++) {
+        const text = String(texts[i] || '').trim();
+        if (!text) {
+            results[i] = texts[i];
+            continue;
+        }
+        
+        if (currentBlockLength + text.length + DELIMITER.length > MAX_BLOCK_CHARS) {
+            await processBlock(currentBlock, currentBlockIndices);
+            await new Promise(resolve => setTimeout(resolve, 400)); // Delay between blocks
+            currentBlock = [];
+            currentBlockIndices = [];
+            currentBlockLength = 0;
+        }
+        
+        currentBlock.push(text);
+        currentBlockIndices.push(i);
+        currentBlockLength += text.length + DELIMITER.length;
     }
     
+    await processBlock(currentBlock, currentBlockIndices);
     return results;
 };
 
