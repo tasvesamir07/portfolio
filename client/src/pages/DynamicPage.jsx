@@ -43,7 +43,13 @@ const DynamicPage = () => {
         const fetchPage = async () => {
             setLoading(true);
             try {
-                const res = await api.get(`/pages/${slug}`);
+                let res;
+                try {
+                    res = await api.get('/page', { params: { slug } });
+                } catch (primaryErr) {
+                    // Fallback for local/dev environments that still use /pages/:slug.
+                    res = await api.get(`/pages/${slug}`);
+                }
                 setPage(res.data);
                 setError(null);
             } catch (err) {

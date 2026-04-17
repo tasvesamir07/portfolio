@@ -1140,6 +1140,29 @@ app.get('/api/pages', async (req, res) => {
     }
 });
 
+// Vercel-safe single-segment endpoint for fetching page by slug/id.
+app.get('/api/page', async (req, res) => {
+    try {
+        const slug = String(req.query?.slug || '').trim();
+        const id = Number(req.query?.id);
+        let result;
+
+        if (slug) {
+            result = await db.query('SELECT * FROM pages WHERE slug = $1', [slug]);
+        } else if (Number.isFinite(id) && id > 0) {
+            result = await db.query('SELECT * FROM pages WHERE id = $1', [id]);
+        } else {
+            return res.status(400).json({ message: 'slug or id is required' });
+        }
+
+        if (result.rows.length === 0) return res.status(404).json({ message: 'Page not found' });
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows[0], language));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/pages/:slug', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM pages WHERE slug = $1', [req.params.slug]);
