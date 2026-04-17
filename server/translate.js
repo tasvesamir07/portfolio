@@ -7,6 +7,7 @@ const GOOGLE_TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 const LATIN_REGEX = /[A-Za-z]/;
+const MAX_RETRY_CHUNK_CHARS = 220;
 
 /**
  * Lazy-load the ESM 'translate' package.
@@ -49,21 +50,72 @@ const needsTranslationForTarget = (text = '', targetLanguage = 'en') => {
     return false;
 };
 
+const chunkTextByLength = (text = '', maxChars = MAX_RETRY_CHUNK_CHARS) => {
+    const source = String(text || '');
+    if (!source.trim() || source.length <= maxChars) {
+        return [source];
+    }
+
+    const tokens = source.split(/(\s+)/).filter((token) => token !== '');
+    const chunks = [];
+    let current = '';
+
+    tokens.forEach((token) => {
+        if ((current + token).length > maxChars && current.trim()) {
+            chunks.push(current);
+            current = token;
+            return;
+        }
+
+        current += token;
+    });
+
+    if (current) {
+        chunks.push(current);
+    }
+
+    return chunks.length ? chunks : [source];
+};
+
 const splitForRetry = (text = '') => {
     const normalized = String(text || '');
     const parts = normalized
-        .split(/(\r?\n+|(?<=[.!?।])\s+)/)
+        .split(/(\r?\n+|(?<=[.!?\u0964])\s+)/)
         .filter((part) => part != null && part !== '');
-    return parts.length > 1 ? parts : [normalized];
+
+    if (parts.length > 1) {
+        return parts;
+    }
+
+    const clauseParts = normalized
+        .split(/(?<=[,;:])(\s+)/)
+        .filter((part) => part != null && part !== '');
+
+    if (clauseParts.length > 1) {
+        return clauseParts;
+    }
+
+    return chunkTextByLength(normalized);
 };
 
 const looksLikeBrokenTranslation = (translated = '', original = '', targetLanguage = 'en') => {
     const normalized = String(translated || '').trim();
+    const originalTrimmed = String(original || '').trim();
     if (!normalized) return true;
     if (/^\?+(?:\s+\?+)*$/.test(normalized)) return true;
+    if (normalized === originalTrimmed && needsTranslationForTarget(originalTrimmed, targetLanguage)) {
+        return true;
+    }
 
-    // If the result still clearly contains source-script text for the target, treat it as unresolved.
-    if (needsTranslationForTarget(original, targetLanguage) && needsTranslationForTarget(normalized, targetLanguage)) {
+    if (targetLanguage === 'en' && (BANGLA_REGEX.test(normalized) || HANGUL_REGEX.test(normalized))) {
+        return true;
+    }
+
+    if (targetLanguage === 'bn' && HANGUL_REGEX.test(originalTrimmed) && HANGUL_REGEX.test(normalized)) {
+        return true;
+    }
+
+    if (targetLanguage === 'ko' && BANGLA_REGEX.test(originalTrimmed) && BANGLA_REGEX.test(normalized)) {
         return true;
     }
 

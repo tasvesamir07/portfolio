@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
 const LANGUAGE_HEADER = 'x-translate-language';
 const SKIP_TRANSLATION_HEADER = 'x-skip-auto-translate';
 const RESPONSE_TRANSLATED_HEADER = 'X-Response-Translated';
-const RESPONSE_TRANSLATION_CACHE_VERSION = 'v2';
+const RESPONSE_TRANSLATION_CACHE_VERSION = 'v3';
 const MAX_RESPONSE_CACHE_ENTRIES = 400;
 const responseTranslationCache = new Map();
 const SKIP_TRANSLATION_KEYS = new Set([
@@ -54,6 +54,8 @@ const SKIP_TRANSLATION_KEYS = new Set([
 ]);
 const HTML_REGEX = /<[a-z][\s\S]*>/i;
 const URLISH_REGEX = /^(https?:\/\/|mailto:|tel:|data:|\/uploads\/)/i;
+const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+const NON_TRANSLATABLE_SYMBOLIC_REGEX = /^[\d\s.,:/()\-+%]+$/;
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 const HTML_SEGMENT_JOIN_TOKEN = '\n[[__PORTFOLIO_HTML_SEGMENT_SPLIT__]]\n';
@@ -139,15 +141,19 @@ const isLikelyAlreadyInTargetLanguage = (value = '', language = 'en') => {
     const trimmed = value.trim();
     if (!trimmed) return true;
 
+    const hasBangla = BANGLA_REGEX.test(trimmed);
+    const hasHangul = HANGUL_REGEX.test(trimmed);
+    const hasLatin = /[A-Za-z]/.test(trimmed);
+
     if (language === 'bn') {
-        return BANGLA_REGEX.test(trimmed);
+        return hasBangla && !hasHangul && !hasLatin;
     }
 
     if (language === 'ko') {
-        return HANGUL_REGEX.test(trimmed);
+        return hasHangul && !hasBangla && !hasLatin;
     }
 
-    return !BANGLA_REGEX.test(trimmed) && !HANGUL_REGEX.test(trimmed);
+    return !hasBangla && !hasHangul;
 };
 
 const shouldSkipStringTranslation = (key = '', value = '', language = 'en') => {
@@ -162,6 +168,8 @@ const shouldSkipStringTranslation = (key = '', value = '', language = 'en') => {
         if (keyLanguage !== language) return true;
     }
     if (URLISH_REGEX.test(value.trim())) return true;
+    if (EMAIL_REGEX.test(value.trim())) return true;
+    if (NON_TRANSLATABLE_SYMBOLIC_REGEX.test(value.trim())) return true;
     return false;
 };
 

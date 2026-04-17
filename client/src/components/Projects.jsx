@@ -4,24 +4,54 @@ import { Code, ExternalLink } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
+import { getNoDataLabel } from '../utils/publicSectionState';
 import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 const Projects = () => {
     const [projects, setProjects] = useState([]);
+    const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
     const translatedProjects = useTranslatedDataRows(projects, ['title', 'description', 'tech_stack'], language);
+    const noDataLabel = getNoDataLabel(language);
 
     useEffect(() => {
         const fetchProjects = async () => {
+            setLoading(true);
             try {
                 const res = await api.get('/projects');
-                setProjects(res.data);
+                setProjects(Array.isArray(res.data) ? res.data : []);
             } catch (err) {
                 console.error('Error fetching projects:', err);
+                setProjects([]);
+            } finally {
+                setLoading(false);
             }
         };
         fetchProjects();
     }, [language]);
+
+    if (loading) {
+        return (
+            <section id="projects" className="py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <span className="text-brand-blue font-bold uppercase tracking-widest mb-4 block text-center">{t('projects.kicker')}</span>
+                    <h2 className="text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h2>
+                </div>
+            </section>
+        );
+    }
+
+    if (projects.length === 0) {
+        return (
+            <section id="projects" className="py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <span className="text-brand-blue font-bold uppercase tracking-widest mb-4 block text-center">{t('projects.kicker')}</span>
+                    <h2 className="text-5xl md:text-7xl font-bold text-center mb-4 text-gray-900 tracking-tight">{t('projects.titleMain')} <span className="text-brand-gold">{t('projects.titleAccent')}</span></h2>
+                    <p className="text-gray-500 font-medium">{noDataLabel}</p>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section id="projects" className="py-24 bg-[#fcfaf7]">

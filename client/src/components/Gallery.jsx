@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
+import { getNoDataLabel } from '../utils/publicSectionState';
 import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 const Gallery = () => {
@@ -11,21 +12,28 @@ const Gallery = () => {
     const [categories, setCategories] = useState([]);
     const [activeCategory, setActiveCategory] = useState('all');
     const [selectedImage, setSelectedImage] = useState(null);
+    const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
     const translatedImages = useTranslatedDataRows(images, ['caption', 'category'], language);
     const translatedCategories = useTranslatedDataRows(categories, ['name'], language);
+    const noDataLabel = getNoDataLabel(language);
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
             try {
                 const [imgRes, catRes] = await Promise.all([
                     api.get('/gallery'),
                     api.get('/gallery-categories')
                 ]);
-                setImages(imgRes.data);
-                setCategories(catRes.data);
+                setImages(Array.isArray(imgRes.data) ? imgRes.data : []);
+                setCategories(Array.isArray(catRes.data) ? catRes.data : []);
             } catch (err) {
                 console.error('Error fetching gallery data:', err);
+                setImages([]);
+                setCategories([]);
+            } finally {
+                setLoading(false);
             }
         };
         fetchData();
@@ -38,6 +46,29 @@ const Gallery = () => {
     const filteredImages = activeCategory === 'all' 
         ? translatedImages 
         : translatedImages.filter(img => img.category === activeCategory);
+
+    if (loading) {
+        return (
+            <section id="gallery" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('gallery.kicker')}</span>
+                    <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h2>
+                </div>
+            </section>
+        );
+    }
+
+    if (images.length === 0) {
+        return (
+            <section id="gallery" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('gallery.kicker')}</span>
+                    <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-4 text-gray-900 tracking-tight">{t('gallery.titleMain')} <span className="text-brand-blue font-black">{t('gallery.titleAccent')}</span></h2>
+                    <p className="text-gray-500 font-medium">{noDataLabel}</p>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section id="gallery" className="py-16 md:py-24 bg-[#fcfaf7]">

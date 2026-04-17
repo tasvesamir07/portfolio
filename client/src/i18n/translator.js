@@ -125,17 +125,14 @@ const isLikelyAlreadyInTargetLanguage = (text = '', language = 'en') => {
     const hasLatin = LATIN_REGEX.test(trimmed);
 
     if (language === 'en') {
-        // English target still needs translation whenever Bangla/Korean scripts are present.
         return !hasBangla && !hasHangul;
     }
 
     if (language === 'bn') {
-        // Mixed Bangla+English content should still be translated to fully Bangla.
         return hasBangla && !hasHangul && !hasLatin;
     }
 
     if (language === 'ko') {
-        // Mixed Korean+English content should still be translated to fully Korean.
         return hasHangul && !hasBangla && !hasLatin;
     }
 

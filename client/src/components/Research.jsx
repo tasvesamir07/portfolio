@@ -6,31 +6,47 @@ import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { getNoDataLabel } from '../utils/publicSectionState';
 import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 const Research = () => {
     const [research, setResearch] = useState([]);
+    const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
     const translatedResearch = useTranslatedDataRows(research, ['title', 'status', 'date_text'], language);
+    const noDataLabel = getNoDataLabel(language);
 
     useEffect(() => {
         const fetchResearch = async () => {
+            setLoading(true);
             try {
                 const res = await api.get('/research');
                 setResearch(Array.isArray(res.data) ? res.data : []);
             } catch (err) {
                 console.error('Error fetching research:', err);
                 setResearch([]);
+            } finally {
+                setLoading(false);
             }
         };
         fetchResearch();
     }, [language]);
+
+    if (loading) return (
+         <section id="research" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
+            <div className="max-w-7xl mx-auto px-6 text-center">
+                <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('research.kicker')}</span>
+                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h2>
+            </div>
+         </section>
+    );
 
     if (research.length === 0) return (
          <section id="research" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
             <div className="max-w-7xl mx-auto px-6 text-center">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('research.kicker')}</span>
                 <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('research.emptyTitleMain')} <span className="text-brand-blue">{t('research.emptyTitleAccent')}</span> {t('research.emptyTitleSuffix')}</h2>
+                <p className="text-gray-500 font-medium">{noDataLabel}</p>
             </div>
          </section>
     );

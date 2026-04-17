@@ -158,11 +158,17 @@ api.interceptors.response.use(
             const configUrl = String(response.config?.url || '');
             const configHeaders = response.config?.headers || {};
             const fromCache = response._fromCache === true;
+            const serverAlreadyTranslated = String(
+                response.headers?.['x-response-translated']
+                || response.headers?.['X-Response-Translated']
+                || ''
+            ) === '1';
 
             const shouldTranslate = method === 'get'
                 && response.config?.enableAutoTranslate === true
                 && !configUrl.includes('/translate')
                 && !fromCache
+                && !serverAlreadyTranslated
                 && configHeaders?.['X-Skip-Auto-Translate'] !== '1'
                 && ['en', 'bn', 'ko'].includes(language);
 
