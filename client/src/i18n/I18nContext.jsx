@@ -13,6 +13,12 @@ const applyLanguageSideEffects = (language) => {
     }
 };
 
+const reloadCurrentPage = () => {
+    if (typeof window === 'undefined') return;
+    // Use a full document reload so every page re-fetches API content in the new language.
+    window.location.reload();
+};
+
 const getTranslationValue = (language, key) => {
     const segments = key.split('.');
     let current = translations[language];
@@ -46,20 +52,22 @@ export const I18nProvider = ({ children }) => {
     const setLanguage = (nextLanguage) => {
         const resolvedLanguage = supportedLanguages.some((item) => item.code === nextLanguage) ? nextLanguage : defaultLanguage;
 
-        if (resolvedLanguage !== language) {
-            // Flush all in-memory translation caches so content is re-translated in the new language
-            clearTranslationCaches();
-            // Signal api.js to flush its response cache for the old language
-            if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('portfolio:languageChange', { detail: { language: resolvedLanguage } }));
-            }
-        }
-
         if (typeof window !== 'undefined') {
             window.localStorage.setItem(STORAGE_KEY, resolvedLanguage);
         }
 
         applyLanguageSideEffects(resolvedLanguage);
+
+        if (resolvedLanguage !== language) {
+            clearTranslationCaches();
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('portfolio:languageChange', { detail: { language: resolvedLanguage } }));
+            }
+            setLanguageState(resolvedLanguage);
+            reloadCurrentPage();
+            return;
+        }
+
         setLanguageState(resolvedLanguage);
     };
 
