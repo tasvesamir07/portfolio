@@ -101,15 +101,23 @@ const shouldSkipStringTranslation = (key = '', value = '') => {
     return false;
 };
 
-const requestTranslatedTexts = async (texts, language) => {
-    const response = await axios.post(TRANSLATE_API_URL, {
-        texts,
-        targetLang: language
-    }, {
-        timeout: 25000
-    });
+    try {
+        const response = await axios.post(TRANSLATE_API_URL, {
+            texts,
+            targetLang: language
+        }, {
+            timeout: 25000
+        });
 
-    return Array.isArray(response.data?.translations) ? response.data.translations : texts;
+        if (!response.data?.translations) {
+            console.warn('Translate API returned no translations:', response.data);
+        }
+
+        return Array.isArray(response.data?.translations) ? response.data.translations : texts;
+    } catch (error) {
+        console.error('Translate API request failed:', error.response?.data || error.message);
+        throw error;
+    }
 };
 
 const batchTranslateTexts = async (texts, language) => {
