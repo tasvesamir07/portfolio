@@ -126,7 +126,6 @@ const shouldSkipStringTranslation = (key = '', value = '', language = 'en') => {
     if (SKIP_TRANSLATION_KEYS.has(key) || key.endsWith('_url')) return true;
     if (/_en$|_bn$|_ko$/i.test(key)) return true;
     if (URLISH_REGEX.test(value.trim())) return true;
-    if (isLikelyAlreadyInTargetLanguage(value, language)) return true;
     return false;
 };
 
@@ -274,47 +273,7 @@ const translateResponseData = async (value, language = 'en', key = '', options =
     return value;
 };
 
-app.use((req, res, next) => {
-    if (req.method !== 'GET') {
-        responseTranslationCache.clear();
-    }
-
-    const originalJson = res.json.bind(res);
-
-    res.json = (payload) => {
-        const shouldTranslate = req.method === 'GET'
-            && req.path !== '/api/translate'
-            && req.headers[SKIP_TRANSLATION_HEADER] !== '1';
-
-        if (!shouldTranslate) {
-            return originalJson(payload);
-        }
-
-        const language = normalizeTargetLanguage(req.headers[LANGUAGE_HEADER]);
-        const requestCacheKey = buildResponseTranslationCacheKey(req, language);
-
-        Promise.resolve()
-            .then(async () => {
-                if (!responseTranslationCache.has(requestCacheKey)) {
-                    responseTranslationCache.set(requestCacheKey, translateResponseData(payload, language));
-                    trimResponseTranslationCache();
-                }
-
-                const translatedPayload = await responseTranslationCache.get(requestCacheKey);
-                res.set(RESPONSE_TRANSLATED_HEADER, '1');
-                originalJson(translatedPayload);
-            })
-            .catch((error) => {
-                responseTranslationCache.delete(requestCacheKey);
-                console.error('Server-side response translation failed:', error);
-                originalJson(payload);
-            });
-
-        return res;
-    };
-
-    next();
-});
+// Translation interceptor deferred natively to client-side localStorage caching mechanisms instead.
 
 const ensureCmsTables = async () => {
     await db.query(`
