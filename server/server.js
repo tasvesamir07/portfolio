@@ -75,6 +75,21 @@ app.use((req, res, next) => {
     next();
 });
 
+// Hard CORS headers for serverless environments (Vercel/Workers) so preflight never fails.
+app.use((req, res, next) => {
+    const origin = req.headers.origin || '*';
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-translate-language, x-skip-auto-translate');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(204).end();
+    }
+
+    next();
+});
+
 const allowedOrigins = [
     'https://portfolio-site-amu.pages.dev',
     'http://localhost:5173',
