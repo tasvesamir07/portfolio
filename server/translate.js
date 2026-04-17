@@ -2,7 +2,8 @@ let translator = null;
 const translationCache = new Map();
 const MAX_CACHE_ENTRIES = 6000;
 const CHUNK_CONCURRENCY = 8;
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
+const GOOGLE_TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 const LATIN_REGEX = /[A-Za-z]/;
@@ -56,6 +57,64 @@ const splitForRetry = (text = '') => {
     return parts.length > 1 ? parts : [normalized];
 };
 
+const looksLikeBrokenTranslation = (translated = '', original = '', targetLanguage = 'en') => {
+    const normalized = String(translated || '').trim();
+    if (!normalized) return true;
+    if (/^\?+(?:\s+\?+)*$/.test(normalized)) return true;
+
+    // If the result still clearly contains source-script text for the target, treat it as unresolved.
+    if (needsTranslationForTarget(original, targetLanguage) && needsTranslationForTarget(normalized, targetLanguage)) {
+        return true;
+    }
+
+    return false;
+};
+
+const translateViaGoogleEndpoint = async (text = '', sourceLanguage = 'auto', targetLanguage = 'en') => {
+    const params = new URLSearchParams({
+        client: 'gtx',
+        sl: sourceLanguage || 'auto',
+        tl: targetLanguage,
+        dt: 't',
+        q: text
+    });
+
+    const response = await fetch(`${GOOGLE_TRANSLATE_ENDPOINT}?${params.toString()}`, {
+        headers: {
+            'Accept': 'application/json, text/plain, */*'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Google translate endpoint failed with status ${response.status}`);
+    }
+
+    const payload = await response.json();
+    if (!Array.isArray(payload?.[0])) {
+        throw new Error('Unexpected translate payload shape');
+    }
+
+    return payload[0]
+        .map((part) => (Array.isArray(part) ? String(part[0] || '') : ''))
+        .join('')
+        .trim();
+};
+
+const translateWithFallbacks = async (text = '', sourceLanguage = 'auto', targetLanguage = 'en') => {
+    try {
+        const translated = await translateViaGoogleEndpoint(text, sourceLanguage, targetLanguage);
+        if (!looksLikeBrokenTranslation(translated, text, targetLanguage)) {
+            return translated;
+        }
+    } catch (error) {
+        console.warn('Google endpoint translation failed:', error.message);
+    }
+
+    const translate = await getTranslator();
+    const translated = await translate(text, { from: sourceLanguage, to: targetLanguage });
+    return translated || text;
+};
+
 const getCacheKey = (text = '', targetLanguage = 'en', sourceLanguage = 'en') =>
     `${CACHE_VERSION}::${sourceLanguage}::${normalizeTargetLanguage(targetLanguage)}::${text}`;
 
@@ -106,16 +165,29 @@ const translateText = async (text = '', language = 'en') => {
     }
 
     try {
-        const translate = await getTranslator();
-        const translated = await translate(text, { from: sourceLanguage, to: targetLanguage });
+        const fragments = splitForRetry(text);
+        if (fragments.length > 1 && (String(text).includes('\n') || String(text).length > 280)) {
+            const translatedFragments = await processInChunks(
+                fragments,
+                CHUNK_CONCURRENCY,
+                (fragment) => translateText(fragment, language)
+            );
+            const resolved = translatedFragments.join('');
+
+            if (!looksLikeBrokenTranslation(resolved, text, targetLanguage)) {
+                writeCachedTranslation(text, targetLanguage, sourceLanguage, resolved);
+                return resolved;
+            }
+        }
+
+        const translated = await translateWithFallbacks(text, sourceLanguage, targetLanguage);
         let resolved = translated || text;
 
         // Retry in smaller pieces when long mixed content comes back mostly unchanged.
         if (
-            needsTranslationForTarget(resolved, targetLanguage)
+            looksLikeBrokenTranslation(resolved, text, targetLanguage)
             && (String(text).includes('\n') || String(text).length > 220)
         ) {
-            const fragments = splitForRetry(text);
             if (fragments.length > 1) {
                 const translatedFragments = await processInChunks(
                     fragments,
@@ -131,10 +203,7 @@ const translateText = async (text = '', language = 'en') => {
                         }
 
                         try {
-                            const piece = await translate(fragment, {
-                                from: fragmentSourceLanguage,
-                                to: targetLanguage
-                            });
+                            const piece = await translateWithFallbacks(fragment, fragmentSourceLanguage, targetLanguage);
                             return piece || fragment;
                         } catch {
                             return fragment;
@@ -146,7 +215,7 @@ const translateText = async (text = '', language = 'en') => {
             }
         }
 
-        if (resolved !== text || !needsTranslationForTarget(resolved, targetLanguage)) {
+        if (!looksLikeBrokenTranslation(resolved, text, targetLanguage)) {
             writeCachedTranslation(text, targetLanguage, sourceLanguage, resolved);
         }
 
