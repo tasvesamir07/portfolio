@@ -8,8 +8,8 @@ const TRANSLATE_API_URL = `${defaultBaseUrl}/translate`;
 const STORAGE_KEY = 'portfolio-language';
 const MAX_BATCH_ITEMS = 20;
 const BATCH_FLUSH_DELAY_MS = 12;
-const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v6';
-const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v6';
+const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v7';
+const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v7';
 const MAX_PERSISTED_CACHE_ENTRIES = 250;
 
 const textCache = new Map();
@@ -191,6 +191,20 @@ export const translateText = async (value = '', language = getCurrentLanguage())
     if (!value || !value.trim()) return value;
 
     const trimmed = value.trim();
+    
+    // For long text blocks (like the Bio), split into sentences on the frontend
+    // to ensure we never hit backend limits or timeout processing one giant string.
+    if (trimmed.length > 300) {
+        // Splitting by periods, question marks, and exclamation marks followed by whitespace
+        const sentences = trimmed.split(/(?<=[.!?])\s+(?=[A-Z\u0980-\u09FF\uAC00-\uD7AF])/);
+        if (sentences.length > 1) {
+            const translatedSentences = await Promise.all(
+                sentences.map(s => translateText(s, language))
+            );
+            return translatedSentences.join(' ');
+        }
+    }
+
     const cacheKey = `${language}::text::${trimmed}`;
     const persistedValue = getPersistentTranslation(TEXT_CACHE_STORAGE_KEY, cacheKey);
 
@@ -200,9 +214,13 @@ export const translateText = async (value = '', language = getCurrentLanguage())
 
     if (!textCache.has(cacheKey)) {
         textCache.set(cacheKey, (async () => {
-            const translated = await queueTextTranslation(trimmed, language);
-            setPersistentTranslation(TEXT_CACHE_STORAGE_KEY, cacheKey, translated || trimmed);
-            return translated || trimmed;
+            try {
+                const translated = await queueTextTranslation(trimmed, language);
+                setPersistentTranslation(TEXT_CACHE_STORAGE_KEY, cacheKey, translated || trimmed);
+                return translated || trimmed;
+            } catch {
+                return trimmed;
+            }
         })());
     }
 
