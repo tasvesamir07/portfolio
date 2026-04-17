@@ -62,3 +62,34 @@ npx wrangler deploy
 
 **Congratulations! Your portfolio is now live on the Edge! 🚀**
 If you see any errors, let me know and I will help you fix them.
+
+---
+
+## Troubleshooting: "Too many subrequests by single Worker invocation"
+
+If Cloudflare logs show errors like:
+- `Translation proxy failed: Too many subrequests by single Worker invocation`
+- `Unexpected token '<' ... is not valid JSON`
+
+use this deployment-safe flow:
+
+1. Deploy latest backend first:
+```powershell
+cd server
+npx wrangler deploy
+```
+
+2. Deploy latest frontend:
+- Push to your connected Git branch (Pages auto-build), or run your normal Pages deploy flow.
+
+3. Confirm API URL in Pages env:
+- `VITE_API_URL` must point to your latest Worker URL.
+
+4. Hard refresh browser and switch language once (`EN -> BN -> EN`).
+
+### Why this happens
+- Large auto-translation requests can exceed Worker subrequest limits.
+- The latest code reduces translation fan-out by:
+  - using lightweight `/api/pages` payload by default,
+  - avoiding heavy prefetch of every `/api/pages/:slug`,
+  - grouping HTML translation requests and limiting retries.

@@ -56,8 +56,9 @@ const URLISH_REGEX = /^(https?:\/\/|mailto:|tel:|data:|\/uploads\/)/i;
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 const HTML_SEGMENT_JOIN_TOKEN = '\n[[__PORTFOLIO_HTML_SEGMENT_SPLIT__]]\n';
-const HTML_SEGMENT_GROUP_CHAR_LIMIT = 1200;
-const HTML_SEGMENT_GROUP_SIZE_LIMIT = 8;
+const HTML_SEGMENT_GROUP_CHAR_LIMIT = 9000;
+const HTML_SEGMENT_GROUP_SIZE_LIMIT = 120;
+const HTML_SEGMENT_MAX_SPLIT_DEPTH = 2;
 
 // Cloudflare-Express Compatibility Middleware (MUST BE AT TOP)
 app.use((req, res, next) => {
@@ -190,7 +191,7 @@ const translateHtmlContent = async (html = '', language = 'en') => {
         return groups;
     };
 
-    const translateSegmentGroup = async (group = []) => {
+    const translateSegmentGroup = async (group = [], depth = 0) => {
         if (!group.length) return [];
         if (group.length === 1) {
             const [single] = await translateTexts(group, language);
@@ -202,22 +203,26 @@ const translateHtmlContent = async (html = '', language = 'en') => {
         const normalizedJoined = String(joined).trim();
         const normalizedTranslatedJoined = String(translatedJoined || joined).trim();
 
-        // If bulk translation returns essentially unchanged text while translation is needed,
-        // fall back to per-segment translation for correctness.
-        if (
-            normalizedTranslatedJoined === normalizedJoined
-            && !isLikelyAlreadyInTargetLanguage(joined, language)
-        ) {
-            return translateTexts(group, language);
-        }
-
         const parts = String(translatedJoined || joined).split(HTML_SEGMENT_JOIN_TOKEN);
+        const unchangedWhileNeedsTranslation =
+            normalizedTranslatedJoined === normalizedJoined
+            && !isLikelyAlreadyInTargetLanguage(joined, language);
+        const splitInvalid = parts.length !== group.length;
 
-        if (parts.length === group.length) {
+        if (!unchangedWhileNeedsTranslation && !splitInvalid) {
             return parts;
         }
 
-        return translateTexts(group, language);
+        if (depth >= HTML_SEGMENT_MAX_SPLIT_DEPTH || group.length <= 2) {
+            // Avoid an explosion of subrequests in Cloudflare Workers.
+            // Return originals for this small/problematic group instead of per-segment retries.
+            return group;
+        }
+
+        const middle = Math.ceil(group.length / 2);
+        const left = await translateSegmentGroup(group.slice(0, middle), depth + 1);
+        const right = await translateSegmentGroup(group.slice(middle), depth + 1);
+        return [...left, ...right];
     };
 
     const segmentGroups = buildSegmentGroups(uniqueTexts);
@@ -1105,7 +1110,10 @@ app.delete('/api/research-interests/:id', authenticateToken, async (req, res) =>
 // --- Dynamic Pages (CMS) ---
 app.get('/api/pages', async (req, res) => {
     try {
-        const result = await db.query('SELECT id, title, slug, content, details_json, show_in_nav FROM pages ORDER BY id ASC');
+        const includeContent = String(req.query?.includeContent || '') === '1';
+        const result = includeContent
+            ? await db.query('SELECT id, title, slug, content, details_json, show_in_nav FROM pages ORDER BY id ASC')
+            : await db.query('SELECT id, title, slug, show_in_nav FROM pages ORDER BY id ASC');
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         res.json(localizeDataObject(result.rows, language));
     } catch (err) {

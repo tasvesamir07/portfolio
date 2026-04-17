@@ -1062,7 +1062,11 @@ const Dashboard = () => {
         setLoading(true);
         setContent([]); // Clear stale data immediately
         try {
-            const endpoint = activeTab === 'social' ? '/social-links' : activeTab === 'blog' ? '/pages' : `/${activeTab}`;
+            const endpoint = activeTab === 'social'
+                ? '/social-links'
+                : activeTab === 'blog'
+                    ? '/pages?includeContent=1'
+                    : `/${activeTab}`;
             const res = await api.get(endpoint);
             setContent(Array.isArray(res.data) ? res.data : [res.data]);
             

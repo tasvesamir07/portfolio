@@ -51,19 +51,6 @@ const warmRouteBundles = () => {
 
 const warmApiCache = async () => {
     await runInBatches(PUBLIC_ENDPOINTS, BATCH_SIZE, (endpoint) => api.get(endpoint));
-
-    try {
-        const pagesResponse = await api.get('/pages');
-        const pages = Array.isArray(pagesResponse.data) ? pagesResponse.data : [];
-        const pagePaths = pages
-            .map((page) => page?.slug)
-            .filter(Boolean)
-            .map((slug) => `/pages/${slug}`);
-
-        await runInBatches(pagePaths, BATCH_SIZE, (endpoint) => api.get(endpoint));
-    } catch {
-        // Keep background warmup non-blocking.
-    }
 };
 
 const preloadPublicApp = (language) => {
