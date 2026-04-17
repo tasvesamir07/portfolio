@@ -307,16 +307,20 @@ const About = ({ data }) => {
 
         if (!imageColumn || !panel || !list) return;
 
+        const resetMobilePanelStyles = () => {
+            panel.style.removeProperty('min-height');
+            panel.style.removeProperty('max-height');
+            panel.style.setProperty('--about-highlight-font-size', 'clamp(1.08rem, 1rem + 0.85vw, 1.7rem)');
+            panel.style.setProperty('--about-highlight-gap', '0.9rem');
+            panel.style.setProperty('--about-highlight-line-height', '1.24');
+            list.style.removeProperty('height');
+            list.style.removeProperty('justify-content');
+            list.style.removeProperty('row-gap');
+        };
+
         const syncPanelHeight = () => {
             if (window.innerWidth < 1024) {
-                panel.style.removeProperty('min-height');
-                panel.style.removeProperty('max-height');
-                panel.style.setProperty('--about-highlight-font-size', 'clamp(1.08rem, 1rem + 0.85vw, 1.7rem)');
-                panel.style.setProperty('--about-highlight-gap', '0.9rem');
-                panel.style.setProperty('--about-highlight-line-height', '1.24');
-                list.style.removeProperty('height');
-                list.style.removeProperty('justify-content');
-                list.style.removeProperty('row-gap');
+                resetMobilePanelStyles();
                 return;
             }
 
@@ -374,18 +378,29 @@ const About = ({ data }) => {
 
         syncPanelHeight();
 
-        const resizeObserver = new ResizeObserver(() => {
-            syncPanelHeight();
-        });
+        let resizeRafId = null;
+        const runSyncInNextFrame = () => {
+            if (resizeRafId != null) {
+                cancelAnimationFrame(resizeRafId);
+            }
+            resizeRafId = requestAnimationFrame(() => {
+                syncPanelHeight();
+                resizeRafId = null;
+            });
+        };
 
+        const resizeObserver = new ResizeObserver(runSyncInNextFrame);
+
+        // Observing panel/list can create resize-feedback loops because this effect mutates their size.
         resizeObserver.observe(imageColumn);
-        resizeObserver.observe(panel);
-        resizeObserver.observe(list);
-        window.addEventListener('resize', syncPanelHeight);
+        window.addEventListener('resize', runSyncInNextFrame, { passive: true });
 
         return () => {
+            if (resizeRafId != null) {
+                cancelAnimationFrame(resizeRafId);
+            }
             resizeObserver.disconnect();
-            window.removeEventListener('resize', syncPanelHeight);
+            window.removeEventListener('resize', runSyncInNextFrame);
             panel.style.removeProperty('min-height');
             panel.style.removeProperty('max-height');
             panel.style.removeProperty('--about-highlight-font-size');
