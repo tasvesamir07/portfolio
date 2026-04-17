@@ -11,13 +11,7 @@ import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 const Publications = () => {
     const [publications, setPublications] = useState([]);
     const { language, t } = useI18n();
-    const shouldForceSectionTranslation = language !== 'en';
-    const translatedPublications = useTranslatedDataRows(
-        publications,
-        ['title', 'journal_name', 'authors', 'introduction', 'methods'],
-        language,
-        { force: shouldForceSectionTranslation }
-    );
+    const translatedPublications = useTranslatedDataRows(publications, ['title', 'journal_name', 'authors', 'introduction', 'methods'], language);
 
     useEffect(() => {
         const fetchPublications = async () => {
@@ -135,7 +129,6 @@ const Publications = () => {
                             {/* Content Sections */}
                             <StructuredDetails
                                 items={detailItems}
-                                forceTranslate={shouldForceSectionTranslation}
                                 className="space-y-8 text-gray-800 leading-relaxed"
                                 titleClassName="text-xl font-black text-black"
                                 textClassName="text-[1.05rem] font-medium text-gray-600 leading-8 break-words"

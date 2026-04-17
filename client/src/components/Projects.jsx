@@ -9,13 +9,7 @@ import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 const Projects = () => {
     const [projects, setProjects] = useState([]);
     const { language, t } = useI18n();
-    const shouldForceSectionTranslation = language !== 'en';
-    const translatedProjects = useTranslatedDataRows(
-        projects,
-        ['title', 'description', 'tech_stack'],
-        language,
-        { force: shouldForceSectionTranslation }
-    );
+    const translatedProjects = useTranslatedDataRows(projects, ['title', 'description', 'tech_stack'], language);
 
     useEffect(() => {
         const fetchProjects = async () => {

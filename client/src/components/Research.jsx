@@ -11,13 +11,7 @@ import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 const Research = () => {
     const [research, setResearch] = useState([]);
     const { language, t } = useI18n();
-    const shouldForceSectionTranslation = language !== 'en';
-    const translatedResearch = useTranslatedDataRows(
-        research,
-        ['title', 'status', 'date_text'],
-        language,
-        { force: shouldForceSectionTranslation }
-    );
+    const translatedResearch = useTranslatedDataRows(research, ['title', 'status', 'date_text'], language);
 
     useEffect(() => {
         const fetchResearch = async () => {
@@ -97,7 +91,6 @@ const Research = () => {
                                     </h3>
                                     <StructuredDetails
                                         items={detailItems}
-                                        forceTranslate={shouldForceSectionTranslation}
                                         className="space-y-4 mb-6"
                                         titleClassName="text-lg font-bold text-gray-900 leading-tight"
                                         textClassName="text-gray-600 leading-7 text-base break-words"

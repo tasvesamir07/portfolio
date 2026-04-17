@@ -11,13 +11,7 @@ import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 const Academics = () => {
     const [academics, setAcademics] = useState([]);
     const { language, t } = useI18n();
-    const shouldForceSectionTranslation = language !== 'en';
-    const translatedAcademics = useTranslatedDataRows(
-        academics,
-        ['degree', 'institution', 'location'],
-        language,
-        { force: shouldForceSectionTranslation }
-    );
+    const translatedAcademics = useTranslatedDataRows(academics, ['degree', 'institution', 'location'], language);
 
     useEffect(() => {
         const fetchAcademics = async () => {
@@ -136,7 +130,6 @@ const Academics = () => {
                                 {detailItems.length > 0 && (
                                     <StructuredDetails
                                         items={detailItems}
-                                        forceTranslate={shouldForceSectionTranslation}
                                         className="space-y-4 text-left mt-1"
                                         titleClassName="text-xl md:text-2xl font-medium text-gray-700 leading-tight"
                                         textClassName="text-gray-600 text-lg md:text-[1.12rem] leading-[1.75] break-words [&_a]:text-gray-600 [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-sky-600"

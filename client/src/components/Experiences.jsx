@@ -14,25 +14,9 @@ const Experiences = () => {
     const [skills, setSkills] = useState([]);
     const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
-    const shouldForceSectionTranslation = language !== 'en';
-    const translatedExperiences = useTranslatedDataRows(
-        experiences,
-        ['position', 'company', 'location', 'description'],
-        language,
-        { force: shouldForceSectionTranslation }
-    );
-    const translatedTrainings = useTranslatedDataRows(
-        trainings,
-        ['title', 'topic', 'instructor', 'date_text'],
-        language,
-        { force: shouldForceSectionTranslation }
-    );
-    const translatedSkills = useTranslatedDataRows(
-        skills,
-        ['category'],
-        language,
-        { force: shouldForceSectionTranslation }
-    );
+    const translatedExperiences = useTranslatedDataRows(experiences, ['position', 'company', 'location', 'description'], language);
+    const translatedTrainings = useTranslatedDataRows(trainings, ['title', 'topic', 'instructor', 'date_text'], language);
+    const translatedSkills = useTranslatedDataRows(skills, ['category'], language);
 
     useEffect(() => {
         const fetchAll = async () => {
@@ -115,7 +99,6 @@ const Experiences = () => {
                                 {detailItems.length > 0 && (
                                     <StructuredDetails
                                         items={detailItems}
-                                        forceTranslate={shouldForceSectionTranslation}
                                         className="space-y-4 text-left"
                                         titleClassName="text-lg md:text-xl font-bold text-[#0b3b75] leading-tight"
                                         textClassName="text-gray-700 text-sm md:text-base leading-8 break-words"
@@ -170,7 +153,6 @@ const Experiences = () => {
                                         {detailItems.length > 0 && (
                                             <StructuredDetails
                                                 items={detailItems}
-                                                forceTranslate={shouldForceSectionTranslation}
                                                 className="space-y-3 text-left mt-4"
                                                 titleClassName="text-base md:text-lg font-bold text-[#0b3b75] leading-tight"
                                                 textClassName="text-gray-700 text-sm md:text-base leading-7 break-words"
@@ -221,7 +203,6 @@ const Experiences = () => {
                                     {detailItems.length > 0 ? (
                                         <StructuredDetails
                                             items={detailItems}
-                                            forceTranslate={shouldForceSectionTranslation}
                                             className="space-y-3 text-left"
                                             titleClassName="text-base md:text-lg font-bold text-[#0b3b75] leading-tight"
                                             textClassName="text-gray-700 text-sm md:text-base leading-7 break-words flex items-start gap-2"

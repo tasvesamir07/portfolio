@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { translateApiData } from './i18n/translator';
 const STORAGE_KEY = 'portfolio-language';
 const LANGUAGE_HEADER = 'X-Translate-Language';
 const MAX_CACHED_GETS = 120;
-const API_RESPONSE_CACHE_VERSION = 'v4';
+const API_RESPONSE_CACHE_VERSION = 'v5';
 
 const getResponseCache = new Map();
 const pendingGetRequests = new Map();
@@ -80,8 +81,15 @@ api.interceptors.request.use(
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        const autoTranslateEnabled = method === 'get'
+            && !isAdminRoute
+            && !String(config.url || '').includes('/translate')
+            && config.enableAutoTranslate !== false;
+
+        config.enableAutoTranslate = autoTranslateEnabled;
         config.headers[LANGUAGE_HEADER] = requestLanguage;
-        if (method === 'get' && config.enableAutoTranslate !== true) {
+        if (!autoTranslateEnabled) {
             config.headers['X-Skip-Auto-Translate'] = '1';
         }
         config.metadataLanguage = requestLanguage;
