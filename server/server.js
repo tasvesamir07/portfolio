@@ -152,7 +152,14 @@ const isLikelyAlreadyInTargetLanguage = (value = '', language = 'en') => {
 const shouldSkipStringTranslation = (key = '', value = '', language = 'en') => {
     if (!value || !value.trim()) return true;
     if (SKIP_TRANSLATION_KEYS.has(key) || key.endsWith('_url')) return true;
-    if (/_en$|_bn$|_ko$/i.test(key)) return true;
+    const localizedSuffixMatch = key.match(/_(en|bn|ko)$/i);
+    if (localizedSuffixMatch) {
+        const keyLanguage = localizedSuffixMatch[1].toLowerCase();
+        // Only skip localized fields that belong to other languages.
+        // The active language field (e.g., content_en while language=en) must stay translatable
+        // to recover from partially translated/stale CMS content.
+        if (keyLanguage !== language) return true;
+    }
     if (URLISH_REGEX.test(value.trim())) return true;
     return false;
 };

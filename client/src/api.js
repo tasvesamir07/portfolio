@@ -158,7 +158,7 @@ api.interceptors.response.use(
                 && !fromCache
                 && response.headers?.['x-response-translated'] !== '1'
                 && configHeaders?.['X-Skip-Auto-Translate'] !== '1'
-                && ['bn', 'ko'].includes(language);
+                && ['en', 'bn', 'ko'].includes(language);
 
             if (shouldTranslate) {
                 const timeoutPromise = new Promise((_, reject) =>
