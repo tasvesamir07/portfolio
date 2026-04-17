@@ -131,7 +131,7 @@ const Academics = () => {
                                         className="space-y-4 text-left mt-1"
                                         titleClassName="text-xl md:text-2xl font-medium text-gray-700 leading-tight"
                                         textClassName="text-gray-600 text-lg md:text-[1.12rem] leading-[1.75] break-words [&_a]:text-gray-600 [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-sky-600"
-                                        pairLabelClassName="text-gray-700 font-medium whitespace-nowrap text-lg md:text-[1.08rem]"
+                                        pairLabelClassName="text-gray-700 font-medium text-lg md:text-[1.08rem]"
                                         pairValueClassName="text-gray-600 text-lg md:text-[1.08rem] leading-[1.75] break-words [&_a]:text-gray-600 [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-sky-600"
                                         valueStackClassName="space-y-2.5"
                                     />

@@ -13,6 +13,8 @@
   --color-border-light: #e5e7eb;
   
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --breakpoint-xs: 400px;
 }
 
 

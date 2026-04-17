@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const TRANSLATE_API_URL = 'http://localhost:5000/api/translate';
+let defaultBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+if (defaultBaseUrl && !defaultBaseUrl.endsWith('/api') && !defaultBaseUrl.endsWith('/api/')) {
+    defaultBaseUrl = defaultBaseUrl.replace(/\/$/, '') + '/api';
+}
+const TRANSLATE_API_URL = `${defaultBaseUrl}/translate`;
 const STORAGE_KEY = 'portfolio-language';
 const MAX_BATCH_ITEMS = 80;
 const BATCH_FLUSH_DELAY_MS = 12;
@@ -99,7 +103,7 @@ const requestTranslatedTexts = async (texts, language) => {
         texts,
         targetLang: language
     }, {
-        timeout: 30000
+        timeout: 5000
     });
 
     return Array.isArray(response.data?.translations) ? response.data.translations : texts;

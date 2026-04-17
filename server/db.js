@@ -1,4 +1,4 @@
-const { Pool, neon } = require('@neondatabase/serverless');
+const { neon } = require('@neondatabase/serverless');
 
 // We use a "lazy" variable so we only connect when needed
 let pool;
@@ -7,22 +7,32 @@ const getPool = () => {
     if (pool) return pool;
 
     const isProduction = process.env.NODE_ENV === 'production' || process.env.CF_PAGES;
+    const connectionString = process.env.DATABASE_URL;
     
-    const poolConfig = {
-        connectionString: process.env.DATABASE_URL,
-        ssl: isProduction ? { rejectUnauthorized: false } : false
-    };
-
-    // Fallback for local development
-    if (!poolConfig.connectionString) {
-        poolConfig.user = process.env.DB_USER;
-        poolConfig.host = process.env.DB_HOST;
-        poolConfig.database = process.env.DB_NAME;
-        poolConfig.password = process.env.DB_PASSWORD;
-        poolConfig.port = process.env.DB_PORT;
+    if (connectionString && isProduction) {
+        const { Pool } = require('@neondatabase/serverless');
+        pool = new Pool({
+            connectionString,
+            ssl: { rejectUnauthorized: false }
+        });
+    } else if (connectionString) {
+        const { Pool } = require('pg');
+        pool = new Pool({
+            connectionString,
+            ssl: { rejectUnauthorized: false }
+        });
+    } else {
+        // Fallback for local development
+        const { Pool } = require('pg');
+        pool = new Pool({
+            user: process.env.DB_USER,
+            host: process.env.DB_HOST,
+            database: process.env.DB_NAME,
+            password: process.env.DB_PASSWORD,
+            port: process.env.DB_PORT,
+        });
     }
 
-    pool = new Pool(poolConfig);
     return pool;
 };
 

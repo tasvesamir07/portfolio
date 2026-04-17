@@ -98,7 +98,7 @@ const Experiences = () => {
                                         className="space-y-4 text-left"
                                         titleClassName="text-lg md:text-xl font-bold text-[#0b3b75] leading-tight"
                                         textClassName="text-gray-700 text-sm md:text-base leading-8 break-words"
-                                        pairLabelClassName="text-gray-800 font-semibold whitespace-nowrap"
+                                        pairLabelClassName="text-gray-800 font-semibold"
                                         pairValueClassName="text-gray-700 text-sm md:text-base leading-8 break-words"
                                         valueStackClassName="space-y-2"
                                     />
@@ -152,7 +152,7 @@ const Experiences = () => {
                                                 className="space-y-3 text-left mt-4"
                                                 titleClassName="text-base md:text-lg font-bold text-[#0b3b75] leading-tight"
                                                 textClassName="text-gray-700 text-sm md:text-base leading-7 break-words"
-                                                pairLabelClassName="text-gray-800 font-semibold whitespace-nowrap"
+                                                pairLabelClassName="text-gray-800 font-semibold"
                                                 pairValueClassName="text-gray-700 text-sm md:text-base leading-7 break-words"
                                                 valueStackClassName="space-y-2"
                                             />
@@ -202,9 +202,10 @@ const Experiences = () => {
                                             className="space-y-3 text-left"
                                             titleClassName="text-base md:text-lg font-bold text-[#0b3b75] leading-tight"
                                             textClassName="text-gray-700 text-sm md:text-base leading-7 break-words flex items-start gap-2"
-                                            pairLabelClassName="text-gray-800 font-semibold whitespace-nowrap"
+                                            pairLabelClassName="text-gray-800 font-semibold"
                                             pairValueClassName="text-gray-700 text-sm md:text-base leading-7 break-words"
                                             valueStackClassName="space-y-2"
+                                            layoutClassName="flex flex-col gap-1 w-full"
                                         />
                                     ) : (
                                         <div className="flex flex-wrap justify-center md:justify-start gap-2.5">
