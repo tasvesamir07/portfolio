@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Hero from '../components/Hero';
 import About from '../components/About';
-import Academics from '../components/Academics';
-import Research from '../components/Research';
-import Projects from '../components/Projects';
-import Gallery from '../components/Gallery';
-import Contact from '../components/Contact';
 import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 
