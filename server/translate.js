@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
-const MAX_TRANSLATE_CHARS = 4000;
+const MAX_TRANSLATE_CHARS = 1000;
 const translationCache = new Map();
 const PROTECTED_TOKEN_REGEX = /((?:https?:\/\/|www\.)[^\s<>"')]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,})(?=[\s<>"')]|$)/g;
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
@@ -81,14 +81,12 @@ const fetchTranslatedChunk = async (text, targetLanguage) => {
         client: 'gtx',
         sl: 'auto',
         tl: targetLanguage,
-        dt: 't'
+        dt: 't',
+        q: text
     };
 
-    const response = await axios.post(TRANSLATE_ENDPOINT, `q=${encodeURIComponent(text)}`, {
+    const response = await axios.get(TRANSLATE_ENDPOINT, {
         params,
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
         timeout: 30000
     });
 
