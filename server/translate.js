@@ -2,9 +2,10 @@ let translator = null;
 const translationCache = new Map();
 const MAX_CACHE_ENTRIES = 6000;
 const CHUNK_CONCURRENCY = 8;
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
+const LATIN_REGEX = /[A-Za-z]/;
 
 /**
  * Lazy-load the ESM 'translate' package.
@@ -31,6 +32,28 @@ const detectSourceLanguage = (text = '', targetLanguage = 'en') => {
     if (BANGLA_REGEX.test(sample)) return 'bn';
     if (HANGUL_REGEX.test(sample)) return 'ko';
     return targetLanguage === 'en' ? 'en' : 'en';
+};
+
+const needsTranslationForTarget = (text = '', targetLanguage = 'en') => {
+    const sample = String(text || '');
+    if (!sample.trim()) return false;
+
+    const hasBangla = BANGLA_REGEX.test(sample);
+    const hasHangul = HANGUL_REGEX.test(sample);
+    const hasLatin = LATIN_REGEX.test(sample);
+
+    if (targetLanguage === 'en') return hasBangla || hasHangul;
+    if (targetLanguage === 'bn') return hasHangul || hasLatin;
+    if (targetLanguage === 'ko') return hasBangla || hasLatin;
+    return false;
+};
+
+const splitForRetry = (text = '') => {
+    const normalized = String(text || '');
+    const parts = normalized
+        .split(/(\r?\n+|(?<=[.!?।])\s+)/)
+        .filter((part) => part != null && part !== '');
+    return parts.length > 1 ? parts : [normalized];
 };
 
 const getCacheKey = (text = '', targetLanguage = 'en', sourceLanguage = 'en') =>
@@ -73,7 +96,7 @@ const translateText = async (text = '', language = 'en') => {
         return text;
     }
 
-    if (sourceLanguage === targetLanguage) {
+    if (!needsTranslationForTarget(text, targetLanguage) || sourceLanguage === targetLanguage) {
         return text;
     }
 
@@ -85,8 +108,49 @@ const translateText = async (text = '', language = 'en') => {
     try {
         const translate = await getTranslator();
         const translated = await translate(text, { from: sourceLanguage, to: targetLanguage });
-        writeCachedTranslation(text, targetLanguage, sourceLanguage, translated || text);
-        return translated || text;
+        let resolved = translated || text;
+
+        // Retry in smaller pieces when long mixed content comes back mostly unchanged.
+        if (
+            needsTranslationForTarget(resolved, targetLanguage)
+            && (String(text).includes('\n') || String(text).length > 220)
+        ) {
+            const fragments = splitForRetry(text);
+            if (fragments.length > 1) {
+                const translatedFragments = await processInChunks(
+                    fragments,
+                    CHUNK_CONCURRENCY,
+                    async (fragment) => {
+                        if (!fragment.trim() || !needsTranslationForTarget(fragment, targetLanguage)) {
+                            return fragment;
+                        }
+
+                        const fragmentSourceLanguage = detectSourceLanguage(fragment, targetLanguage);
+                        if (fragmentSourceLanguage === targetLanguage) {
+                            return fragment;
+                        }
+
+                        try {
+                            const piece = await translate(fragment, {
+                                from: fragmentSourceLanguage,
+                                to: targetLanguage
+                            });
+                            return piece || fragment;
+                        } catch {
+                            return fragment;
+                        }
+                    }
+                );
+
+                resolved = translatedFragments.join('');
+            }
+        }
+
+        if (resolved !== text || !needsTranslationForTarget(resolved, targetLanguage)) {
+            writeCachedTranslation(text, targetLanguage, sourceLanguage, resolved);
+        }
+
+        return resolved;
     } catch (error) {
         console.error(`Translation proxy failed:`, error.message);
         return text;
@@ -117,6 +181,7 @@ const translateTexts = async (texts = [], language = 'en') => {
     const uniqueTexts = [...new Set(normalizedTexts)];
     const unresolved = uniqueTexts.filter((text) => {
         const targetLanguage = normalizeTargetLanguage(language);
+        if (!needsTranslationForTarget(text, targetLanguage)) return false;
         const sourceLanguage = detectSourceLanguage(text, targetLanguage);
         if (sourceLanguage === targetLanguage) return false;
         return readCachedTranslation(text, targetLanguage, sourceLanguage) == null;
@@ -132,6 +197,7 @@ const translateTexts = async (texts = [], language = 'en') => {
 
     return normalizedTexts.map((text) => {
         const targetLanguage = normalizeTargetLanguage(language);
+        if (!needsTranslationForTarget(text, targetLanguage)) return text;
         const sourceLanguage = detectSourceLanguage(text, targetLanguage);
         if (sourceLanguage === targetLanguage) return text;
         const cached = readCachedTranslation(text, targetLanguage, sourceLanguage);

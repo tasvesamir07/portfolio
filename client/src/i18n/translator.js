@@ -9,8 +9,8 @@ const TRANSLATE_API_URL = `${defaultBaseUrl}/translate`;
 const STORAGE_KEY = 'portfolio-language';
 const MAX_BATCH_ITEMS = 60;
 const BATCH_FLUSH_DELAY_MS = 4;
-const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v8';
-const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v8';
+const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v9';
+const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v9';
 const MAX_PERSISTED_CACHE_ENTRIES = 250;
 const MAX_CONCURRENT_CHUNKS = 5;
 const MAX_PARALLEL_BATCH_REQUESTS = 3;
@@ -352,8 +352,11 @@ export const translateText = async (text = '', language = 'en') => {
         textCache.set(cacheKey, (async () => {
             try {
                 const translated = await queueTextTranslation(trimmed, language);
-                setPersistentTranslation(TEXT_CACHE_STORAGE_KEY, cacheKey, translated || trimmed);
-                return translated || trimmed;
+                const resolved = translated || trimmed;
+                if (resolved !== trimmed || isLikelyAlreadyInTargetLanguage(resolved, language)) {
+                    setPersistentTranslation(TEXT_CACHE_STORAGE_KEY, cacheKey, resolved);
+                }
+                return resolved;
             } catch {
                 return trimmed;
             }
@@ -436,7 +439,10 @@ export const translateHtml = async (html = '', language = getCurrentLanguage()) 
         });
 
         const translatedHtml = doc.body.innerHTML;
-        setPersistentTranslation(HTML_CACHE_STORAGE_KEY, cacheKey, translatedHtml);
+        const translatedPlainText = translatedHtml.replace(/<[^>]+>/g, ' ');
+        if (translatedHtml !== html || isLikelyAlreadyInTargetLanguage(translatedPlainText, language)) {
+            setPersistentTranslation(HTML_CACHE_STORAGE_KEY, cacheKey, translatedHtml);
+        }
         return translatedHtml;
     })();
 

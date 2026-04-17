@@ -4,7 +4,7 @@ import { translateApiData } from './i18n/translator';
 const STORAGE_KEY = 'portfolio-language';
 const LANGUAGE_HEADER = 'X-Translate-Language';
 const MAX_CACHED_GETS = 120;
-const API_RESPONSE_CACHE_VERSION = 'v2';
+const API_RESPONSE_CACHE_VERSION = 'v3';
 
 const getResponseCache = new Map();
 const pendingGetRequests = new Map();
@@ -156,7 +156,6 @@ api.interceptors.response.use(
             const shouldTranslate = method === 'get'
                 && !configUrl.includes('/translate')
                 && !fromCache
-                && response.headers?.['x-response-translated'] !== '1'
                 && configHeaders?.['X-Skip-Auto-Translate'] !== '1'
                 && ['en', 'bn', 'ko'].includes(language);
 

@@ -26,6 +26,7 @@ app.get('/', (req, res) => {
 const LANGUAGE_HEADER = 'x-translate-language';
 const SKIP_TRANSLATION_HEADER = 'x-skip-auto-translate';
 const RESPONSE_TRANSLATED_HEADER = 'X-Response-Translated';
+const RESPONSE_TRANSLATION_CACHE_VERSION = 'v2';
 const MAX_RESPONSE_CACHE_ENTRIES = 400;
 const responseTranslationCache = new Map();
 const SKIP_TRANSLATION_KEYS = new Set([
@@ -236,9 +237,12 @@ const translateHtmlContent = async (html = '', language = 'en') => {
         }
 
         if (depth >= HTML_SEGMENT_MAX_SPLIT_DEPTH || group.length <= 2) {
-            // Avoid an explosion of subrequests in Cloudflare Workers.
-            // Return originals for this small/problematic group instead of per-segment retries.
-            return group;
+            // Final fallback: translate each segment independently instead of returning originals.
+            // This avoids leaving untranslated fragments when a grouped translation response is malformed.
+            return Promise.all(group.map(async (segment) => {
+                const [single] = await translateTexts([segment], language);
+                return single || segment;
+            }));
         }
 
         const middle = Math.ceil(group.length / 2);
@@ -301,7 +305,7 @@ const trimResponseTranslationCache = () => {
 };
 
 const buildResponseTranslationCacheKey = (req, language = 'en') =>
-    `${language}::${req.originalUrl || req.path || ''}`;
+    `${RESPONSE_TRANSLATION_CACHE_VERSION}::${language}::${req.originalUrl || req.path || ''}`;
 
 const shouldServerTranslateResponse = (req, language = 'en') => {
     const normalizedLanguage = normalizeTargetLanguage(language);
