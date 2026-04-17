@@ -14,12 +14,13 @@ import { shouldRunLiveClientTranslation, translateText } from '../i18n/translato
  * Example:
  *   const translated = useTranslatedDataRows(academics, ['degree', 'institution'], language);
  */
-export const useTranslatedDataRows = (rows, fields, language) => {
+export const useTranslatedDataRows = (rows, fields, language, options = {}) => {
     const [translatedRows, setTranslatedRows] = useState(rows);
     const keyRef = useRef(null);
+    const force = options?.force === true;
 
     useEffect(() => {
-        if (!rows?.length || !fields?.length || !shouldRunLiveClientTranslation()) {
+        if (!rows?.length || !fields?.length || (!force && !shouldRunLiveClientTranslation())) {
             setTranslatedRows(rows);
             return;
         }
@@ -54,7 +55,7 @@ export const useTranslatedDataRows = (rows, fields, language) => {
                 setTranslatedRows(next);
             })
             .catch(() => setTranslatedRows(rows));
-    }, [language, JSON.stringify(rows?.map(r => fields.map(f => r[f]).join('|')))]);
+    }, [language, JSON.stringify(rows?.map(r => fields.map(f => r[f]).join('|'))), force]);
 
     return translatedRows;
 };

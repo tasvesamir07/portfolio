@@ -4,10 +4,18 @@ import { Code, ExternalLink } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
+import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 const Projects = () => {
     const [projects, setProjects] = useState([]);
     const { language, t } = useI18n();
+    const shouldForceSectionTranslation = language !== 'en';
+    const translatedProjects = useTranslatedDataRows(
+        projects,
+        ['title', 'description', 'tech_stack'],
+        language,
+        { force: shouldForceSectionTranslation }
+    );
 
     useEffect(() => {
         const fetchProjects = async () => {
@@ -27,7 +35,7 @@ const Projects = () => {
                 <span className="text-brand-blue font-bold uppercase tracking-widest mb-4 block text-center">{t('projects.kicker')}</span>
                 <h2 className="text-5xl md:text-7xl font-bold text-center mb-16 text-gray-900 tracking-tight">{t('projects.titleMain')} <span className="text-brand-gold">{t('projects.titleAccent')}</span></h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {projects.map((project, index) => {
+                    {translatedProjects.map((project, index) => {
                         const title = getLocalizedField(project, 'title', language, project.title);
                         const description = getLocalizedField(project, 'description', language, project.description);
                         const techStack = getLocalizedField(project, 'tech_stack', language, project.tech_stack || '');

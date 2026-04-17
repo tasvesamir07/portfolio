@@ -18,7 +18,13 @@ const iconMap = {
 const ResearchInterests = () => {
     const [interests, setInterests] = useState([]);
     const { language, t } = useI18n();
-    const translatedInterests = useTranslatedDataRows(interests, ['interest'], language);
+    const shouldForceSectionTranslation = language !== 'en';
+    const translatedInterests = useTranslatedDataRows(
+        interests,
+        ['interest'],
+        language,
+        { force: shouldForceSectionTranslation }
+    );
 
     useEffect(() => {
         const fetchInterests = async () => {
@@ -59,6 +65,7 @@ const ResearchInterests = () => {
                                 </h3>
                                 <StructuredDetails
                                     items={detailItems}
+                                    forceTranslate={shouldForceSectionTranslation}
                                     className="space-y-4 research-interest-content"
                                     titleClassName="text-xl font-bold text-gray-900 leading-tight"
                                     textClassName="text-gray-600 leading-8 text-[1.05rem] break-words"

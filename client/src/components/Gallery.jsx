@@ -12,9 +12,20 @@ const Gallery = () => {
     const [activeCategory, setActiveCategory] = useState('all');
     const [selectedImage, setSelectedImage] = useState(null);
     const { language, t } = useI18n();
+    const shouldForceSectionTranslation = language !== 'en';
 
-    const translatedImages = useTranslatedDataRows(images, ['caption', 'category'], language);
-    const translatedCategories = useTranslatedDataRows(categories, ['name'], language);
+    const translatedImages = useTranslatedDataRows(
+        images,
+        ['caption', 'category'],
+        language,
+        { force: shouldForceSectionTranslation }
+    );
+    const translatedCategories = useTranslatedDataRows(
+        categories,
+        ['name'],
+        language,
+        { force: shouldForceSectionTranslation }
+    );
 
     useEffect(() => {
         const fetchData = async () => {
