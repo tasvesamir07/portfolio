@@ -6,7 +6,7 @@ if (defaultBaseUrl && !defaultBaseUrl.endsWith('/api') && !defaultBaseUrl.endsWi
 }
 const TRANSLATE_API_URL = `${defaultBaseUrl}/translate`;
 const STORAGE_KEY = 'portfolio-language';
-const MAX_BATCH_ITEMS = 80;
+const MAX_BATCH_ITEMS = 20;
 const BATCH_FLUSH_DELAY_MS = 12;
 const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache';
 const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache';
@@ -103,7 +103,7 @@ const requestTranslatedTexts = async (texts, language) => {
         texts,
         targetLang: language
     }, {
-        timeout: 5000
+        timeout: 25000
     });
 
     return Array.isArray(response.data?.translations) ? response.data.translations : texts;
