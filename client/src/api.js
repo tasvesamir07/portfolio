@@ -143,7 +143,7 @@ api.interceptors.response.use(
             if (shouldTranslate) {
                 // Add a global timeout to the translation process to prevent hung requests from blocking the UI
                 const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Auto-translation timed out')), 15000)
+                    setTimeout(() => reject(new Error('Auto-translation timed out')), 45000)
                 );
                 
                 try {

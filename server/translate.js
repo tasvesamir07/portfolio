@@ -89,7 +89,7 @@ const fetchTranslatedChunk = async (text, targetLanguage) => {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
-        timeout: 15000
+        timeout: 30000
     });
 
     const segments = Array.isArray(response.data?.[0]) ? response.data[0] : [];
