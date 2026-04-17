@@ -81,12 +81,14 @@ const fetchTranslatedChunk = async (text, targetLanguage) => {
         client: 'gtx',
         sl: 'auto',
         tl: targetLanguage,
-        dt: 't',
-        q: text
+        dt: 't'
     };
 
-    const response = await axios.get(TRANSLATE_ENDPOINT, {
+    const response = await axios.post(TRANSLATE_ENDPOINT, `q=${encodeURIComponent(text)}`, {
         params,
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
         timeout: 15000
     });
 
