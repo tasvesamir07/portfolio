@@ -17,10 +17,12 @@ const Home = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const aboutRes = await api.get('/about');
+                const [aboutRes, socialRes] = await Promise.all([
+                    api.get('/about'),
+                    api.get('/social-links')
+                ]);
+
                 setAboutData(aboutRes.data);
-                
-                const socialRes = await api.get('/social-links');
                 setSocialLinks(socialRes.data);
             } catch (err) {
                 console.error('Error fetching home data:', err);

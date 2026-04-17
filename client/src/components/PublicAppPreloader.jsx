@@ -14,10 +14,13 @@ const PUBLIC_ROUTE_LOADERS = [
     () => import('../pages/DynamicPage')
 ];
 
-const PUBLIC_ENDPOINTS = [
+const CORE_PUBLIC_ENDPOINTS = [
     '/about',
     '/social-links',
-    '/pages',
+    '/pages'
+];
+
+const SECONDARY_PUBLIC_ENDPOINTS = [
     '/academics',
     '/experiences',
     '/trainings',
@@ -30,15 +33,58 @@ const PUBLIC_ENDPOINTS = [
     '/projects'
 ];
 
-const BATCH_SIZE = 4;
+const LOAD_FALLBACK_DELAY_MS = 1200;
+const IDLE_TIMEOUT_MS = 3500;
 let routeWarmupPromise = null;
 const languageWarmupPromises = new Map();
 
-const runInBatches = async (items, batchSize, worker) => {
-    for (let index = 0; index < items.length; index += batchSize) {
-        const batch = items.slice(index, index + batchSize);
-        await Promise.allSettled(batch.map(worker));
+const runWithConcurrency = async (items, concurrency, worker) => {
+    if (!items.length) return;
+
+    const safeConcurrency = Math.max(1, Math.min(concurrency, items.length));
+    let nextIndex = 0;
+
+    const workers = Array.from({ length: safeConcurrency }, async () => {
+        while (nextIndex < items.length) {
+            const currentIndex = nextIndex++;
+            await worker(items[currentIndex]);
+        }
+    });
+
+    await Promise.allSettled(workers);
+};
+
+const getClientConnection = () => {
+    if (typeof navigator === 'undefined') return null;
+    return navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
+};
+
+const getWarmupProfile = () => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+        return { shouldSkipWarmup: false, includeSecondaryWarmup: true };
     }
+
+    const connection = getClientConnection();
+    const effectiveType = String(connection?.effectiveType || '').toLowerCase();
+    const saveData = connection?.saveData === true;
+    const lowBandwidth = ['slow-2g', '2g', '3g'].includes(effectiveType);
+
+    const viewportWidth = window.innerWidth || 0;
+    const touchPoints = Number(navigator.maxTouchPoints || 0);
+    const likelyMobile = viewportWidth > 0 && viewportWidth <= 1024 && touchPoints > 0;
+
+    const deviceMemory = Number(navigator.deviceMemory || 0);
+    const lowMemory = Number.isFinite(deviceMemory) && deviceMemory > 0 && deviceMemory <= 4;
+
+    const cpuCores = Number(navigator.hardwareConcurrency || 0);
+    const lowCpu = Number.isFinite(cpuCores) && cpuCores > 0 && cpuCores <= 4;
+    const constrainedDevice = lowMemory || lowCpu;
+
+    return {
+        shouldSkipWarmup: saveData || lowBandwidth || likelyMobile,
+        includeSecondaryWarmup: !constrainedDevice && !likelyMobile,
+        apiWarmupConcurrency: constrainedDevice ? 2 : 4
+    };
 };
 
 const warmRouteBundles = () => {
@@ -49,15 +95,19 @@ const warmRouteBundles = () => {
     return routeWarmupPromise;
 };
 
-const warmApiCache = async () => {
-    await runInBatches(PUBLIC_ENDPOINTS, BATCH_SIZE, (endpoint) => api.get(endpoint));
+const warmApiCache = async (includeSecondaryWarmup, apiWarmupConcurrency) => {
+    const endpoints = includeSecondaryWarmup
+        ? [...CORE_PUBLIC_ENDPOINTS, ...SECONDARY_PUBLIC_ENDPOINTS]
+        : CORE_PUBLIC_ENDPOINTS;
+
+    await runWithConcurrency(endpoints, apiWarmupConcurrency, (endpoint) => api.get(endpoint));
 };
 
-const preloadPublicApp = (language) => {
+const preloadPublicApp = (language, includeSecondaryWarmup, apiWarmupConcurrency) => {
     if (!languageWarmupPromises.has(language)) {
         languageWarmupPromises.set(
             language,
-            Promise.allSettled([warmRouteBundles(), warmApiCache()]).finally(() => {
+            Promise.allSettled([warmRouteBundles(), warmApiCache(includeSecondaryWarmup, apiWarmupConcurrency)]).finally(() => {
                 languageWarmupPromises.delete(language);
             })
         );
@@ -71,19 +121,47 @@ const scheduleWarmup = (language) => {
         return () => {};
     }
 
-    if (typeof window.requestIdleCallback === 'function') {
-        const idleId = window.requestIdleCallback(() => {
-            preloadPublicApp(language);
-        }, { timeout: 1200 });
-
-        return () => window.cancelIdleCallback?.(idleId);
+    const { shouldSkipWarmup, includeSecondaryWarmup, apiWarmupConcurrency } = getWarmupProfile();
+    if (shouldSkipWarmup) {
+        return () => {};
     }
 
-    const timeoutId = window.setTimeout(() => {
-        preloadPublicApp(language);
-    }, 150);
+    let idleId = null;
+    let timeoutId = null;
+    let cancelled = false;
 
-    return () => window.clearTimeout(timeoutId);
+    const runWarmup = () => {
+        if (cancelled) return;
+        preloadPublicApp(language, includeSecondaryWarmup, apiWarmupConcurrency);
+    };
+
+    const scheduleIdleWarmup = () => {
+        if (typeof window.requestIdleCallback === 'function') {
+            idleId = window.requestIdleCallback(runWarmup, { timeout: IDLE_TIMEOUT_MS });
+            return;
+        }
+
+        timeoutId = window.setTimeout(runWarmup, LOAD_FALLBACK_DELAY_MS);
+    };
+
+    if (document.readyState === 'complete') {
+        scheduleIdleWarmup();
+    } else {
+        window.addEventListener('load', scheduleIdleWarmup, { once: true });
+    }
+
+    return () => {
+        cancelled = true;
+        window.removeEventListener('load', scheduleIdleWarmup);
+
+        if (idleId != null) {
+            window.cancelIdleCallback?.(idleId);
+        }
+
+        if (timeoutId != null) {
+            window.clearTimeout(timeoutId);
+        }
+    };
 };
 
 const PublicAppPreloader = () => {
