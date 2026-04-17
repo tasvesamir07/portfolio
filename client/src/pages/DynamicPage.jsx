@@ -36,8 +36,8 @@ const DynamicPage = () => {
     const pageTitleRaw = getLocalizedField(page, 'title', language, page?.title || '');
     
     // Dynamic translation
-    const pageTitle = useTranslatedText(pageTitleRaw, language);
-    const renderedContent = useTranslatedHtml(renderedContentRaw, language);
+    const pageTitle = useTranslatedText(pageTitleRaw, language, { force: true });
+    const renderedContent = useTranslatedHtml(renderedContentRaw, language, { force: true });
 
     useEffect(() => {
         const fetchPage = async () => {
@@ -89,6 +89,7 @@ const DynamicPage = () => {
                 {structuredItems.length ? (
                     <StructuredDetails
                         items={structuredItems}
+                        forceTranslate
                         className="space-y-6 dynamic-page-content"
                         titleClassName="text-2xl font-black text-gray-900 leading-tight"
                         textClassName="text-gray-700 font-medium leading-8 break-words"

@@ -369,10 +369,7 @@ export const translateText = async (text = '', language = 'en') => {
     return `${leadingWhitespace}${translated}${trailingWhitespace}`;
 };
 
-const isAdminRoute = () =>
-    typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
-
-export const shouldRunLiveClientTranslation = () => isAdminRoute();
+export const shouldRunLiveClientTranslation = () => true;
 
 export const translateHtml = async (html = '', language = getCurrentLanguage()) => {
     if (!html) return html;
