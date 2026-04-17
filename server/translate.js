@@ -130,7 +130,13 @@ const translateText = async (text = '', language = 'en') => {
 };
 
 const translateTexts = async (texts = [], language = 'en') => {
-    return Promise.all((texts || []).map((text) => translateText(text, language)));
+    const results = [];
+    for (const text of texts || []) {
+        results.push(await translateText(text, language));
+        // 100ms cooldown to prevent Google 429 Too Many Requests IP bans
+        await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    return results;
 };
 
 module.exports = {
