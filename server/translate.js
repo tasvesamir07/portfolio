@@ -98,8 +98,9 @@ const fetchTranslatedChunk = async (text, targetLanguage) => {
 
 const translateText = async (text = '', language = 'en') => {
     const targetLanguage = normalizeTargetLanguage(language);
-    console.log(`Translating "${text}" to "${targetLanguage}"`);
-    if (!text || !text.trim() || isLikelyAlreadyInTargetLanguage(text, targetLanguage)) {
+    
+    // Only skip if the text is clearly empty or whitespace
+    if (!text || !text.trim()) {
         return text;
     }
 
@@ -133,52 +134,35 @@ const translateTexts = async (texts = [], language = 'en') => {
     if (!texts || texts.length === 0) return [];
     
     const results = new Array(texts.length);
-    const DELIMITER = ' [[]] ';
-    const MAX_BLOCK_CHARS = 3500;
+    const CHUNK_SIZE = 5;
     
-    let currentBlock = [];
-    let currentBlockIndices = [];
-    let currentBlockLength = 0;
-    
-    const processBlock = async (block, indices) => {
-        if (!block.length) return;
-        try {
-            const joinedText = block.join(DELIMITER);
-            const translatedJoined = await translateText(joinedText, language);
-            const parts = translatedJoined.split(/\[\[\s*\]\]|\[\]/); // Handle potential spaces added by translate
+    for (let i = 0; i < texts.length; i += CHUNK_SIZE) {
+        const chunkIndices = [];
+        const chunkPromises = [];
+        
+        for (let j = i; j < Math.min(i + CHUNK_SIZE, texts.length); j++) {
+            const text = String(texts[j] || '').trim();
+            if (!text) {
+                results[j] = texts[j];
+                continue;
+            }
+            chunkIndices.push(j);
+            chunkPromises.push(translateText(text, language));
+        }
+        
+        if (chunkPromises.length > 0) {
+            const chunkResults = await Promise.all(chunkPromises);
+            chunkIndices.forEach((originalIndex, index) => {
+                results[originalIndex] = chunkResults[index];
+            });
             
-            indices.forEach((originalIndex, i) => {
-                results[originalIndex] = (parts[i] || block[i]).trim();
-            });
-        } catch (error) {
-            console.error('Block translation failed:', error);
-            indices.forEach((originalIndex, i) => {
-                results[originalIndex] = block[i];
-            });
+            // Short delay to avoid 429 after each parallel chunk
+            if (i + CHUNK_SIZE < texts.length) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
         }
-    };
-    
-    for (let i = 0; i < texts.length; i++) {
-        const text = String(texts[i] || '').trim();
-        if (!text) {
-            results[i] = texts[i];
-            continue;
-        }
-        
-        if (currentBlockLength + text.length + DELIMITER.length > MAX_BLOCK_CHARS) {
-            await processBlock(currentBlock, currentBlockIndices);
-            await new Promise(resolve => setTimeout(resolve, 400)); // Delay between blocks
-            currentBlock = [];
-            currentBlockIndices = [];
-            currentBlockLength = 0;
-        }
-        
-        currentBlock.push(text);
-        currentBlockIndices.push(i);
-        currentBlockLength += text.length + DELIMITER.length;
     }
     
-    await processBlock(currentBlock, currentBlockIndices);
     return results;
 };
 

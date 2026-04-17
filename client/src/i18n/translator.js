@@ -8,8 +8,8 @@ const TRANSLATE_API_URL = `${defaultBaseUrl}/translate`;
 const STORAGE_KEY = 'portfolio-language';
 const MAX_BATCH_ITEMS = 20;
 const BATCH_FLUSH_DELAY_MS = 12;
-const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v5';
-const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v5';
+const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v6';
+const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v6';
 const MAX_PERSISTED_CACHE_ENTRIES = 250;
 
 const textCache = new Map();
