@@ -136,9 +136,10 @@ api.interceptors.response.use(
             const method = (response.config?.method || 'get').toLowerCase();
             const language = response.config?.metadataLanguage || response.config?.headers?.[LANGUAGE_HEADER] || 'en';
             const shouldTranslate = method === 'get'
-                && !String(response.config?.url || '').includes('/translate')
+                && !configUrl.includes('/translate')
                 && response.headers?.['x-response-translated'] !== '1'
-                && response.config?.headers?.['X-Skip-Auto-Translate'] !== '1';
+                && configHeaders?.['X-Skip-Auto-Translate'] !== '1'
+                && (configUrl.includes('/api/') || configUrl.startsWith('http'));
 
             if (shouldTranslate) {
                 // Add a global timeout to the translation process to prevent hung requests from blocking the UI

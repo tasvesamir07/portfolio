@@ -15,9 +15,10 @@ const Research = () => {
         const fetchResearch = async () => {
             try {
                 const res = await api.get('/research');
-                setResearch(res.data);
+                setResearch(Array.isArray(res.data) ? res.data : []);
             } catch (err) {
                 console.error('Error fetching research:', err);
+                setResearch([]);
             }
         };
         fetchResearch();
