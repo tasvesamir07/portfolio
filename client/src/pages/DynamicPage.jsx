@@ -29,6 +29,7 @@ const DynamicPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { language, t } = useI18n();
+    const shouldForceDynamicTranslation = language === 'en';
 
     // Hooks at top level to satisfy Rules of Hooks
     const structuredItems = parseStructuredItems(getLocalizedFirstField(page, ['details_json'], language, ''));
@@ -36,8 +37,8 @@ const DynamicPage = () => {
     const pageTitleRaw = getLocalizedField(page, 'title', language, page?.title || '');
     
     // Dynamic translation
-    const pageTitle = useTranslatedText(pageTitleRaw, language, { force: true });
-    const renderedContent = useTranslatedHtml(renderedContentRaw, language, { force: true });
+    const pageTitle = useTranslatedText(pageTitleRaw, language, { force: shouldForceDynamicTranslation });
+    const renderedContent = useTranslatedHtml(renderedContentRaw, language, { force: shouldForceDynamicTranslation });
 
     useEffect(() => {
         const fetchPage = async () => {
@@ -89,7 +90,7 @@ const DynamicPage = () => {
                 {structuredItems.length ? (
                     <StructuredDetails
                         items={structuredItems}
-                        forceTranslate
+                        forceTranslate={shouldForceDynamicTranslation}
                         className="space-y-6 dynamic-page-content"
                         titleClassName="text-2xl font-black text-gray-900 leading-tight"
                         textClassName="text-gray-700 font-medium leading-8 break-words"
