@@ -318,12 +318,12 @@ const About = ({ data }) => {
             list.style.removeProperty('row-gap');
         };
 
-        const syncPanelHeight = () => {
-            if (window.innerWidth < 1024) {
-                resetMobilePanelStyles();
-                return;
-            }
+        if (window.innerWidth < 1024) {
+            resetMobilePanelStyles();
+            return;
+        }
 
+        const syncPanelHeight = () => {
             const imageHeight = imageColumn.getBoundingClientRect().height;
             const itemCount = Math.max(highlightItems.length, 1);
 
@@ -426,17 +426,13 @@ const About = ({ data }) => {
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.6 }}
                             >
-                                <motion.div
-                                    animate={{ y: [0, -10, 0] }}
-                                    transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
-                                    className="bg-white p-2 rounded-sm shadow-2xl border border-gray-100 aspect-[3/4] overflow-hidden"
-                                >
+                                <div className="bg-white p-2 rounded-sm shadow-2xl border border-gray-100 aspect-[3/4] overflow-hidden">
                                     <img
                                         src={hero_image_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'}
                                         alt={localizedName || 'Profile'}
-                                        className="w-full h-full object-cover object-top filter contrast-105"
+                                        className="w-full h-full object-cover object-top filter contrast-105 pointer-events-none select-none"
                                     />
-                                </motion.div>
+                                </div>
                             </motion.div>
                         </div>
                     </div>

@@ -31,6 +31,8 @@
     @apply bg-background text-foreground font-sans selection:bg-[#0b3b75]/20 selection:text-[#0b3b75] leading-relaxed overflow-x-hidden;
     word-break: normal;
     overflow-wrap: normal;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
     hyphens: none;
     -webkit-hyphens: none;
     -ms-hyphens: none;
