@@ -324,12 +324,27 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
         return responseTranslationCache.get(cacheKey);
     }
 
-    const translated = await translateResponseData(payload, normalizedLanguage);
-    responseTranslationCache.set(cacheKey, translated);
-    trimResponseTranslationCache();
-    res.setHeader(RESPONSE_TRANSLATED_HEADER, '1');
-    return translated;
+    try {
+        // Add a 5-second timeout for server-side translation to ensure data is served even if translation is slow.
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Server translation timeout')), 5000)
+        );
+
+        const translated = await Promise.race([
+            translateResponseData(payload, normalizedLanguage),
+            timeoutPromise
+        ]);
+
+        responseTranslationCache.set(cacheKey, translated);
+        trimResponseTranslationCache();
+        res.setHeader(RESPONSE_TRANSLATED_HEADER, '1');
+        return translated;
+    } catch (err) {
+        console.warn(`[Auto-Translate] Falling back to original data for ${req.path} (${normalizedLanguage}) due to: ${err.message}`);
+        return payload;
+    }
 };
+
 
 // Global response translator for public GET API responses.
 // This keeps translation centralized on the server and allows shared caching.
@@ -348,14 +363,14 @@ app.use((req, res, next) => {
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         return Promise.resolve(maybeTranslateApiPayload(req, res, payload, language))
             .then((translatedPayload) => originalJson(translatedPayload))
-            .catch((error) => {
-                console.error('Server-side response translation failed:', error?.message || error);
+            .catch((err) => {
+                console.warn(`[Auto-Translate] Error for ${req.path}:`, err.message);
                 return originalJson(payload);
             });
     };
-
     next();
 });
+
 
 const translateResponseData = async (value, language = 'en', key = '', options = {}) => {
     if (value == null || SKIP_TRANSLATION_KEYS.has(key)) {
