@@ -31,6 +31,45 @@ const Field = ({ label, required, children }) => (
     </div>
 );
 
+const MAX_UPLOAD_SIZE_MB = 4;
+const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
+
+const getAcceptedFileLabel = (accept = 'image/*') => {
+    if (!accept || accept === 'image/*') return 'Images only';
+
+    return accept
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .map((part) => {
+            if (part === 'image/*') return 'Images';
+            return part.replace(/^\./, '').toUpperCase();
+        })
+        .join(', ');
+};
+
+const formatUploadErrorMessage = (error) => {
+    if (error?.response?.status === 413) {
+        return `File is too large. Maximum upload size is ${MAX_UPLOAD_SIZE_MB} MB.`;
+    }
+
+    const responseError = error?.response?.data?.error;
+    if (typeof responseError === 'string' && responseError.trim()) {
+        return responseError;
+    }
+
+    const responseMessage = error?.response?.data?.message;
+    if (typeof responseMessage === 'string' && responseMessage.trim()) {
+        return responseMessage;
+    }
+
+    if (typeof error?.message === 'string' && error.message.trim() && error.message !== 'Network Error') {
+        return error.message;
+    }
+
+    return 'Upload failed. Please try again with a smaller file.';
+};
+
 const QUILL_SIZE_WHITELIST = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '30px', '36px', '48px'];
 let quillRegistered = false;
 
@@ -1035,10 +1074,21 @@ const StructuredItemsEditor = ({ items = [], onChange, itemLabel = 'Entry' }) =>
 
 const FileUploadField = ({ value, onChange, label, required, accept = "image/*" }) => {
     const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState('');
+    const acceptedFileLabel = getAcceptedFileLabel(accept);
     
     const handleFileChange = async (e) => {
-        const file = e.target.files[0];
+        const input = e.target;
+        const file = input.files[0];
         if (!file) return;
+
+        setUploadError('');
+
+        if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+            setUploadError(`"${file.name}" is too large. Maximum upload size is ${MAX_UPLOAD_SIZE_MB} MB.`);
+            input.value = '';
+            return;
+        }
 
         const formData = new FormData();
         formData.append('file', file);
@@ -1046,11 +1096,13 @@ const FileUploadField = ({ value, onChange, label, required, accept = "image/*" 
         setUploading(true);
         try {
             const res = await api.post('/upload', formData);
+            setUploadError('');
             onChange(res.data.url);
         } catch (err) {
-            alert('Upload failed: ' + (err.response?.data?.error || err.message));
+            setUploadError(formatUploadErrorMessage(err));
         } finally {
             setUploading(false);
+            input.value = '';
         }
     };
 
@@ -1086,6 +1138,15 @@ const FileUploadField = ({ value, onChange, label, required, accept = "image/*" 
                     </label>
                     {value && <span className="text-[10px] text-brand-gold font-bold uppercase italic">File Active</span>}
                 </div>
+                <p className="text-[11px] text-gray-500">
+                    Allowed: {acceptedFileLabel}. Max {MAX_UPLOAD_SIZE_MB} MB.
+                </p>
+                {uploadError && (
+                    <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                        <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                        <span>{uploadError}</span>
+                    </div>
+                )}
             </div>
         </Field>
     );

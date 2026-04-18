@@ -3,9 +3,17 @@ const path = require('path');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
 
+const MAX_UPLOAD_SIZE_MB = 4;
+const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
+
 // Configure multer for temporary storage
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({
+    storage,
+    limits: {
+        fileSize: MAX_UPLOAD_SIZE_BYTES
+    }
+});
 
 const processFile = async (file) => {
     // We use the original extension since sharp (native resizing) 
@@ -50,4 +58,4 @@ const processFile = async (file) => {
     throw new Error('File upload failed: Supabase storage is not configured.');
 };
 
-module.exports = { upload, processFile };
+module.exports = { upload, processFile, MAX_UPLOAD_SIZE_MB, MAX_UPLOAD_SIZE_BYTES };

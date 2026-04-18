@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('./db');
 const authenticateToken = require('./auth');
-const { upload, processFile } = require('./upload');
+const { upload, processFile, MAX_UPLOAD_SIZE_MB } = require('./upload');
 const path = require('path');
 const { translateTexts } = require('./translate');
 
@@ -558,16 +558,26 @@ const loginHandler = async (req, res) => {
 app.post('/api/admin-login', loginHandler);
 
 // --- Upload ---
-app.post('/api/upload', authenticateToken, upload.single('file'), async (req, res) => {
-    try {
-        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-        const filePath = await processFile(req.file);
-        // Important: Return absolute URL for frontend consumption
-        const fullUrl = filePath.startsWith('http') ? filePath : `${req.protocol}://${req.get('host')}${filePath}`;
-        res.json({ url: fullUrl });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+app.post('/api/upload', authenticateToken, (req, res) => {
+    upload.single('file')(req, res, async (uploadErr) => {
+        if (uploadErr) {
+            if (uploadErr.code === 'LIMIT_FILE_SIZE') {
+                return res.status(413).json({ error: `File is too large. Maximum upload size is ${MAX_UPLOAD_SIZE_MB} MB.` });
+            }
+
+            return res.status(400).json({ error: uploadErr.message || 'Upload failed.' });
+        }
+
+        try {
+            if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+            const filePath = await processFile(req.file);
+            // Important: Return absolute URL for frontend consumption
+            const fullUrl = filePath.startsWith('http') ? filePath : `${req.protocol}://${req.get('host')}${filePath}`;
+            res.json({ url: fullUrl });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    });
 });
 
 
