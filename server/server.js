@@ -806,7 +806,8 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
     }
 });
 
-app.post('/api/profile/request-otp', authenticateToken, async (req, res) => {
+app.post('/api/profile-otp', authenticateToken, async (req, res) => {
+    console.log('[Route-Hit] POST /api/profile-otp');
     try {
         const user = await getUserById(req.user.id);
         if (!user) {
@@ -893,7 +894,8 @@ app.post('/api/profile/request-otp', authenticateToken, async (req, res) => {
     }
 });
 
-app.post('/api/profile/confirm-update', authenticateToken, async (req, res) => {
+app.post('/api/profile-confirm', authenticateToken, async (req, res) => {
+    console.log('[Route-Hit] POST /api/profile-confirm');
     try {
         const otp = String(req.body?.otp || '').trim();
         if (!/^\d{6}$/.test(otp)) {
