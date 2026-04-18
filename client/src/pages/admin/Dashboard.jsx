@@ -1489,7 +1489,7 @@ const Dashboard = () => {
                 }
 
                 if (!formData.otp_requested) {
-                    const res = await api.post('/profile/request-otp', {
+                    const res = await api.post('/profile-otp', {
                         username,
                         email,
                         password
@@ -1511,7 +1511,7 @@ const Dashboard = () => {
                     throw new Error('Enter the 6-digit OTP sent to your email.');
                 }
 
-                const res = await api.post('/profile/confirm-update', { otp });
+                const res = await api.post('/profile-confirm', { otp });
                 if (res.data?.token) {
                     storeSessionToken(res.data.token);
                 }
