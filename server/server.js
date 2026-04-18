@@ -1029,44 +1029,70 @@ app.put('/api/about', authenticateToken, async (req, res) => {
         custom_nav
     } = req.body;
     try {
-        const previousResult = await db.query('SELECT resume_url, hero_image_url, logo_url FROM about LIMIT 1');
-        const previousAbout = previousResult.rows[0] || {};
-        const result = await db.query(
-            `UPDATE about SET
-                bio_text = $1,
-                resume_url = $2,
-                name = $3,
-                location = $4,
-                title = $5,
-                hero_image_url = $6,
-                sub_bio = $7,
-                logo_url = $8,
-                site_name = $9,
-                custom_nav = COALESCE($10::jsonb, custom_nav)
-             WHERE id = (SELECT id FROM about LIMIT 1)
-             RETURNING *`,
-            [
-                bio_text || '',
-                resume_url || '',
-                name || '',
-                location || '',
-                title || '',
-                hero_image_url || '',
-                sub_bio || '',
-                logo_url || '',
-                site_name || '',
-                custom_nav ? JSON.stringify(custom_nav) : null
-            ]
-        );
-        await cleanMediaUrls(diffRemovedMediaUrls(
-            [previousAbout.resume_url, previousAbout.hero_image_url, previousAbout.logo_url],
-            [resume_url || '', hero_image_url || '', logo_url || '']
-        ));
+        const checkResult = await db.query('SELECT id, resume_url, hero_image_url, logo_url FROM about LIMIT 1');
+        const existing = checkResult.rows[0];
+
+        let result;
+        if (existing) {
+            result = await db.query(
+                `UPDATE about SET
+                    bio_text = $1,
+                    resume_url = $2,
+                    name = $3,
+                    location = $4,
+                    title = $5,
+                    hero_image_url = $6,
+                    sub_bio = $7,
+                    logo_url = $8,
+                    site_name = $9,
+                    custom_nav = COALESCE($10::jsonb, custom_nav),
+                    updated_at = CURRENT_TIMESTAMP
+                 WHERE id = $11
+                 RETURNING *`,
+                [
+                    bio_text || '',
+                    resume_url || '',
+                    name || '',
+                    location || '',
+                    title || '',
+                    hero_image_url || '',
+                    sub_bio || '',
+                    logo_url || '',
+                    site_name || '',
+                    custom_nav ? JSON.stringify(custom_nav) : null,
+                    existing.id
+                ]
+            );
+            await cleanMediaUrls(diffRemovedMediaUrls(
+                [existing.resume_url, existing.hero_image_url, existing.logo_url],
+                [resume_url || '', hero_image_url || '', logo_url || '']
+            ));
+        } else {
+            result = await db.query(
+                `INSERT INTO about (bio_text, resume_url, name, location, title, hero_image_url, sub_bio, logo_url, site_name, custom_nav)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10::jsonb, '[]'::jsonb))
+                 RETURNING *`,
+                [
+                    bio_text || '',
+                    resume_url || '',
+                    name || '',
+                    location || '',
+                    title || '',
+                    hero_image_url || '',
+                    sub_bio || '',
+                    logo_url || '',
+                    site_name || '',
+                    custom_nav ? JSON.stringify(custom_nav) : null
+                ]
+            );
+        }
         res.json(result.rows[0]);
     } catch (err) {
+        console.error('Update About Error:', err);
         res.status(500).json({ error: err.message });
     }
 });
+
 
 // --- Academics ---
 app.get('/api/academics', async (req, res) => {
