@@ -4,6 +4,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import { Plus, Trash2, Edit3, Save, ExternalLink, Image as ImageIcon, GraduationCap, Briefcase, FileText, User, Share2, Github, Linkedin, Twitter, Mail, Instagram, Globe, X, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 import api from '../../api';
 import ConfirmModal from '../../components/ConfirmModal';
+import { showSiteAlert } from '../../utils/siteAlerts';
 import {
     createStructuredItem,
     parseStructuredItems,
@@ -68,6 +69,14 @@ const formatUploadErrorMessage = (error) => {
     }
 
     return 'Upload failed. Please try again with a smaller file.';
+};
+
+const uploadFileToMediaApi = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await api.post('/upload', formData);
+    return res.data.url;
 };
 
 const QUILL_SIZE_WHITELIST = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '30px', '36px', '48px'];
@@ -367,10 +376,13 @@ const normalizeInlineRichText = (html = '') => {
 
 const InlineFormatEditor = ({ value, onChange, placeholder }) => {
     const editorRef = React.useRef(null);
+    const savedRangeRef = React.useRef(null);
     const latestValueRef = React.useRef(value || '');
     const lastCommittedValueRef = React.useRef(value || '');
     const onChangeRef = React.useRef(onChange);
     const timerRef = React.useRef(null);
+    const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+    const [linkUrl, setLinkUrl] = useState('https://');
 
     useEffect(() => {
         onChangeRef.current = onChange;
@@ -470,6 +482,14 @@ const InlineFormatEditor = ({ value, onChange, placeholder }) => {
         emitChange();
     };
 
+    const restoreSavedSelection = () => {
+        const selection = window.getSelection();
+        if (!selection || !savedRangeRef.current) return false;
+        selection.removeAllRanges();
+        selection.addRange(savedRangeRef.current);
+        return true;
+    };
+
     const applyLink = () => {
         if (!editorRef.current) return;
         editorRef.current.focus();
@@ -477,59 +497,113 @@ const InlineFormatEditor = ({ value, onChange, placeholder }) => {
         const selection = window.getSelection();
         const selectedText = selection?.toString().trim() || '';
         if (!selectedText) {
-            alert('Select the text first, then add the link.');
+            showSiteAlert({ type: 'error', message: 'Select the text first, then add the link.' });
             return;
         }
 
-        const url = window.prompt('Enter link URL', 'https://');
-        if (!url) return;
+        if (selection?.rangeCount) {
+            savedRangeRef.current = selection.getRangeAt(0).cloneRange();
+        }
 
-        document.execCommand('createLink', false, url);
+        setLinkUrl('https://');
+        setIsLinkDialogOpen(true);
+    };
+
+    const handleLinkConfirm = () => {
+        const trimmedUrl = linkUrl.trim();
+        if (!trimmedUrl) {
+            showSiteAlert({ type: 'error', message: 'Enter a valid link URL.' });
+            return;
+        }
+
+        editorRef.current?.focus();
+        restoreSavedSelection();
+        document.execCommand('createLink', false, trimmedUrl);
         emitChange();
+        savedRangeRef.current = null;
+        setIsLinkDialogOpen(false);
     };
 
     return (
-        <div className="rounded-xl border border-gray-300 bg-white overflow-hidden shadow-sm">
-            <div className="flex items-center gap-1 border-b border-gray-200 bg-gray-50 px-2 py-1.5">
-                <button
-                    type="button"
-                    onClick={() => applyFormat('bold')}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-700 hover:bg-gray-200"
-                    aria-label="Bold"
-                    title="Bold"
-                >
-                    <strong>B</strong>
-                </button>
-                <button
-                    type="button"
-                    onClick={() => applyFormat('italic')}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-700 hover:bg-gray-200 italic"
-                    aria-label="Italic"
-                    title="Italic"
-                >
-                    I
-                </button>
-                <button
-                    type="button"
-                    onClick={applyLink}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-700 hover:bg-gray-200"
-                    aria-label="Add link"
-                    title="Add link"
-                >
-                    <ExternalLink size={14} />
-                </button>
+        <>
+            <div className="rounded-xl border border-gray-300 bg-white overflow-hidden shadow-sm">
+                <div className="flex items-center gap-1 border-b border-gray-200 bg-gray-50 px-2 py-1.5">
+                    <button
+                        type="button"
+                        onClick={() => applyFormat('bold')}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-700 hover:bg-gray-200"
+                        aria-label="Bold"
+                        title="Bold"
+                    >
+                        <strong>B</strong>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => applyFormat('italic')}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-700 hover:bg-gray-200 italic"
+                        aria-label="Italic"
+                        title="Italic"
+                    >
+                        I
+                    </button>
+                    <button
+                        type="button"
+                        onClick={applyLink}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-700 hover:bg-gray-200"
+                        aria-label="Add link"
+                        title="Add link"
+                    >
+                        <ExternalLink size={14} />
+                    </button>
+                </div>
+                <div
+                    ref={editorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onInput={() => emitChange()}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    data-placeholder={placeholder}
+                    className="mini-inline-editor min-h-[52px] px-3 py-2.5 text-sm text-gray-900 outline-none"
+                />
             </div>
-            <div
-                ref={editorRef}
-                contentEditable
-                suppressContentEditableWarning
-                onInput={() => emitChange()}
-                onBlur={handleBlur}
-                onKeyDown={handleKeyDown}
-                data-placeholder={placeholder}
-                className="mini-inline-editor min-h-[52px] px-3 py-2.5 text-sm text-gray-900 outline-none"
-            />
-        </div>
+            {isLinkDialogOpen && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white p-6 shadow-2xl">
+                        <div className="mb-4 text-left">
+                            <h3 className="text-lg font-bold text-gray-900">Add Link</h3>
+                            <p className="mt-1 text-sm text-gray-500">Enter the full URL for the selected text.</p>
+                        </div>
+                        <input
+                            autoFocus
+                            className="input"
+                            value={linkUrl}
+                            onChange={(event) => setLinkUrl(event.target.value)}
+                            placeholder="https://example.com"
+                        />
+                        <div className="mt-5 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    savedRangeRef.current = null;
+                                    setIsLinkDialogOpen(false);
+                                }}
+                                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-bold text-gray-600 transition-colors hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleLinkConfirm}
+                                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700"
+                            >
+                                Insert Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 
@@ -1152,6 +1226,111 @@ const FileUploadField = ({ value, onChange, label, required, accept = "image/*" 
     );
 };
 
+const GalleryBulkUploadField = ({ files = [], onChange, disabled = false }) => {
+    const [selectionError, setSelectionError] = useState('');
+
+    const queuedFiles = React.useMemo(
+        () => files.map((file, index) => ({
+            id: `${file.name}-${file.size}-${file.lastModified}-${index}`,
+            file,
+            previewUrl: URL.createObjectURL(file)
+        })),
+        [files]
+    );
+
+    useEffect(() => () => {
+        queuedFiles.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    }, [queuedFiles]);
+
+    const handleFileSelection = (event) => {
+        const input = event.target;
+        const selectedFiles = Array.from(input.files || []);
+        if (!selectedFiles.length) return;
+
+        const validFiles = [];
+        const invalidFiles = [];
+
+        selectedFiles.forEach((file) => {
+            if (!file.type.startsWith('image/')) {
+                invalidFiles.push(`${file.name} is not an image.`);
+                return;
+            }
+
+            if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+                invalidFiles.push(`${file.name} exceeds the ${MAX_UPLOAD_SIZE_MB} MB limit.`);
+                return;
+            }
+
+            validFiles.push(file);
+        });
+
+        if (validFiles.length) {
+            const existingKeys = new Set(files.map((file) => `${file.name}-${file.size}-${file.lastModified}`));
+            const dedupedFiles = validFiles.filter((file) => !existingKeys.has(`${file.name}-${file.size}-${file.lastModified}`));
+            onChange([...files, ...dedupedFiles]);
+        }
+
+        setSelectionError(invalidFiles.join(' '));
+        input.value = '';
+    };
+
+    const removeQueuedFile = (indexToRemove) => {
+        onChange(files.filter((_, index) => index !== indexToRemove));
+        setSelectionError('');
+    };
+
+    return (
+        <Field label="Bulk Gallery Upload">
+            <div className="flex flex-col gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50/60 p-4">
+                <div className="flex items-center gap-3">
+                    <label className={`flex-1 flex items-center justify-center h-11 px-4 bg-white border border-gray-300 rounded cursor-pointer hover:border-blue-500 hover:bg-white transition-all ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <div className="flex items-center gap-2">
+                            <Plus size={16} className="text-blue-600" />
+                            <span className="text-xs font-bold text-gray-700">Select Multiple Images</span>
+                        </div>
+                        <input type="file" className="hidden" accept="image/*" multiple onChange={handleFileSelection} />
+                    </label>
+                    {queuedFiles.length > 0 && (
+                        <span className="text-[10px] text-brand-gold font-bold uppercase italic">
+                            {queuedFiles.length} queued
+                        </span>
+                    )}
+                </div>
+                <p className="text-[11px] text-gray-500">
+                    Allowed: Images only. Max {MAX_UPLOAD_SIZE_MB} MB each. Files will upload one by one when you save.
+                </p>
+                {selectionError && (
+                    <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                        <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                        <span>{selectionError}</span>
+                    </div>
+                )}
+                {queuedFiles.length > 0 && (
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                        {queuedFiles.map((item, index) => (
+                            <div key={item.id} className="relative rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
+                                <img src={item.previewUrl} alt={item.file.name} className="h-24 w-full rounded object-cover" />
+                                <div className="mt-2">
+                                    <div className="truncate text-[11px] font-semibold text-gray-700">{item.file.name}</div>
+                                    <div className="text-[10px] text-gray-500">{(item.file.size / (1024 * 1024)).toFixed(2)} MB</div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => removeQueuedFile(index)}
+                                    className="absolute right-2 top-2 rounded bg-red-500 p-1 text-white hover:bg-red-600"
+                                    aria-label={`Remove ${item.file.name}`}
+                                >
+                                    <Trash2 size={12} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </Field>
+    );
+};
+
 const Dashboard = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -1176,6 +1355,8 @@ const Dashboard = () => {
     const [newCategoryName, setNewCategoryName] = useState('');
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
     const [notice, setNotice] = useState(null);
+    const [saveError, setSaveError] = useState('');
+    const [saving, setSaving] = useState(false);
 
     const openConfirmModal = (title, message, onConfirm, type = 'danger') => {
         setConfirmModal({ isOpen: true, title, message, onConfirm, type });
@@ -1186,6 +1367,12 @@ const Dashboard = () => {
         const timer = setTimeout(() => setNotice(null), 2600);
         return () => clearTimeout(timer);
     }, [notice]);
+
+    useEffect(() => {
+        if (!saveError) return undefined;
+        const timer = setTimeout(() => setSaveError(''), 5000);
+        return () => clearTimeout(timer);
+    }, [saveError]);
 
     const fetchCategories = async () => {
         try {
@@ -1223,6 +1410,7 @@ const Dashboard = () => {
         fetchData();
         setIsEditing(false);
         setFormData({});
+        setSaveError('');
     }, [activeTab]);
 
     const handleAddCategory = async (e) => {
@@ -1232,10 +1420,10 @@ const Dashboard = () => {
             const res = await api.post('/gallery-categories', { name: newCategoryName });
             setCategories([...categories, res.data]);
             setNewCategoryName('');
-            alert('Category added successfully!');
+            showSiteAlert({ type: 'success', message: 'Category added successfully.' });
         } catch (err) {
             console.error('Error adding category:', err);
-            alert('Failed to add category');
+            showSiteAlert({ type: 'error', message: 'Failed to add category.' });
         }
     };
 
@@ -1252,7 +1440,7 @@ const Dashboard = () => {
                     if (activeTab === 'gallery') fetchData();
                 } catch (err) {
                     console.error('Error deleting category:', err);
-                    alert('Error: ' + (err.response?.data?.message || err.message));
+                    showSiteAlert({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to delete category.' });
                 }
             }
         );
@@ -1260,8 +1448,16 @@ const Dashboard = () => {
 
     const handleSave = async (e) => {
         e.preventDefault();
+        setSaveError('');
+        setSaving(true);
         try {
             const endpoint = (activeTab === 'social' ? '/social-links' : activeTab === 'blog' ? '/pages' : `/${activeTab}`);
+            const hasQueuedGalleryFiles = activeTab === 'gallery' && Array.isArray(formData.gallery_files) && formData.gallery_files.length > 0;
+
+            if (activeTab === 'gallery' && !formData.id && !hasQueuedGalleryFiles && !formData.image_url) {
+                throw new Error('Please upload at least one gallery image before saving.');
+            }
+
             if (activeTab === 'about') {
                  const aboutPayload = {
                     ...formData,
@@ -1347,6 +1543,52 @@ const Dashboard = () => {
                 } else {
                     await api.post(endpoint, structuredPayload);
                 }
+            } else if (activeTab === 'gallery' && !formData.id && hasQueuedGalleryFiles) {
+                if (!formData.category) {
+                    throw new Error('Please select a category before saving gallery images.');
+                }
+
+                const results = [];
+
+                for (const file of formData.gallery_files) {
+                    try {
+                        const imageUrl = await uploadFileToMediaApi(file);
+                        const payload = {
+                            image_url: imageUrl,
+                            caption: formData.caption || '',
+                            category: formData.category || ''
+                        };
+
+                        await api.post('/gallery', payload);
+                        results.push({ name: file.name, success: true });
+                    } catch (fileError) {
+                        results.push({
+                            name: file.name,
+                            success: false,
+                            error: formatUploadErrorMessage(fileError)
+                        });
+                    }
+                }
+
+                const failedUploads = results.filter((item) => !item.success);
+                const successfulCount = results.length - failedUploads.length;
+
+                if (!successfulCount) {
+                    throw new Error(failedUploads[0]?.error || 'No gallery images were uploaded.');
+                }
+
+                if (failedUploads.length) {
+                    setNotice({
+                        type: 'success',
+                        message: `${successfulCount} image${successfulCount === 1 ? '' : 's'} saved. ${failedUploads.length} failed.`
+                    });
+                    setSaveError(failedUploads.map((item) => `${item.name}: ${item.error}`).join(' '));
+                } else {
+                    setNotice({
+                        type: 'success',
+                        message: `${successfulCount} gallery image${successfulCount === 1 ? '' : 's'} saved successfully.`
+                    });
+                }
             } else if (formData.id) {
                 await api.put(`${endpoint}/${formData.id}`, formData);
             } else {
@@ -1354,11 +1596,15 @@ const Dashboard = () => {
             }
             setIsEditing(false);
             setFormData({});
-            setNotice({ type: 'success', message: 'Saved successfully.' });
+            if (!(activeTab === 'gallery' && !formData.id && hasQueuedGalleryFiles)) {
+                setNotice({ type: 'success', message: 'Saved successfully.' });
+            }
             fetchData();
         } catch (err) {
             const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message;
-            alert('Error saving data: ' + errorMsg);
+            setSaveError(errorMsg);
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -1372,7 +1618,7 @@ const Dashboard = () => {
                     await api.delete(`${endpoint}/${id}`);
                     fetchData();
                 } catch {
-                    alert('Error deleting item');
+                    showSiteAlert({ type: 'error', message: 'Error deleting item.' });
                 }
             }
         );
@@ -1644,6 +1890,7 @@ const Dashboard = () => {
                     : nextFormData;
 
         const applyState = () => {
+            setSaveError('');
             setFormData(normalizedFormData);
             setIsEditing(true);
         };
@@ -2046,8 +2293,15 @@ const Dashboard = () => {
             case 'gallery':
                 return (
                     <div className="grid grid-cols-1 gap-4">
+                        {!formData.id && (
+                            <GalleryBulkUploadField
+                                files={formData.gallery_files || []}
+                                onChange={(files) => setFormData({ ...formData, gallery_files: files })}
+                                disabled={saving}
+                            />
+                        )}
                         <FileUploadField 
-                            label="Gallery Image" required
+                            label={formData.id ? "Gallery Image" : "Single Gallery Image (Optional)"} required={Boolean(formData.id)}
                             value={formData.image_url || ''} 
                             onChange={val => setFormData({...formData, image_url: val})} 
                         />
@@ -2317,14 +2571,20 @@ const Dashboard = () => {
                                     : <>Fill in the fields below. Fields marked with <span className="text-red-500">*</span> are mandatory.</>}
                             </p>
                         </div>
+                        {saveError && (
+                            <div className="mb-6 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                <span>{saveError}</span>
+                            </div>
+                        )}
                         <div className="space-y-4">
                             {renderForm()}
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3 mt-12 justify-center">
-                            <button type="submit" className="bg-gray-900 hover:bg-black text-white px-10 py-3 rounded font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 sm:min-w-[200px]">
-                                <Save size={18} /> {formData.id ? 'Update Record' : 'Save Record'}
+                            <button type="submit" disabled={saving} className={`bg-gray-900 hover:bg-black text-white px-10 py-3 rounded font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 sm:min-w-[200px] ${saving ? 'opacity-70 cursor-wait' : ''}`}>
+                                <Save size={18} /> {saving ? 'Saving...' : formData.id ? 'Update Record' : 'Save Record'}
                             </button>
-                            <button type="button" onClick={() => setIsEditing(false)} className="px-10 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded font-bold text-sm text-gray-600 transition-all sm:min-w-[120px]">Cancel</button>
+                            <button type="button" onClick={() => setIsEditing(false)} disabled={saving} className="px-10 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded font-bold text-sm text-gray-600 transition-all sm:min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed">Cancel</button>
                         </div>
                     </form>
                 )}

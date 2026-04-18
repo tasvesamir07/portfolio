@@ -1,29 +1,125 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { LogOut, FileText, Briefcase, GraduationCap, Image as ImageIcon, User, ExternalLink, Share2, Mail } from 'lucide-react';
+import { clearSessionToken, expireSessionAndRedirect, getStoredToken, getTokenExpiryTime, isTokenExpired, SESSION_CHANGED_EVENT } from '../utils/authSession';
+import api from '../api';
 const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const token = localStorage.getItem('samir_portfolio_token');
+    const [token, setToken] = useState(() => getStoredToken());
+    const [authReady, setAuthReady] = useState(() => location.pathname === '/admin');
 
-    // Simple check - in a real app, you'd verify the token with the backend
     useEffect(() => {
-        const path = window.location.pathname;
-        if (!token && path !== '/admin') {
-            navigate('/admin');
-        } else if (token && path === '/admin') {
-            navigate('/admin/dashboard');
+        const syncToken = () => {
+            setToken(getStoredToken());
+        };
+
+        window.addEventListener(SESSION_CHANGED_EVENT, syncToken);
+        window.addEventListener('storage', syncToken);
+
+        return () => {
+            window.removeEventListener(SESSION_CHANGED_EVENT, syncToken);
+            window.removeEventListener('storage', syncToken);
+        };
+    }, []);
+
+    useLayoutEffect(() => {
+        const path = location.pathname;
+        const currentToken = getStoredToken();
+
+        if (!currentToken) {
+            setAuthReady(path === '/admin');
+            if (path !== '/admin') {
+                navigate('/admin', { replace: true });
+            }
+            return;
         }
-    }, [token, navigate]);
+
+        if (isTokenExpired(currentToken)) {
+            setAuthReady(false);
+            expireSessionAndRedirect({ showAlert: path !== '/admin' });
+            return;
+        }
+
+        setAuthReady(true);
+        if (currentToken && path === '/admin') {
+            navigate('/admin/dashboard', { replace: true });
+        }
+    }, [token, location.pathname, navigate]);
+
+    useEffect(() => {
+        if (!token) return undefined;
+
+        let cancelled = false;
+
+        const validateSession = async () => {
+            const currentToken = getStoredToken();
+            if (!currentToken) return;
+
+            if (isTokenExpired(currentToken)) {
+                expireSessionAndRedirect({ showAlert: location.pathname !== '/admin' });
+                return;
+            }
+
+            try {
+                await api.get('/session', { enableAutoTranslate: false });
+            } catch (error) {
+                if (!cancelled) {
+                    expireSessionAndRedirect({
+                        message: error?.response?.data?.message || 'Session expired. Please log in again.'
+                    });
+                }
+            }
+        };
+
+        validateSession();
+
+        const handleFocus = () => {
+            validateSession();
+        };
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                validateSession();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+            cancelled = true;
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [token, location.pathname]);
+
+    useEffect(() => {
+        if (!token || location.pathname === '/admin') return undefined;
+
+        const expiresAt = getTokenExpiryTime(token);
+        if (!expiresAt) {
+            expireSessionAndRedirect();
+            return undefined;
+        }
+
+        const msUntilExpiry = Math.max(0, expiresAt - Date.now());
+        const timer = window.setTimeout(() => {
+            expireSessionAndRedirect();
+        }, msUntilExpiry);
+
+        return () => window.clearTimeout(timer);
+    }, [token, location.pathname]);
 
     const handleLogout = () => {
-        localStorage.removeItem('samir_portfolio_token');
-        navigate('/admin');
+        clearSessionToken();
+        navigate('/admin', { replace: true });
     };
 
-    if (!token && window.location.pathname !== '/admin') return null;
+    if (!authReady && location.pathname !== '/admin') return null;
+    if (!token && location.pathname !== '/admin') return null;
 
-    if (window.location.pathname === '/admin') return <Outlet />;
+    if (location.pathname === '/admin') return <Outlet />;
 
     return (
         <div className="h-screen flex bg-[#fcfaf7] overflow-hidden">

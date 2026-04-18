@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import api from '../api';
+import { storeSessionToken } from '../utils/authSession';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -18,7 +19,7 @@ const Login = () => {
         try {
             // Use a Vercel-safe login route (avoid /api/auth/* path conflicts).
             const res = await api.post('/admin-login', { username, password });
-            localStorage.setItem('samir_portfolio_token', res.data.token);
+            storeSessionToken(res.data.token);
             navigate('/admin/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');

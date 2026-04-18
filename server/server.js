@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('./db');
 const authenticateToken = require('./auth');
-const { upload, processFile, MAX_UPLOAD_SIZE_MB } = require('./upload');
+const { upload, processFile, deleteManagedMediaFiles, MAX_UPLOAD_SIZE_MB } = require('./upload');
 const path = require('path');
 const { translateTexts } = require('./translate');
 
@@ -18,6 +18,17 @@ const LANGUAGE_HEADER = 'x-translate-language';
 const SKIP_TRANSLATION_HEADER = 'x-skip-auto-translate';
 const RESPONSE_TRANSLATED_HEADER = 'X-Response-Translated';
 const RESPONSE_TRANSLATION_CACHE_VERSION = 'v3';
+const cleanMediaUrls = async (urls = []) => {
+    const failures = await deleteManagedMediaFiles(urls);
+    if (failures.length) {
+        console.warn('Managed media cleanup warnings:', failures.join(' | '));
+    }
+};
+
+const diffRemovedMediaUrls = (previousUrls = [], nextUrls = []) => {
+    const normalizedNextUrls = new Set((nextUrls || []).filter(Boolean));
+    return [...new Set((previousUrls || []).filter((url) => url && !normalizedNextUrls.has(url)))];
+};
 const MAX_RESPONSE_CACHE_ENTRIES = 400;
 const responseTranslationCache = new Map();
 const SKIP_TRANSLATION_KEYS = new Set([
@@ -556,6 +567,15 @@ const loginHandler = async (req, res) => {
 };
 
 app.post('/api/admin-login', loginHandler);
+app.get('/api/session', authenticateToken, (req, res) => {
+    res.json({
+        authenticated: true,
+        user: {
+            id: req.user?.id,
+            username: req.user?.username
+        }
+    });
+});
 
 // --- Upload ---
 app.post('/api/upload', authenticateToken, (req, res) => {
@@ -614,6 +634,8 @@ app.put('/api/about', authenticateToken, async (req, res) => {
         custom_nav
     } = req.body;
     try {
+        const previousResult = await db.query('SELECT resume_url, hero_image_url, logo_url FROM about LIMIT 1');
+        const previousAbout = previousResult.rows[0] || {};
         const result = await db.query(
             `UPDATE about SET
                 bio_text = $1,
@@ -641,6 +663,10 @@ app.put('/api/about', authenticateToken, async (req, res) => {
                 custom_nav ? JSON.stringify(custom_nav) : null
             ]
         );
+        await cleanMediaUrls(diffRemovedMediaUrls(
+            [previousAbout.resume_url, previousAbout.hero_image_url, previousAbout.logo_url],
+            [resume_url || '', hero_image_url || '', logo_url || '']
+        ));
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -674,10 +700,13 @@ app.post('/api/academics', authenticateToken, async (req, res) => {
 app.put('/api/academics/:id', authenticateToken, async (req, res) => {
     const { institution, degree, start_year, end_year, logo_url, details_json } = req.body;
     try {
+        const previousResult = await db.query('SELECT logo_url FROM academics WHERE id = $1', [req.params.id]);
+        const previousRow = previousResult.rows[0] || {};
         const result = await db.query(
             'UPDATE academics SET institution = $1, degree = $2, start_year = $3, end_year = $4, logo_url = $5, details_json = $6 WHERE id = $7 RETURNING *',
             [institution || '', degree || '', start_year || '', end_year || '', logo_url || '', details_json || '', req.params.id]
         );
+        await cleanMediaUrls(diffRemovedMediaUrls([previousRow.logo_url], [logo_url || '']));
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -686,7 +715,9 @@ app.put('/api/academics/:id', authenticateToken, async (req, res) => {
 
 app.delete('/api/academics/:id', authenticateToken, async (req, res) => {
     try {
+        const previousResult = await db.query('SELECT logo_url FROM academics WHERE id = $1', [req.params.id]);
         await db.query('DELETE FROM academics WHERE id = $1', [req.params.id]);
+        await cleanMediaUrls(previousResult.rows.map((row) => row.logo_url));
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -720,10 +751,16 @@ app.post('/api/publications', authenticateToken, async (req, res) => {
 app.put('/api/publications/:id', authenticateToken, async (req, res) => {
     const { title, thumbnail_url, journal_name, pub_year, authors, introduction, methods, link_url, file_url, details_json } = req.body;
     try {
+        const previousResult = await db.query('SELECT thumbnail_url, file_url FROM publications WHERE id = $1', [req.params.id]);
+        const previousRow = previousResult.rows[0] || {};
         const result = await db.query(
             'UPDATE publications SET title = $1, thumbnail_url = $2, journal_name = $3, pub_year = $4, authors = $5, introduction = $6, methods = $7, link_url = $8, file_url = $9, details_json = $10 WHERE id = $11 RETURNING *',
             [title || '', thumbnail_url || '', journal_name || '', pub_year || '', authors || '', introduction || '', methods || '', link_url || '', file_url || '', details_json || '', req.params.id]
         );
+        await cleanMediaUrls(diffRemovedMediaUrls(
+            [previousRow.thumbnail_url, previousRow.file_url],
+            [thumbnail_url || '', file_url || '']
+        ));
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -732,7 +769,9 @@ app.put('/api/publications/:id', authenticateToken, async (req, res) => {
 
 app.delete('/api/publications/:id', authenticateToken, async (req, res) => {
     try {
+        const previousResult = await db.query('SELECT thumbnail_url, file_url FROM publications WHERE id = $1', [req.params.id]);
         await db.query('DELETE FROM publications WHERE id = $1', [req.params.id]);
+        await cleanMediaUrls(previousResult.rows.flatMap((row) => [row.thumbnail_url, row.file_url]));
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -766,10 +805,16 @@ app.post('/api/research', authenticateToken, async (req, res) => {
 app.put('/api/research/:id', authenticateToken, async (req, res) => {
     const { title, description, image_url, link, file_url, status, date_text, details_json } = req.body;
     try {
+        const previousResult = await db.query('SELECT image_url, file_url FROM research WHERE id = $1', [req.params.id]);
+        const previousRow = previousResult.rows[0] || {};
         const result = await db.query(
             'UPDATE research SET title = $1, description = $2, image_url = $3, link = $4, file_url = $5, status = $6, date_text = $7, details_json = $8 WHERE id = $9 RETURNING *',
             [title || '', description || '', image_url || '', link || '', file_url || '', status || '', date_text || '', details_json || '', req.params.id]
         );
+        await cleanMediaUrls(diffRemovedMediaUrls(
+            [previousRow.image_url, previousRow.file_url],
+            [image_url || '', file_url || '']
+        ));
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -778,7 +823,9 @@ app.put('/api/research/:id', authenticateToken, async (req, res) => {
 
 app.delete('/api/research/:id', authenticateToken, async (req, res) => {
     try {
+        const previousResult = await db.query('SELECT image_url, file_url FROM research WHERE id = $1', [req.params.id]);
         await db.query('DELETE FROM research WHERE id = $1', [req.params.id]);
+        await cleanMediaUrls(previousResult.rows.flatMap((row) => [row.image_url, row.file_url]));
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -834,6 +881,7 @@ app.delete('/api/gallery-categories/:id', authenticateToken, async (req, res) =>
         if (catRes.rows.length === 0) return res.status(404).json({ error: 'Category not found' });
         
         const catName = catRes.rows[0].name;
+        const galleryRows = await db.query('SELECT image_url FROM gallery WHERE category = $1', [catName]);
 
         // Use a transaction
         await db.query('BEGIN');
@@ -845,6 +893,7 @@ app.delete('/api/gallery-categories/:id', authenticateToken, async (req, res) =>
         await db.query('DELETE FROM gallery_categories WHERE id = $1', [id]);
         
         await db.query('COMMIT');
+        await cleanMediaUrls(galleryRows.rows.map((row) => row.image_url));
         
         console.log(`Successfully deleted category "${catName}" and its related gallery items.`);
         res.json({ message: 'Category and all associated images deleted successfully' });
@@ -881,10 +930,13 @@ app.post('/api/gallery', authenticateToken, async (req, res) => {
 app.put('/api/gallery/:id', authenticateToken, async (req, res) => {
     const { image_url, caption, category } = req.body;
     try {
+        const previousResult = await db.query('SELECT image_url FROM gallery WHERE id = $1', [req.params.id]);
+        const previousRow = previousResult.rows[0] || {};
         const result = await db.query(
             'UPDATE gallery SET image_url = $1, caption = $2, category = $3 WHERE id = $4 RETURNING *',
             [image_url, caption, category, req.params.id]
         );
+        await cleanMediaUrls(diffRemovedMediaUrls([previousRow.image_url], [image_url || '']));
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -893,7 +945,9 @@ app.put('/api/gallery/:id', authenticateToken, async (req, res) => {
 
 app.delete('/api/gallery/:id', authenticateToken, async (req, res) => {
     try {
+        const previousResult = await db.query('SELECT image_url FROM gallery WHERE id = $1', [req.params.id]);
         await db.query('DELETE FROM gallery WHERE id = $1', [req.params.id]);
+        await cleanMediaUrls(previousResult.rows.map((row) => row.image_url));
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1001,10 +1055,13 @@ app.post('/api/experiences', authenticateToken, async (req, res) => {
 app.put('/api/experiences/:id', authenticateToken, async (req, res) => {
     const { company, position, location, start_date, end_date, description, logo_url, details_json } = req.body;
     try {
+        const previousResult = await db.query('SELECT logo_url FROM experiences WHERE id = $1', [req.params.id]);
+        const previousRow = previousResult.rows[0] || {};
         const result = await db.query(
             'UPDATE experiences SET company = $1, position = $2, location = $3, start_date = $4, end_date = $5, description = $6, logo_url = $7, details_json = $8 WHERE id = $9 RETURNING *',
             [company || '', position || '', location || '', start_date || '', end_date || '', description || '', logo_url || '', details_json || '', req.params.id]
         );
+        await cleanMediaUrls(diffRemovedMediaUrls([previousRow.logo_url], [logo_url || '']));
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1013,7 +1070,9 @@ app.put('/api/experiences/:id', authenticateToken, async (req, res) => {
 
 app.delete('/api/experiences/:id', authenticateToken, async (req, res) => {
     try {
+        const previousResult = await db.query('SELECT logo_url FROM experiences WHERE id = $1', [req.params.id]);
         await db.query('DELETE FROM experiences WHERE id = $1', [req.params.id]);
+        await cleanMediaUrls(previousResult.rows.map((row) => row.logo_url));
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: err.message });

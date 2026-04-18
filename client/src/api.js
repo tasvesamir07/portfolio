@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { translateApiData } from './i18n/translator';
+import { expireSessionAndRedirect, getStoredToken } from './utils/authSession';
 const STORAGE_KEY = 'portfolio-language';
 const LANGUAGE_HEADER = 'X-Translate-Language';
 const MAX_CACHED_GETS = 120;
@@ -95,7 +96,7 @@ if (typeof window !== 'undefined') {
 // Request interceptor for API calls
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('samir_portfolio_token');
+        const token = getStoredToken();
         const requestLanguage = localStorage.getItem(STORAGE_KEY) || 'en';
         const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
         const method = String(config.method || 'get').toLowerCase();
@@ -240,11 +241,9 @@ api.interceptors.response.use(
         }
 
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-            localStorage.removeItem('samir_portfolio_token');
-            if (window.location.pathname !== '/admin') {
-                alert('Session expired or invalid. Please log in again.');
-                window.location.href = '/admin';
-            }
+            expireSessionAndRedirect({
+                message: 'Session expired or invalid. Please log in again.'
+            });
         }
         return Promise.reject(error);
     }
