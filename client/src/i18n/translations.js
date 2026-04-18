@@ -89,12 +89,6 @@ export const translations = {
             readFullArticle: 'Read Full Article',
             downloadPdf: 'Download PDF'
         },
-        projects: {
-            kicker: 'Portfolio',
-            titleMain: 'Featured',
-            titleAccent: 'Projects',
-            viewProject: 'View Project'
-        },
         gallery: {
             kicker: 'Moments',
             titleMain: 'Visual',
@@ -208,12 +202,6 @@ export const translations = {
             readFullArticle: 'পূর্ণ প্রবন্ধ পড়ুন',
             downloadPdf: 'PDF ডাউনলোড'
         },
-        projects: {
-            kicker: 'পোর্টফোলিও',
-            titleMain: 'নির্বাচিত',
-            titleAccent: 'প্রকল্প',
-            viewProject: 'প্রকল্প দেখুন'
-        },
         gallery: {
             kicker: 'মুহূর্তগুলো',
             titleMain: 'চিত্র',
@@ -326,12 +314,6 @@ export const translations = {
             authors: '저자',
             readFullArticle: '전체 논문 보기',
             downloadPdf: 'PDF 다운로드'
-        },
-        projects: {
-            kicker: '포트폴리오',
-            titleMain: '주요',
-            titleAccent: '프로젝트',
-            viewProject: '프로젝트 보기'
         },
         gallery: {
             kicker: '순간들',

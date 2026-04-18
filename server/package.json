@@ -16,7 +16,6 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
     "@supabase/supabase-js": "^2.103.3",
-    "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
@@ -25,11 +24,9 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "pg": "^8.20.0",
-    "serverless-http": "^4.0.0",
     "translate": "^3.0.1"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260416.2",
     "nodemon": "^3.1.14"
   }
 }

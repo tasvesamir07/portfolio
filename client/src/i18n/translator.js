@@ -5,6 +5,29 @@ let defaultBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 if (defaultBaseUrl && !defaultBaseUrl.endsWith('/api') && !defaultBaseUrl.endsWith('/api/')) {
     defaultBaseUrl = defaultBaseUrl.replace(/\/$/, '') + '/api';
 }
+
+const resolveRuntimeApiBaseUrl = (configuredBaseUrl) => {
+    if (typeof window === 'undefined') return configuredBaseUrl;
+
+    try {
+        const configuredUrl = new URL(configuredBaseUrl, window.location.origin);
+        const currentHost = window.location.hostname;
+        const configuredHost = configuredUrl.hostname;
+        const isLocalhost = ['localhost', '127.0.0.1'].includes(currentHost);
+        const isCrossOriginTarget = !isLocalhost && configuredHost && configuredHost !== currentHost;
+
+        if (isCrossOriginTarget) {
+            return '/api';
+        }
+    } catch {
+        // Fall back to the configured value when it cannot be parsed.
+    }
+
+    return configuredBaseUrl;
+};
+
+defaultBaseUrl = resolveRuntimeApiBaseUrl(defaultBaseUrl);
+
 const TRANSLATE_API_URL = `${defaultBaseUrl}/translate`;
 const STORAGE_KEY = 'portfolio-language';
 const MAX_BATCH_ITEMS = 60;

@@ -25,11 +25,41 @@ export const escapeStructuredHtml = (value = '') =>
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
+const decodeStructuredHtmlEntities = (value = '') => {
+    if (!value) return '';
+
+    const decodeOnce = (input = '') => {
+        if (typeof window === 'undefined') {
+            return input
+                .replace(/&nbsp;/gi, ' ')
+                .replace(/&#39;/gi, "'")
+                .replace(/&quot;/gi, '"')
+                .replace(/&lt;/gi, '<')
+                .replace(/&gt;/gi, '>')
+                .replace(/&amp;/gi, '&');
+        }
+
+        return new DOMParser().parseFromString(input, 'text/html').body.textContent || '';
+    };
+
+    let decoded = String(value);
+
+    // Old saved records may already contain double-escaped entities like &amp;amp;.
+    // Decode a few passes so re-opening and re-saving does not keep mutating the text.
+    for (let i = 0; i < 3; i += 1) {
+        const nextDecoded = decodeOnce(decoded);
+        if (nextDecoded === decoded) break;
+        decoded = nextDecoded;
+    }
+
+    return decoded.replace(/\u00a0/g, ' ');
+};
+
 export const extractStructuredPlainText = (value = '') => {
     if (!value) return '';
 
     if (!/<[a-z][\s\S]*>/i.test(value) || typeof window === 'undefined') {
-        return normalizeStructuredText(value);
+        return normalizeStructuredText(decodeStructuredHtmlEntities(value));
     }
 
     return normalizeStructuredText(new DOMParser().parseFromString(value, 'text/html').body.textContent || '');
@@ -39,7 +69,7 @@ export const sanitizeStructuredInlineHtml = (html = '') => {
     if (!html) return '';
 
     if (!/<[a-z][\s\S]*>/i.test(html) || typeof window === 'undefined') {
-        return escapeStructuredHtml(html);
+        return escapeStructuredHtml(decodeStructuredHtmlEntities(html));
     }
 
     const doc = new DOMParser().parseFromString(html, 'text/html');

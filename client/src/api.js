@@ -57,6 +57,28 @@ if (defaultBaseUrl && !defaultBaseUrl.endsWith('/api') && !defaultBaseUrl.endsWi
     defaultBaseUrl = defaultBaseUrl.replace(/\/$/, '') + '/api';
 }
 
+const resolveRuntimeApiBaseUrl = (configuredBaseUrl) => {
+    if (typeof window === 'undefined') return configuredBaseUrl;
+
+    try {
+        const configuredUrl = new URL(configuredBaseUrl, window.location.origin);
+        const currentHost = window.location.hostname;
+        const configuredHost = configuredUrl.hostname;
+        const isLocalhost = ['localhost', '127.0.0.1'].includes(currentHost);
+        const isCrossOriginTarget = !isLocalhost && configuredHost && configuredHost !== currentHost;
+
+        if (isCrossOriginTarget) {
+            return '/api';
+        }
+    } catch {
+        // Fall back to the configured value when it cannot be parsed.
+    }
+
+    return configuredBaseUrl;
+};
+
+defaultBaseUrl = resolveRuntimeApiBaseUrl(defaultBaseUrl);
+
 const api = axios.create({
     baseURL: defaultBaseUrl,
 });
@@ -192,6 +214,13 @@ api.interceptors.response.use(
                 // Otherwise we'd cache untranslated fallback data and keep serving it.
                 const cacheKey = response.config?.metadataCacheKey;
                 if (cacheKey && translationApplied) {
+                    const translatedSnapshot = cloneCachedResponse(response, response.config);
+                    getResponseCache.set(cacheKey, translatedSnapshot);
+                    trimGetResponseCache();
+                }
+            } else if (!fromCache && serverAlreadyTranslated) {
+                const cacheKey = response.config?.metadataCacheKey;
+                if (cacheKey) {
                     const translatedSnapshot = cloneCachedResponse(response, response.config);
                     getResponseCache.set(cacheKey, translatedSnapshot);
                     trimGetResponseCache();

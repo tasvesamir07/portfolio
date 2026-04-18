@@ -29,8 +29,7 @@ const SECONDARY_PUBLIC_ENDPOINTS = [
     '/research',
     '/publications',
     '/gallery',
-    '/gallery-categories',
-    '/projects'
+    '/gallery-categories'
 ];
 
 const LOAD_FALLBACK_DELAY_MS = 1200;

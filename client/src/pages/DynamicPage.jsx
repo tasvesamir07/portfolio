@@ -6,7 +6,6 @@ import StructuredDetails from '../components/StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
-import { useTranslatedText, useTranslatedHtml } from '../i18n/translator';
 
 const normalizePageContent = (html = '') => {
     if (!html || typeof window === 'undefined') return html;
@@ -28,39 +27,52 @@ const DynamicPage = () => {
     const [page, setPage] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [resolvedPageKey, setResolvedPageKey] = useState('');
     const { language, t } = useI18n();
+    const currentPageKey = `${slug || ''}::${language}`;
+    const isCurrentPageReady = Boolean(page) && resolvedPageKey === currentPageKey;
 
     // Hooks at top level to satisfy Rules of Hooks
     const structuredItems = parseStructuredItems(getLocalizedFirstField(page, ['details_json'], language, ''));
     const renderedContentRaw = normalizePageContent(getLocalizedField(page, 'content', language, page?.content || ''));
     const pageTitleRaw = getLocalizedField(page, 'title', language, page?.title || '');
-    
-    // Dynamic translation
-    const pageTitle = useTranslatedText(pageTitleRaw, language);
-    const renderedContent = useTranslatedHtml(renderedContentRaw, language);
 
     useEffect(() => {
         const fetchPage = async () => {
             setLoading(true);
+            setError(null);
+
             try {
-                const res = await Promise.any([
-                    api.get('/page', { params: { slug } }),
-                    // Fallback for local/dev environments that still use /pages/:slug.
-                    api.get(`/pages/${slug}`)
-                ]);
+                let res;
+                try {
+                    res = await api.get('/page', {
+                        params: { slug }
+                    });
+                } catch (primaryError) {
+                    const status = primaryError?.response?.status;
+                    if (status && status !== 400 && status !== 404) {
+                        throw primaryError;
+                    }
+
+                    // Fallback for environments that still only expose /pages/:slug.
+                    res = await api.get(`/pages/${slug}`);
+                }
+
                 setPage(res.data);
+                setResolvedPageKey(currentPageKey);
                 setError(null);
             } catch (err) {
                 console.error('Error fetching dynamic page:', err);
+                setResolvedPageKey(currentPageKey);
                 setError('not-found');
             } finally {
                 setLoading(false);
             }
         };
         fetchPage();
-    }, [slug, language]);
+    }, [currentPageKey, slug]);
 
-    if (loading) return (
+    if (loading || (!error && !isCurrentPageReady)) return (
         <div className="min-h-screen flex items-center justify-center pt-20">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-accent-primary"></div>
         </div>
@@ -85,7 +97,7 @@ const DynamicPage = () => {
                 animate={{ opacity: 1 }}
                 className="dynamic-page-shell max-w-4xl mx-auto glass p-6 sm:p-8 md:p-12 rounded-[32px] border border-gray-200 shadow-2xl shadow-gray-200/50 overflow-hidden"
             >
-                <h1 className="text-4xl sm:text-5xl font-black mb-8 md:mb-10 text-gray-900 tracking-tight break-words">{pageTitle}</h1>
+                <h1 className="text-4xl sm:text-5xl font-black mb-8 md:mb-10 text-gray-900 tracking-tight break-words">{pageTitleRaw}</h1>
                 {structuredItems.length ? (
                     <StructuredDetails
                         items={structuredItems}
@@ -99,7 +111,7 @@ const DynamicPage = () => {
                 ) : (
                     <div 
                         className="quill-content dynamic-page-content w-full max-w-none min-w-0 text-gray-700 font-medium"
-                        dangerouslySetInnerHTML={{ __html: renderedContent }}
+                        dangerouslySetInnerHTML={{ __html: renderedContentRaw }}
                     />
                 )}
             </motion.div>

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, LayoutDashboard, FileText, Briefcase, GraduationCap, Image as ImageIcon, User, ExternalLink, Share2, Mail } from 'lucide-react';
+import { LogOut, FileText, Briefcase, GraduationCap, Image as ImageIcon, User, ExternalLink, Share2, Mail } from 'lucide-react';
 const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();

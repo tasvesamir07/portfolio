@@ -11,7 +11,6 @@ import {
     buildStructuredPreview,
     buildStructuredFallbackText
 } from '../../utils/structuredItems';
-import { translateApiData, translateHtml, translateText } from '../../i18n/translator';
  
  const iconMap = {
      Github,
@@ -134,25 +133,6 @@ const RichTextEditor = ({ value = '', onChange, fallbackClassName = 'h-64', comm
     );
 };
 
-// Quill Configuration
-const quillModules = {
-    toolbar: [
-        [{ 'header': [1, 2, 3, false] }],
-        [{ 'size': QUILL_SIZE_WHITELIST }],
-        ['bold', 'italic', 'underline', 'strike'],
-        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-        [{ 'indent': '-1' }, { 'indent': '+1' }],
-        ['link', 'clean']
-    ],
-};
-
-const quillFormats = [
-    'header', 'size',
-    'bold', 'italic', 'underline', 'strike',
-    'list', 'bullet', 'indent',
-    'link'
-];
-
 const compactQuillModules = {
     toolbar: [
         ['bold', 'italic', 'underline', 'strike'],
@@ -184,28 +164,6 @@ const aboutRichTextFormats = [
     'list', 'bullet', 'indent',
     'link'
 ];
-
-const normalizeCompactRichText = (html = '') => {
-    if (!html || typeof window === 'undefined') return html;
-
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-
-    doc.body.querySelectorAll('*').forEach((element) => {
-        element.style.removeProperty('font-size');
-        element.style.removeProperty('line-height');
-        element.style.removeProperty('font-family');
-
-        ['ql-size-small', 'ql-size-large', 'ql-size-huge'].forEach((className) => {
-            element.classList.remove(className);
-        });
-
-        if (!element.getAttribute('style')?.trim()) {
-            element.removeAttribute('style');
-        }
-    });
-
-    return doc.body.innerHTML;
-};
 
 const normalizeAboutRichText = (html = '') => {
     if (!html || typeof window === 'undefined') return html;
@@ -260,10 +218,37 @@ const escapeHtml = (value = '') =>
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 
+const decodeHtmlEntities = (value = '') => {
+    if (!value) return '';
+
+    const decodeOnce = (input = '') => {
+        if (typeof window === 'undefined') {
+            return input
+                .replace(/&nbsp;/gi, ' ')
+                .replace(/&#39;/gi, "'")
+                .replace(/&quot;/gi, '"')
+                .replace(/&lt;/gi, '<')
+                .replace(/&gt;/gi, '>')
+                .replace(/&amp;/gi, '&');
+        }
+
+        return new DOMParser().parseFromString(input, 'text/html').body.textContent || '';
+    };
+
+    let decoded = String(value);
+    for (let i = 0; i < 3; i += 1) {
+        const nextDecoded = decodeOnce(decoded);
+        if (nextDecoded === decoded) break;
+        decoded = nextDecoded;
+    }
+
+    return decoded.replace(/\u00a0/g, ' ');
+};
+
 const extractPlainText = (value = '') => {
     if (!value) return '';
     if (!/<[a-z][\s\S]*>/i.test(value) || typeof window === 'undefined') {
-        return normalizeHighlightText(value);
+        return normalizeHighlightText(decodeHtmlEntities(value));
     }
 
     return normalizeHighlightText(new DOMParser().parseFromString(value, 'text/html').body.textContent || '');
@@ -290,6 +275,10 @@ const slugify = (value = '') =>
 const normalizeInlineRichText = (html = '') => {
     if (!html || typeof window === 'undefined') return html;
 
+    if (!/<[a-z][\s\S]*>/i.test(html)) {
+        return escapeHtml(decodeHtmlEntities(html));
+    }
+
     const doc = new DOMParser().parseFromString(html, 'text/html');
 
     const normalizeHref = (value = '') => {
@@ -315,6 +304,9 @@ const normalizeInlineRichText = (html = '') => {
         if (tag === 'strong' || tag === 'b') return `<strong>${children}</strong>`;
         if (tag === 'em' || tag === 'i') return `<em>${children}</em>`;
         if (tag === 'br') return '<br>';
+        if (tag === 'div' || tag === 'p' || tag === 'li') {
+            return children ? `${children}<br>` : '<br>';
+        }
         if (tag === 'a') {
             const href = normalizeHref(node.getAttribute('href') || node.textContent || '');
             return href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${children || escapeHtml(node.textContent || href)}</a>` : children;
@@ -326,7 +318,9 @@ const normalizeInlineRichText = (html = '') => {
     const normalized = Array.from(doc.body.childNodes)
         .map(serializeNode)
         .join('')
-        .replace(/(?:<br>){3,}/g, '<br><br>')
+        .replace(/\u200B/g, '')
+        .replace(/(?:<br>\s*){3,}/g, '<br><br>')
+        .replace(/^(?:<br>\s*)+|(?:<br>\s*)+$/g, '')
         .trim();
 
     return normalized;
@@ -334,17 +328,100 @@ const normalizeInlineRichText = (html = '') => {
 
 const InlineFormatEditor = ({ value, onChange, placeholder }) => {
     const editorRef = React.useRef(null);
+    const latestValueRef = React.useRef(value || '');
+    const lastCommittedValueRef = React.useRef(value || '');
+    const onChangeRef = React.useRef(onChange);
+    const timerRef = React.useRef(null);
+
+    useEffect(() => {
+        onChangeRef.current = onChange;
+    }, [onChange]);
 
     useEffect(() => {
         if (!editorRef.current) return;
-        if (editorRef.current.innerHTML !== value) {
-            editorRef.current.innerHTML = value || '';
+        const nextValue = value || '';
+        latestValueRef.current = nextValue;
+        lastCommittedValueRef.current = nextValue;
+
+        // Never rewrite DOM while the editor is focused; it resets the caret.
+        if (document.activeElement !== editorRef.current && editorRef.current.innerHTML !== nextValue) {
+            editorRef.current.innerHTML = nextValue;
         }
     }, [value]);
 
-    const emitChange = () => {
+    useEffect(() => () => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+        }
+    }, []);
+
+    const commitChange = (nextValue, immediate = false) => {
+        latestValueRef.current = nextValue;
+
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+
+        const runCommit = () => {
+            if (nextValue === lastCommittedValueRef.current) return;
+            lastCommittedValueRef.current = nextValue;
+            onChangeRef.current?.(nextValue);
+        };
+
+        if (immediate) {
+            runCommit();
+            return;
+        }
+
+        timerRef.current = setTimeout(runCommit, 120);
+    };
+
+    const emitChange = (immediate = false) => {
         if (!editorRef.current) return;
-        onChange(normalizeInlineRichText(editorRef.current.innerHTML));
+        commitChange(normalizeInlineRichText(editorRef.current.innerHTML), immediate);
+    };
+
+    const insertLineBreak = () => {
+        if (typeof document.execCommand === 'function') {
+            const inserted = document.execCommand('insertLineBreak');
+            if (inserted) return;
+        }
+
+        const selection = window.getSelection();
+        if (!selection?.rangeCount) return;
+
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+
+        const br = document.createElement('br');
+        const spacer = document.createTextNode('\u200B');
+        range.insertNode(spacer);
+        range.insertNode(br);
+
+        range.setStartAfter(spacer);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key !== 'Enter') return;
+
+        event.preventDefault();
+        insertLineBreak();
+        emitChange();
+    };
+
+    const handleBlur = () => {
+        emitChange(true);
+
+        if (!editorRef.current) return;
+
+        const normalizedValue = latestValueRef.current || '';
+        if (editorRef.current.innerHTML !== normalizedValue) {
+            editorRef.current.innerHTML = normalizedValue;
+        }
     };
 
     const applyFormat = (command) => {
@@ -407,7 +484,9 @@ const InlineFormatEditor = ({ value, onChange, placeholder }) => {
                 ref={editorRef}
                 contentEditable
                 suppressContentEditableWarning
-                onInput={emitChange}
+                onInput={() => emitChange()}
+                onBlur={handleBlur}
+                onKeyDown={handleKeyDown}
                 data-placeholder={placeholder}
                 className="mini-inline-editor min-h-[52px] px-3 py-2.5 text-sm text-gray-900 outline-none"
             />
@@ -966,9 +1045,7 @@ const FileUploadField = ({ value, onChange, label, required, accept = "image/*" 
 
         setUploading(true);
         try {
-            const res = await api.post('/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const res = await api.post('/upload', formData);
             onChange(res.data.url);
         } catch (err) {
             alert('Upload failed: ' + (err.response?.data?.error || err.message));
@@ -1233,7 +1310,7 @@ const Dashboard = () => {
                     const endpoint = (activeTab === 'social' ? '/social-links' : activeTab === 'blog' ? '/pages' : `/${activeTab}`);
                     await api.delete(`${endpoint}/${id}`);
                     fetchData();
-                } catch (err) {
+                } catch {
                     alert('Error deleting item');
                 }
             }

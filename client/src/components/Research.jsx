@@ -5,7 +5,7 @@ import api from '../api';
 import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
-import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 

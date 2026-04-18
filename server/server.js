@@ -14,15 +14,6 @@ const { translateTexts } = require('./translate');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Root route for API health check
-app.get('/', (req, res) => {
-    res.json({ 
-        message: "Portfolio API is running successfully!",
-        status: "online",
-        time: new Date().toISOString()
-    });
-});
 const LANGUAGE_HEADER = 'x-translate-language';
 const SKIP_TRANSLATION_HEADER = 'x-skip-auto-translate';
 const RESPONSE_TRANSLATED_HEADER = 'X-Response-Translated';
@@ -93,23 +84,8 @@ app.use((req, res, next) => {
     next();
 });
 
-const allowedOrigins = [
-    'https://portfolio-site-amu.pages.dev',
-    'http://localhost:5173',
-    'http://localhost:3000'
-];
-
 app.use(cors({
-    origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            // Allow all for now during setup to prevent blockage, 
-            // but we'll keep the list for reference.
-            return callback(null, true); 
-        }
-        return callback(null, true);
-    },
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-translate-language', 'x-skip-auto-translate']
@@ -531,28 +507,6 @@ if (process.env.NODE_ENV !== 'production') {
 // --- Health/Ping ---
 app.get('/api/ping', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
-// Database Health Check
-app.get('/api/health', async (req, res) => {
-    try {
-        // Run a simple query to see if DB is responsive
-        const result = await db.query('SELECT NOW() as now');
-        res.json({ 
-            status: 'online', 
-            database: 'connected', 
-            db_server_time: result.rows[0].now,
-            environment: process.env.NODE_ENV || 'production'
-        });
-    } catch (err) {
-        console.error('Database Health Check Failed:', err);
-        res.status(500).json({ 
-            status: 'error', 
-            database: 'disconnected', 
-            error: err.message,
-            suggestion: "Check your DATABASE_URL secret in Cloudflare"
-        });
-    }
-});
-
 // --- Translation ---
 app.post('/api/translate', async (req, res) => {
     const { texts = [], targetLang = 'en' } = req.body || {};
@@ -601,12 +555,7 @@ const loginHandler = async (req, res) => {
     }
 };
 
-// NOTE: On some Vercel setups, /api/auth/* can be intercepted before Express.
-// Keep legacy routes, but add a safe non-auth path for production clients.
 app.post('/api/admin-login', loginHandler);
-app.post('/api/login', loginHandler);
-app.post('/api/auth/login', loginHandler);
-app.post('/auth/login', loginHandler); // Support non-api prefix too
 
 // --- Upload ---
 app.post('/api/upload', authenticateToken, upload.single('file'), async (req, res) => {
@@ -720,52 +669,6 @@ app.put('/api/academics/:id', authenticateToken, async (req, res) => {
 app.delete('/api/academics/:id', authenticateToken, async (req, res) => {
     try {
         await db.query('DELETE FROM academics WHERE id = $1', [req.params.id]);
-        res.sendStatus(204);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// --- Projects ---
-app.get('/api/projects', async (req, res) => {
-    try {
-        const result = await db.query('SELECT * FROM projects ORDER BY sort_order ASC, id DESC');
-        const language = req.headers[LANGUAGE_HEADER] || 'en';
-        res.json(localizeDataObject(result.rows, language));
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.post('/api/projects', authenticateToken, async (req, res) => {
-    const { title, description, tech_stack, image_url, link } = req.body;
-    try {
-        const result = await db.query(
-            'INSERT INTO projects (title, description, tech_stack, image_url, link) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [title, description, tech_stack, image_url, link]
-        );
-        res.status(201).json(result.rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.put('/api/projects/:id', authenticateToken, async (req, res) => {
-    const { title, description, tech_stack, image_url, link } = req.body;
-    try {
-        const result = await db.query(
-            'UPDATE projects SET title = $1, description = $2, tech_stack = $3, image_url = $4, link = $5 WHERE id = $6 RETURNING *',
-            [title, description, tech_stack, image_url, link, req.params.id]
-        );
-        res.json(result.rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.delete('/api/projects/:id', authenticateToken, async (req, res) => {
-    try {
-        await db.query('DELETE FROM projects WHERE id = $1', [req.params.id]);
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1324,7 +1227,7 @@ app.delete('/api/skills/:id', authenticateToken, async (req, res) => {
 app.put('/api/reorder/:table', authenticateToken, async (req, res) => {
     const { table } = req.params;
     const { orders } = req.body; // Array of {id, sort_order}
-    const allowedTables = ['academics', 'experiences', 'trainings', 'skills', 'research', 'publications', 'projects', 'social_links', 'research_interests', 'gallery', 'gallery_categories'];
+    const allowedTables = ['academics', 'experiences', 'trainings', 'skills', 'research', 'publications', 'social_links', 'research_interests', 'gallery', 'gallery_categories'];
     
     if (!allowedTables.includes(table)) {
         return res.status(400).json({ error: 'Invalid table' });
