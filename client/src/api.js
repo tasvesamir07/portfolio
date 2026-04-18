@@ -85,11 +85,14 @@ const api = axios.create({
 });
 
 // Flush response cache immediately when user switches language
+export const clearResponseCache = () => {
+    getResponseCache.clear();
+    pendingGetRequests.clear();
+};
+
 if (typeof window !== 'undefined') {
     window.addEventListener('portfolio:languageChange', () => {
-        getResponseCache.clear();
-        pendingGetRequests.clear();
-        api._lastCachedLanguage = null;
+        clearResponseCache();
     });
 }
 

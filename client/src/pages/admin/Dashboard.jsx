@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import 'react-quill-new/dist/quill.snow.css';
 import { Plus, Trash2, Edit3, Save, ExternalLink, Image as ImageIcon, GraduationCap, Briefcase, FileText, User, Share2, Github, Linkedin, Twitter, Mail, Instagram, Globe, X, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
-import api from '../../api';
+import api, { clearResponseCache } from '../../api';
+import { clearTranslationCache } from '../../i18n/translator';
 import ConfirmModal from '../../components/ConfirmModal';
 import { showSiteAlert } from '../../utils/siteAlerts';
 import { expireSessionAndRedirect, getStoredToken, isTokenExpired, storeSessionToken } from '../../utils/authSession';
@@ -1425,13 +1426,18 @@ const Dashboard = () => {
     }, [activeTab]);
 
     const handleAddCategory = async (e) => {
+    const handleAddCategory = async (e) => {
         e.preventDefault();
         if (!newCategoryName.trim()) return;
         try {
             const res = await api.post('/gallery-categories', { name: newCategoryName });
             setCategories([...categories, res.data]);
             setNewCategoryName('');
+            clearTranslationCache();
+            clearResponseCache();
             showSiteAlert({ type: 'success', message: 'Category added successfully.' });
+            // Small delay to allow alert to be seen before refresh
+            setTimeout(() => window.location.reload(), 800);
         } catch (err) {
             console.error('Error adding category:', err);
             showSiteAlert({ type: 'error', message: 'Failed to add category.' });
@@ -1447,8 +1453,13 @@ const Dashboard = () => {
                 try {
                     await api.delete(`/gallery-categories/${id}`);
                     setCategories(categories.filter(c => c.id !== id));
+                    clearTranslationCache();
+                    clearResponseCache();
                     // If we are currently viewing gallery, refresh data to reflect deleted images
-                    if (activeTab === 'gallery') fetchData();
+                    if (activeTab === 'gallery') {
+                        fetchData();
+                    }
+                    setTimeout(() => window.location.reload(), 500);
                 } catch (err) {
                     console.error('Error deleting category:', err);
                     showSiteAlert({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to delete category.' });
@@ -1519,7 +1530,9 @@ const Dashboard = () => {
                 setIsEditing(false);
                 setFormData({});
                 setNotice({ type: 'success', message: res.data?.message || 'Profile updated successfully.' });
-                fetchData();
+                clearTranslationCache();
+                clearResponseCache();
+                setTimeout(() => window.location.reload(), 1000);
                 return;
             }
 
@@ -1668,7 +1681,13 @@ const Dashboard = () => {
             if (!(activeTab === 'gallery' && !formData.id && hasQueuedGalleryFiles)) {
                 setNotice({ type: 'success', message: 'Saved successfully.' });
             }
-            fetchData();
+            clearTranslationCache();
+            clearResponseCache();
+            if (activeTab === 'profile') {
+                fetchData();
+            } else {
+                setTimeout(() => window.location.reload(), 800);
+            }
         } catch (err) {
             const errorMsg = err.response?.data?.message || err.response?.data?.error || err.message;
             setSaveError(errorMsg);
@@ -1685,7 +1704,9 @@ const Dashboard = () => {
                 try {
                     const endpoint = (activeTab === 'social' ? '/social-links' : activeTab === 'blog' ? '/pages' : `/${activeTab}`);
                     await api.delete(`${endpoint}/${id}`);
-                    fetchData();
+                    clearTranslationCache();
+                    clearResponseCache();
+                    setTimeout(() => window.location.reload(), 500);
                 } catch {
                     showSiteAlert({ type: 'error', message: 'Error deleting item.' });
                 }
@@ -1728,6 +1749,10 @@ const Dashboard = () => {
         } catch (err) {
             console.error('Error reordering:', err);
             fetchData(); // Revert to original order or refetch data on error
+        } finally {
+            clearTranslationCache();
+            clearResponseCache();
+            setTimeout(() => window.location.reload(), 1000);
         }
     };
 

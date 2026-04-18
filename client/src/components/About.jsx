@@ -292,6 +292,7 @@ const About = ({ data }) => {
                 ...item,
                 label: translatedLabel,
                 text: translatedFullText,
+                textHtml: sanitizeInlineHtml(translatedFullText),
                 valueHtmls: translatedValueHtmls
             };
         });

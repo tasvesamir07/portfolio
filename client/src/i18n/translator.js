@@ -32,8 +32,8 @@ const TRANSLATE_API_URL = `${defaultBaseUrl}/translate`;
 const STORAGE_KEY = 'portfolio-language';
 const MAX_BATCH_ITEMS = 60;
 const BATCH_FLUSH_DELAY_MS = 4;
-const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v9';
-const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v9';
+const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v10';
+const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v10';
 const MAX_PERSISTED_CACHE_ENTRIES = 250;
 const MAX_CONCURRENT_CHUNKS = 5;
 const MAX_PARALLEL_BATCH_REQUESTS = 3;
@@ -106,6 +106,18 @@ const setPersistentTranslation = (storageKey, cacheKey, value) => {
     const cacheObject = readPersistentCache(storageKey);
     cacheObject[cacheKey] = value;
     writePersistentCache(storageKey, cacheObject);
+};
+
+export const clearTranslationCache = () => {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage.removeItem(TEXT_CACHE_STORAGE_KEY);
+        window.localStorage.removeItem(HTML_CACHE_STORAGE_KEY);
+        textCache.clear();
+        htmlCache.clear();
+    } catch {
+        // Ignore errors
+    }
 };
 
 const SKIP_TRANSLATION_KEYS = new Set([

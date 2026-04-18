@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 5000;
 const LANGUAGE_HEADER = 'x-translate-language';
 const SKIP_TRANSLATION_HEADER = 'x-skip-auto-translate';
 const RESPONSE_TRANSLATED_HEADER = 'X-Response-Translated';
-const RESPONSE_TRANSLATION_CACHE_VERSION = 'v3';
+const RESPONSE_TRANSLATION_CACHE_VERSION = 'v4';
 const cleanMediaUrls = async (urls = []) => {
     const failures = await deleteManagedMediaFiles(urls);
     if (failures.length) {
