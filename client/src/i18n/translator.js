@@ -32,8 +32,8 @@ const TRANSLATE_API_URL = `${defaultBaseUrl}/translate`;
 const STORAGE_KEY = 'portfolio-language';
 const MAX_BATCH_ITEMS = 60;
 const BATCH_FLUSH_DELAY_MS = 4;
-const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v10';
-const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v10';
+const TEXT_CACHE_STORAGE_KEY = 'portfolio-translate-text-cache-v11';
+const HTML_CACHE_STORAGE_KEY = 'portfolio-translate-html-cache-v11';
 const MAX_PERSISTED_CACHE_ENTRIES = 250;
 const MAX_CONCURRENT_CHUNKS = 5;
 const MAX_PARALLEL_BATCH_REQUESTS = 3;
@@ -235,7 +235,9 @@ const requestTranslatedTexts = async (texts, language) => {
         }
 
         recordSuccess();
-        return Array.isArray(response.data?.translations) ? response.data.translations : texts;
+        return Array.isArray(response.data?.translations) 
+            ? response.data.translations.map(t => typeof t === 'string' ? decodeHtmlEntities(t) : t) 
+            : texts;
     } catch (error) {
         recordFailure();
         console.error('Translate API request failed:', error.response?.data || error.message);

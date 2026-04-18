@@ -28,7 +28,7 @@ const About = ({ data }) => {
 
     const escapeHtml = (value = '') =>
         value
-            .replace(/&/g, '&amp;')
+            .replace(/&(?!(?:[a-z0-9]+|#\d+|#x[a-f0-9]+);)/gi, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
