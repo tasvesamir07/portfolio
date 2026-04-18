@@ -10,6 +10,28 @@ const LATIN_REGEX = /[A-Za-z]/;
 const MAX_RETRY_CHUNK_CHARS = 220;
 
 /**
+ * Decodes common HTML entities that might be returned by the translation service.
+ */
+const decodeHtmlEntities = (text = '') => {
+    if (typeof text !== 'string' || !text.includes('&')) return text;
+    
+    return text
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'")
+        .replace(/&#039;/g, "'")
+        .replace(/&ldquo;/g, '"')
+        .replace(/&rdquo;/g, '"')
+        .replace(/&lsquo;/g, "'")
+        .replace(/&rsquo;/g, "'")
+        .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec))
+        .replace(/&#x([0-9a-f]+);/gi, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+};
+
+/**
  * Lazy-load the ESM 'translate' package.
  */
 const getTranslator = async () => {
@@ -271,7 +293,7 @@ const translateText = async (text = '', language = 'en') => {
             writeCachedTranslation(text, targetLanguage, sourceLanguage, resolved);
         }
 
-        return resolved;
+        return decodeHtmlEntities(resolved);
     } catch (error) {
         console.error(`Translation proxy failed:`, error.message);
         return text;
@@ -322,7 +344,7 @@ const translateTexts = async (texts = [], language = 'en') => {
         const sourceLanguage = detectSourceLanguage(text, targetLanguage);
         if (sourceLanguage === targetLanguage) return text;
         const cached = readCachedTranslation(text, targetLanguage, sourceLanguage);
-        return cached != null ? cached : text;
+        return decodeHtmlEntities(cached != null ? cached : text);
     });
 };
 

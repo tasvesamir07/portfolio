@@ -270,13 +270,32 @@ const About = ({ data }) => {
     const translatedHighlightItems = useMemo(() => {
         if (!translatedHighlightTexts?.length) return highlightItems;
         const half = highlightItems.length;
-        return highlightItems.map((item, i) => ({
-            ...item,
-            label: translatedHighlightTexts[i] || item.label,
-            text: translatedHighlightTexts[half + i] || item.text,
-            valueHtmls: item.valueHtmls?.map(() => translatedHighlightTexts[half + i] || '')
-        }));
-    }, [highlightItems, translatedHighlightTexts, language]);
+        return highlightItems.map((item, i) => {
+            const translatedLabel = translatedHighlightTexts[i] || item.label;
+            const translatedFullText = translatedHighlightTexts[half + i] || item.text;
+            
+            // For pairs, we should extract the value part from the translated full text if it contains a colon
+            // followed by the translated label. 
+            let translatedValueHtmls = item.valueHtmls;
+            if (item.kind === 'pair' && item.valueHtmls?.length > 0) {
+                // If it's a single value pair, we can try to extract the value from the full text
+                if (item.valueHtmls.length === 1 && translatedFullText.includes(':')) {
+                    const parts = translatedFullText.split(':');
+                    const valuePart = parts.slice(1).join(':').trim();
+                    if (valuePart) {
+                        translatedValueHtmls = [sanitizeInlineHtml(valuePart)];
+                    }
+                }
+            }
+
+            return {
+                ...item,
+                label: translatedLabel,
+                text: translatedFullText,
+                valueHtmls: translatedValueHtmls
+            };
+        });
+    }, [highlightItems, translatedHighlightTexts, language, sanitizeInlineHtml]);
 
     // Rebuild bio blocks with translated text
     const translatedBioBlocks = useMemo(() => {
@@ -470,7 +489,7 @@ const About = ({ data }) => {
                                                                             href={toHref(contactValue)}
                                                                             target={contactValue.includes('@') ? undefined : '_blank'}
                                                                             rel={contactValue.includes('@') ? undefined : 'noopener noreferrer'}
-                                                                            className="inline-block w-fit min-w-0 max-w-full self-start text-[#0ea5e9] font-bold break-words underline decoration-current/60 underline-offset-4 transition-colors hover:text-[#0284c7]"
+                                                                            className="inline-block w-fit min-w-0 max-w-full self-start text-[#0ea5e9] font-bold break-words [overflow-wrap:anywhere] [word-break:break-all] underline decoration-current/60 underline-offset-4 transition-colors hover:text-[#0284c7]"
                                                                             style={highlightTextStyle}
                                                                         >
                                                                             {contactValue}

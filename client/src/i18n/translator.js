@@ -139,6 +139,28 @@ const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\uAC00-\uD7AF\u1100-\u11FF\u3130-\u318F\uA960-\uA97F\uD7B0-\uD7FF]/;
 const LATIN_REGEX = /[A-Za-z]/;
 
+/**
+ * Decodes common HTML entities that might be returned by the translation service.
+ */
+const decodeHtmlEntities = (text = '') => {
+    if (typeof text !== 'string' || !text.includes('&')) return text;
+    
+    return text
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'")
+        .replace(/&#039;/g, "'")
+        .replace(/&ldquo;/g, '"')
+        .replace(/&rdquo;/g, '"')
+        .replace(/&lsquo;/g, "'")
+        .replace(/&rsquo;/g, "'")
+        .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec))
+        .replace(/&#x([0-9a-f]+);/gi, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+};
+
 const isLikelyAlreadyInTargetLanguage = (text = '', language = 'en') => {
     const trimmed = text.trim();
     if (!trimmed) return true;
