@@ -43,7 +43,7 @@ const Login = () => {
         setError('');
         setSuccess('');
         try {
-            const res = await api.post('/auth/forgot-password', { email: resetEmail });
+            const res = await api.post('/forgot-password', { email: resetEmail });
             setSuccess(res.data.message);
             setResetStep(2);
         } catch (err) {
@@ -61,7 +61,7 @@ const Login = () => {
         setLoading(true);
         setError('');
         try {
-            const res = await api.post('/auth/reset-password', { 
+            const res = await api.post('/reset-password', { 
                 email: resetEmail, 
                 otp, 
                 newPassword 

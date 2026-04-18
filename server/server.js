@@ -690,7 +690,8 @@ app.get('/health', (req, res) => res.json({ status: 'ok', source: 'root' }));
 
 app.post('/api/admin-login', loginHandler);
 
-app.post('/api/auth/forgot-password', async (req, res) => {
+app.post('/api/forgot-password', async (req, res) => {
+    console.log('[Route-Hit] POST /api/forgot-password');
     const email = normalizeEmail(req.body?.email || '');
     if (!email || !EMAIL_REGEX.test(email)) {
         return res.status(400).json({ message: 'Enter a valid email address.' });
@@ -732,7 +733,8 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     }
 });
 
-app.post('/api/auth/reset-password', async (req, res) => {
+app.post('/api/reset-password', async (req, res) => {
+    console.log('[Route-Hit] POST /api/reset-password');
     const email = normalizeEmail(req.body?.email || '');
     const otp = String(req.body?.otp || '').trim();
     const newPassword = String(req.body?.newPassword || '');
@@ -1722,6 +1724,12 @@ app.put('/api/reorder/:table', authenticateToken, async (req, res) => {
         console.error('Reorder Endpoint Error:', err);
         res.status(500).json({ error: err.message });
     }
+});
+
+// Final Catch-all Logger to debug 404s
+app.use((req, res) => {
+    console.log(`[404-Unhandled] ${req.method} ${req.url}`);
+    res.status(404).json({ message: `Route ${req.method} ${req.url} not found on server.` });
 });
 
 if (process.env.NODE_ENV !== 'production' && typeof process !== 'undefined' && process.release && process.release.name === 'node') {
