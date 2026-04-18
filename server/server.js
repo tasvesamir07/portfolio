@@ -625,11 +625,15 @@ const ensureCmsTables = async () => {
     const userCount = userCountResult.rows[0]?.count || 0;
 
     if (!userCount) {
+        console.log('No users found in DB. Seeding default admin user...');
         const passwordHash = await bcrypt.hash('admin123', 10);
         await db.query(
             'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)',
             ['admin', '', passwordHash]
         );
+        console.log("Default user 'admin' created with password 'admin123'");
+    } else {
+        console.log(`Database already has ${userCount} users.`);
     }
 };
 
