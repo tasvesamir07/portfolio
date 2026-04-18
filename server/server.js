@@ -519,30 +519,39 @@ const getOtpMailer = () => {
 };
 
 const sendOtpEmail = async ({ to, username, otp, subject, title, body }) => {
-    const transporter = getOtpMailer();
-    const sender = process.env.PURCHASE_EMAIL_USER;
+    console.log(`[Email] Preparing to send OTP to: ${to}`);
+    try {
+        const transporter = getOtpMailer();
+        const sender = process.env.PURCHASE_EMAIL_USER;
 
-    const defaultSubject = 'Your Admin Profile OTP Code';
-    const defaultTitle = 'Admin Profile Verification';
-    const defaultBody = 'Use this OTP to confirm your request:';
+        const defaultSubject = 'Your Admin Profile OTP Code';
+        const defaultTitle = 'Admin Profile Verification';
+        const defaultBody = 'Use this OTP to confirm your request:';
 
-    await transporter.sendMail({
-        from: sender,
-        to,
-        subject: subject || defaultSubject,
-        text: `Hello ${username || 'Admin'}, your OTP code is ${otp}. It expires in ${OTP_TTL_MINUTES} minutes. If you request a new code, the previous one stops working immediately.`,
-        html: `
-            <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
-                <h2 style="margin: 0 0 12px;">${title || defaultTitle}</h2>
-                <p style="margin: 0 0 12px;">Hello ${username || 'Admin'},</p>
-                <p style="margin: 0 0 12px;">${body || defaultBody}</p>
-                <div style="display: inline-block; padding: 12px 18px; border-radius: 10px; background: #0b3b75; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
-                    ${otp}
+        console.log(`[Email] Using sender: ${sender}`);
+
+        const info = await transporter.sendMail({
+            from: sender,
+            to,
+            subject: subject || defaultSubject,
+            text: `Hello ${username || 'Admin'}, your OTP code is ${otp}. It expires in ${OTP_TTL_MINUTES} minutes. If you request a new code, the previous one stops working immediately.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
+                    <h2 style="margin: 0 0 12px;">${title || defaultTitle}</h2>
+                    <p style="margin: 0 0 12px;">Hello ${username || 'Admin'},</p>
+                    <p style="margin: 0 0 12px;">${body || defaultBody}</p>
+                    <div style="display: inline-block; padding: 12px 18px; border-radius: 10px; background: #0b3b75; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
+                        ${otp}
+                    </div>
+                    <p style="margin: 16px 0 0;">This code expires in ${OTP_TTL_MINUTES} minutes. If you request a new code, the previous code stops working immediately.</p>
                 </div>
-                <p style="margin: 16px 0 0;">This code expires in ${OTP_TTL_MINUTES} minutes. If you request a new code, the previous code stops working immediately.</p>
-            </div>
-        `
-    });
+            `
+        });
+        console.log(`[Email] Success: ${info.messageId}`);
+    } catch (err) {
+        console.error('[Email] Failed to send OTP:', err);
+        throw err;
+    }
 };
 
 const getUserById = async (id) => {
@@ -662,6 +671,22 @@ const loginHandler = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+app.use((req, res, next) => {
+    console.log(`[Server] ${req.method} ${req.url}`);
+    next();
+});
+
+// Robust Routing for Vercel: Normalize /api prefix if stripped by the host
+app.use((req, res, next) => {
+    if (!req.url.startsWith('/api/') && !req.url.startsWith('/health') && req.url !== '/' && req.url !== '/favicon.ico') {
+        req.url = '/api' + (req.url.startsWith('/') ? '' : '/') + req.url;
+    }
+    next();
+});
+
+app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date(), env: process.env.NODE_ENV }));
+app.get('/health', (req, res) => res.json({ status: 'ok', source: 'root' }));
 
 app.post('/api/admin-login', loginHandler);
 
