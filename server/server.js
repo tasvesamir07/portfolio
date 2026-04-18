@@ -518,20 +518,24 @@ const getOtpMailer = () => {
     return otpMailer;
 };
 
-const sendOtpEmail = async ({ to, username, otp }) => {
+const sendOtpEmail = async ({ to, username, otp, subject, title, body }) => {
     const transporter = getOtpMailer();
     const sender = process.env.PURCHASE_EMAIL_USER;
+
+    const defaultSubject = 'Your Admin Profile OTP Code';
+    const defaultTitle = 'Admin Profile Verification';
+    const defaultBody = 'Use this OTP to confirm your request:';
 
     await transporter.sendMail({
         from: sender,
         to,
-        subject: 'Your Admin Profile OTP Code',
+        subject: subject || defaultSubject,
         text: `Hello ${username || 'Admin'}, your OTP code is ${otp}. It expires in ${OTP_TTL_MINUTES} minutes. If you request a new code, the previous one stops working immediately.`,
         html: `
             <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
-                <h2 style="margin: 0 0 12px;">Admin Profile Verification</h2>
+                <h2 style="margin: 0 0 12px;">${title || defaultTitle}</h2>
                 <p style="margin: 0 0 12px;">Hello ${username || 'Admin'},</p>
-                <p style="margin: 0 0 12px;">Use this OTP to confirm your profile change request:</p>
+                <p style="margin: 0 0 12px;">${body || defaultBody}</p>
                 <div style="display: inline-block; padding: 12px 18px; border-radius: 10px; background: #0b3b75; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
                     ${otp}
                 </div>
@@ -582,56 +586,18 @@ const ensureCmsTables = async () => {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     `);
-
-    await db.query(`ALTER TABLE academics ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE experiences ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE trainings ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE skills ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE research_interests ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE research ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE publications ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
-    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_hash VARCHAR(255);`);
-    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP;`);
-    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pending_username VARCHAR(100);`);
-    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pending_email VARCHAR(255);`);
-    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pending_password_hash TEXT;`);
-    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS name_en VARCHAR(100);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS name_bn VARCHAR(100);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS name_ko VARCHAR(100);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS title_en VARCHAR(255);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS title_bn VARCHAR(255);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS title_ko VARCHAR(255);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS location_en VARCHAR(255);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS location_bn VARCHAR(255);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS location_ko VARCHAR(255);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS site_name_en VARCHAR(100);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS site_name_bn VARCHAR(100);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS site_name_ko VARCHAR(100);`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS sub_bio_en TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS sub_bio_bn TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS sub_bio_ko TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS bio_text_en TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS bio_text_bn TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS bio_text_ko TEXT DEFAULT '';`);
-    await db.query(`ALTER TABLE academics ALTER COLUMN institution TYPE TEXT;`);
-    await db.query(`ALTER TABLE academics ALTER COLUMN degree TYPE TEXT;`);
-    await db.query(`ALTER TABLE academics ALTER COLUMN start_year TYPE TEXT;`);
-    await db.query(`ALTER TABLE academics ALTER COLUMN end_year TYPE TEXT;`);
-
+    // Schema is managed via schema.sql. Redundant ALTER TABLE statements removed.
     const userCountResult = await db.query('SELECT COUNT(*)::int AS count FROM users');
     const userCount = userCountResult.rows[0]?.count || 0;
 
     if (!userCount) {
         console.log('No users found in DB. Seeding default admin user...');
-        const passwordHash = await bcrypt.hash('admin123', 10);
+        const passwordHash = await bcrypt.hash('admin', 10);
         await db.query(
             'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)',
             ['admin', '', passwordHash]
         );
-        console.log("Default user 'admin' created with password 'admin123'");
+        console.log("Default user 'admin' created with password 'admin'");
     } else {
         console.log(`Database already has ${userCount} users.`);
     }
@@ -698,6 +664,97 @@ const loginHandler = async (req, res) => {
 };
 
 app.post('/api/admin-login', loginHandler);
+
+app.post('/api/auth/forgot-password', async (req, res) => {
+    const email = normalizeEmail(req.body?.email || '');
+    if (!email || !EMAIL_REGEX.test(email)) {
+        return res.status(400).json({ message: 'Enter a valid email address.' });
+    }
+
+    try {
+        const result = await db.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1', [email]);
+        if (result.rows.length === 0) {
+            // Security: Don't leak if email exists, but here we can be helpful for admin
+            return res.status(404).json({ message: 'No admin account found with that email.' });
+        }
+
+        const user = result.rows[0];
+        const otp = generateOtpCode();
+        const otpHash = createOtpHash(otp);
+
+        await db.query(
+            `UPDATE users
+             SET otp_hash = $1,
+                 otp_expires_at = NOW() + INTERVAL '5 minutes',
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2`,
+            [otpHash, user.id]
+        );
+
+        await sendOtpEmail({
+            to: email,
+            username: user.username,
+            otp,
+            subject: 'Password Reset OTP Code',
+            title: 'Password Reset Verification',
+            body: 'Use this OTP to verify your password reset request:'
+        });
+
+        res.json({ message: `A 6-digit OTP was sent to ${email}.` });
+    } catch (err) {
+        console.error('Forgot Password Error:', err);
+        res.status(500).json({ message: 'Failed to send OTP.' });
+    }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+    const email = normalizeEmail(req.body?.email || '');
+    const otp = String(req.body?.otp || '').trim();
+    const newPassword = String(req.body?.newPassword || '');
+
+    if (!email || !otp || !newPassword) {
+        return res.status(400).json({ message: 'Email, OTP, and new password are required.' });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+    }
+
+    try {
+        const result = await db.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1', [email]);
+        if (result.rows.length === 0) return res.status(404).json({ message: 'User not found.' });
+
+        const user = result.rows[0];
+
+        if (!user.otp_hash || !user.otp_expires_at) {
+            return res.status(400).json({ message: 'No pending reset request found.' });
+        }
+
+        if (new Date(user.otp_expires_at).getTime() < Date.now()) {
+            return res.status(400).json({ message: 'OTP expired. Please request a new one.' });
+        }
+
+        if (createOtpHash(otp) !== user.otp_hash) {
+            return res.status(400).json({ message: 'Invalid OTP.' });
+        }
+
+        const newPasswordHash = await bcrypt.hash(newPassword, 10);
+        await db.query(
+            `UPDATE users
+             SET password_hash = $1,
+                 otp_hash = NULL,
+                 otp_expires_at = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2`,
+            [newPasswordHash, user.id]
+        );
+
+        res.json({ message: 'Password reset successfully. You can now log in.' });
+    } catch (err) {
+        console.error('Reset Password Error:', err);
+        res.status(500).json({ message: 'Failed to reset password.' });
+    }
+});
 app.get('/api/session', authenticateToken, (req, res) => {
     res.json({
         authenticated: true,
