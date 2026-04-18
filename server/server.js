@@ -580,6 +580,14 @@ app.post('/api/upload', authenticateToken, (req, res) => {
     });
 });
 
+app.get('/', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        service: 'portfolio-api',
+        message: 'API is running. Use /api/* endpoints.'
+    });
+});
+
 
 // --- About ---
 app.get('/api/about', async (req, res) => {
