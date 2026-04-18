@@ -26,6 +26,7 @@ const Gallery = () => {
     const [activeCategory, setActiveCategory] = useState('all');
     const [selectedImage, setSelectedImage] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [brokenImageIds, setBrokenImageIds] = useState([]);
     const [isPending, startTransition] = useTransition();
     const { language, t } = useI18n();
     const translatedImages = useTranslatedDataRows(images, ['caption', 'category'], language);
@@ -54,16 +55,21 @@ const Gallery = () => {
         fetchData();
     }, [language]);
 
+    const visibleImages = useMemo(
+        () => translatedImages.filter((img) => !brokenImageIds.includes(img.id)),
+        [translatedImages, brokenImageIds]
+    );
+
     const usedCategories = useMemo(
-        () => translatedCategories.filter((cat) => translatedImages.some((img) => img.category === cat.name)),
-        [translatedCategories, translatedImages]
+        () => translatedCategories.filter((cat) => visibleImages.some((img) => img.category === cat.name)),
+        [translatedCategories, visibleImages]
     );
 
     const filteredImages = useMemo(
         () => (deferredActiveCategory === 'all'
-            ? translatedImages
-            : translatedImages.filter((img) => img.category === deferredActiveCategory)),
-        [deferredActiveCategory, translatedImages]
+            ? visibleImages
+            : visibleImages.filter((img) => img.category === deferredActiveCategory)),
+        [deferredActiveCategory, visibleImages]
     );
 
     const handleCategoryChange = (nextCategory) => {
@@ -83,7 +89,7 @@ const Gallery = () => {
         );
     }
 
-    if (images.length === 0) {
+    if (visibleImages.length === 0) {
         return (
             <section id="gallery" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
                 <div className="max-w-7xl mx-auto px-6 text-center">
@@ -157,6 +163,12 @@ const Gallery = () => {
                                 <img 
                                     src={img.image_url} 
                                     alt={localizedCaption}
+                                    onError={() => {
+                                        setBrokenImageIds((current) => current.includes(img.id) ? current : [...current, img.id]);
+                                        if (selectedImage?.id === img.id) {
+                                            setSelectedImage(null);
+                                        }
+                                    }}
                                     className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#0f172ae6] via-[#0f172a33] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />

@@ -5,7 +5,7 @@ import api from '../api';
 import { storeSessionToken } from '../utils/authSession';
 
 const Login = () => {
-    const [username, setUsername] = useState('');
+    const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ const Login = () => {
         setError('');
         try {
             // Use a Vercel-safe login route (avoid /api/auth/* path conflicts).
-            const res = await api.post('/admin-login', { username, password });
+            const res = await api.post('/admin-login', { identifier, password });
             storeSessionToken(res.data.token);
             navigate('/admin/dashboard');
         } catch (err) {
@@ -40,13 +40,13 @@ const Login = () => {
                 </div>
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div>
-                        <label className="block text-gray-400 mb-2">Username</label>
+                        <label className="block text-gray-400 mb-2">Username or Email</label>
                         <input 
                             type="text" 
                             required
                             className="input"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
                         />
                     </div>
                     <div>

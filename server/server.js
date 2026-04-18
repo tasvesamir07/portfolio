@@ -6,6 +6,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const db = require('./db');
 const authenticateToken = require('./auth');
 const { upload, processFile, deleteManagedMediaFiles, MAX_UPLOAD_SIZE_MB } = require('./upload');
@@ -64,6 +66,7 @@ const HTML_SEGMENT_JOIN_TOKEN = '\n[[__PORTFOLIO_HTML_SEGMENT_SPLIT__]]\n';
 const HTML_SEGMENT_GROUP_CHAR_LIMIT = 9000;
 const HTML_SEGMENT_GROUP_SIZE_LIMIT = 120;
 const HTML_SEGMENT_MAX_SPLIT_DEPTH = 2;
+const OTP_TTL_MINUTES = 5;
 
 // Cloudflare-Express Compatibility Middleware (MUST BE AT TOP)
 app.use((req, res, next) => {
@@ -465,7 +468,110 @@ const localizeDataObject = (data, language = 'en') => {
 
 // Translation interceptor deferred natively to client-side localStorage caching mechanisms instead.
 
+let otpMailer;
+
+const normalizeEmail = (value = '') => String(value || '').trim().toLowerCase();
+const normalizeUsername = (value = '') => String(value || '').trim();
+const normalizeIdentifier = (value = '') => String(value || '').trim();
+
+const createOtpHash = (otp = '') => (
+    crypto
+        .createHmac('sha256', process.env.JWT_SECRET || 'fallback-otp-secret-change-me')
+        .update(String(otp))
+        .digest('hex')
+);
+
+const generateOtpCode = () => String(Math.floor(100000 + Math.random() * 900000));
+
+const sanitizeUser = (user = {}) => ({
+    id: user.id,
+    username: user.username || '',
+    email: user.email || ''
+});
+
+const buildAuthToken = (user = {}) => jwt.sign(
+    {
+        id: user.id,
+        username: user.username,
+        email: user.email || ''
+    },
+    process.env.JWT_SECRET || 'fallback-secret-change-me',
+    { expiresIn: '1h' }
+);
+
+const getOtpMailer = () => {
+    if (otpMailer) return otpMailer;
+
+    const service = process.env.PURCHASE_EMAIL_SERVICE || 'gmail';
+    const user = process.env.PURCHASE_EMAIL_USER;
+    const pass = process.env.PURCHASE_EMAIL_PASS;
+
+    if (!user || !pass) {
+        throw new Error('OTP email sender is not configured. Set PURCHASE_EMAIL_USER and PURCHASE_EMAIL_PASS.');
+    }
+
+    otpMailer = nodemailer.createTransport({
+        service,
+        auth: { user, pass }
+    });
+
+    return otpMailer;
+};
+
+const sendOtpEmail = async ({ to, username, otp }) => {
+    const transporter = getOtpMailer();
+    const sender = process.env.PURCHASE_EMAIL_USER;
+
+    await transporter.sendMail({
+        from: sender,
+        to,
+        subject: 'Your Admin Profile OTP Code',
+        text: `Hello ${username || 'Admin'}, your OTP code is ${otp}. It expires in ${OTP_TTL_MINUTES} minutes. If you request a new code, the previous one stops working immediately.`,
+        html: `
+            <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
+                <h2 style="margin: 0 0 12px;">Admin Profile Verification</h2>
+                <p style="margin: 0 0 12px;">Hello ${username || 'Admin'},</p>
+                <p style="margin: 0 0 12px;">Use this OTP to confirm your profile change request:</p>
+                <div style="display: inline-block; padding: 12px 18px; border-radius: 10px; background: #0b3b75; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: 6px;">
+                    ${otp}
+                </div>
+                <p style="margin: 16px 0 0;">This code expires in ${OTP_TTL_MINUTES} minutes. If you request a new code, the previous code stops working immediately.</p>
+            </div>
+        `
+    });
+};
+
+const getUserById = async (id) => {
+    const result = await db.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [id]);
+    return result.rows[0] || null;
+};
+
+const clearPendingProfileUpdate = async (userId) => {
+    await db.query(
+        `UPDATE users
+         SET otp_hash = NULL,
+             otp_expires_at = NULL,
+             pending_username = NULL,
+             pending_email = NULL,
+             pending_password_hash = NULL,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1`,
+        [userId]
+    );
+};
+
 const ensureCmsTables = async () => {
+    await db.query(`
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(100) NOT NULL UNIQUE,
+            email VARCHAR(255),
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    `);
+
     await db.query(`
         CREATE TABLE IF NOT EXISTS pages (
             id SERIAL PRIMARY KEY,
@@ -485,6 +591,13 @@ const ensureCmsTables = async () => {
     await db.query(`ALTER TABLE research ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
     await db.query(`ALTER TABLE publications ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
     await db.query(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS details_json TEXT DEFAULT '';`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_hash VARCHAR(255);`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP;`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pending_username VARCHAR(100);`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pending_email VARCHAR(255);`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pending_password_hash TEXT;`);
+    await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`);
     await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS name_en VARCHAR(100);`);
     await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS name_bn VARCHAR(100);`);
     await db.query(`ALTER TABLE about ADD COLUMN IF NOT EXISTS name_ko VARCHAR(100);`);
@@ -507,13 +620,22 @@ const ensureCmsTables = async () => {
     await db.query(`ALTER TABLE academics ALTER COLUMN degree TYPE TEXT;`);
     await db.query(`ALTER TABLE academics ALTER COLUMN start_year TYPE TEXT;`);
     await db.query(`ALTER TABLE academics ALTER COLUMN end_year TYPE TEXT;`);
+
+    const userCountResult = await db.query('SELECT COUNT(*)::int AS count FROM users');
+    const userCount = userCountResult.rows[0]?.count || 0;
+
+    if (!userCount) {
+        const passwordHash = await bcrypt.hash('admin123', 10);
+        await db.query(
+            'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)',
+            ['admin', '', passwordHash]
+        );
+    }
 };
 
-if (process.env.NODE_ENV !== 'production') {
-    ensureCmsTables().catch((err) => {
-        console.error('Failed to ensure CMS tables:', err);
-    });
-}
+ensureCmsTables().catch((err) => {
+    console.error('Failed to ensure CMS tables:', err);
+});
 
 // --- Health/Ping ---
 app.get('/api/ping', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
@@ -536,27 +658,32 @@ app.post('/api/translate', async (req, res) => {
 
 // --- Authentication ---
 const loginHandler = async (req, res) => {
-    const { username, password } = req.body;
+    const identifier = normalizeIdentifier(req.body?.identifier || req.body?.username || req.body?.email);
+    const password = String(req.body?.password || '');
+
+    if (!identifier || !password) {
+        return res.status(400).json({ message: 'Username or email and password are required.' });
+    }
+
     try {
-        const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
+        const result = await db.query(
+            'SELECT * FROM users WHERE LOWER(username) = LOWER($1) OR LOWER(COALESCE(email, \'\')) = LOWER($1) LIMIT 1',
+            [identifier]
+        );
         if (result.rows.length === 0) return res.status(401).json({ message: 'Invalid credentials' });
 
         const user = result.rows[0];
-        const isAdminSeed = (username === 'admin' && password === 'admin123');
-        
-        // Only run the heavy bcrypt check if it's NOT the admin seed
-        // This prevents hitting the 10ms CPU limit on Cloudflare Workers Free tier
-        let isMatch = false;
-        if (!isAdminSeed) {
-            isMatch = await bcrypt.compare(password, user.password_hash);
-        }
+        const isMatch = await bcrypt.compare(password, user.password_hash);
 
-        if (isAdminSeed || isMatch) {
+        if (isMatch) {
             if (!process.env.JWT_SECRET) {
                 console.error('JWT_SECRET is not defined in environment variables');
             }
-            const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET || 'fallback-secret-change-me', { expiresIn: '1h' });
-            res.json({ token });
+            const token = buildAuthToken(user);
+            res.json({
+                token,
+                user: sanitizeUser(user)
+            });
         } else {
             res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -572,9 +699,187 @@ app.get('/api/session', authenticateToken, (req, res) => {
         authenticated: true,
         user: {
             id: req.user?.id,
-            username: req.user?.username
+            username: req.user?.username,
+            email: req.user?.email || ''
         }
     });
+});
+
+app.get('/api/profile', authenticateToken, async (req, res) => {
+    try {
+        const user = await getUserById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User account not found.' });
+        }
+
+        res.json(sanitizeUser(user));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/profile/request-otp', authenticateToken, async (req, res) => {
+    try {
+        const user = await getUserById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User account not found.' });
+        }
+
+        const nextUsername = normalizeUsername(req.body?.username || user.username);
+        const nextEmail = normalizeEmail(req.body?.email || '');
+        const nextPassword = String(req.body?.password || '');
+
+        if (!nextUsername) {
+            return res.status(400).json({ message: 'Username is required.' });
+        }
+
+        if (nextEmail && !EMAIL_REGEX.test(nextEmail)) {
+            return res.status(400).json({ message: 'Enter a valid email address.' });
+        }
+
+        if (nextPassword && nextPassword.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+        }
+
+        const normalizedCurrentEmail = normalizeEmail(user.email || '');
+        const hasUsernameChange = nextUsername !== user.username;
+        const hasEmailChange = nextEmail !== normalizedCurrentEmail;
+        const hasPasswordChange = Boolean(nextPassword);
+
+        if (!hasUsernameChange && !hasEmailChange && !hasPasswordChange) {
+            return res.status(400).json({ message: 'Change at least one field before requesting an OTP.' });
+        }
+
+        const usernameConflict = await db.query(
+            'SELECT id FROM users WHERE LOWER(username) = LOWER($1) AND id <> $2 LIMIT 1',
+            [nextUsername, user.id]
+        );
+        if (usernameConflict.rows.length) {
+            return res.status(409).json({ message: 'That username is already in use.' });
+        }
+
+        if (nextEmail) {
+            const emailConflict = await db.query(
+                'SELECT id FROM users WHERE LOWER(COALESCE(email, \'\')) = LOWER($1) AND id <> $2 LIMIT 1',
+                [nextEmail, user.id]
+            );
+            if (emailConflict.rows.length) {
+                return res.status(409).json({ message: 'That email is already in use.' });
+            }
+        }
+
+        const recipientEmail = normalizedCurrentEmail || nextEmail;
+        if (!recipientEmail) {
+            return res.status(400).json({ message: 'Set an email address before requesting an OTP.' });
+        }
+
+        const otp = generateOtpCode();
+        const otpHash = createOtpHash(otp);
+        const pendingPasswordHash = nextPassword ? await bcrypt.hash(nextPassword, 10) : null;
+
+        await db.query(
+            `UPDATE users
+             SET otp_hash = $1,
+                 otp_expires_at = NOW() + INTERVAL '5 minutes',
+                 pending_username = $2,
+                 pending_email = $3,
+                 pending_password_hash = $4,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $5`,
+            [otpHash, nextUsername, nextEmail, pendingPasswordHash, user.id]
+        );
+
+        await sendOtpEmail({
+            to: recipientEmail,
+            username: user.username,
+            otp
+        });
+
+        res.json({
+            message: `A 6-digit OTP was sent to ${recipientEmail}. It expires in ${OTP_TTL_MINUTES} minutes.`,
+            recipientEmail
+        });
+    } catch (err) {
+        console.error('Profile OTP request failed:', err);
+        res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
+    }
+});
+
+app.post('/api/profile/confirm-update', authenticateToken, async (req, res) => {
+    try {
+        const otp = String(req.body?.otp || '').trim();
+        if (!/^\d{6}$/.test(otp)) {
+            return res.status(400).json({ message: 'Enter a valid 6-digit OTP.' });
+        }
+
+        const user = await getUserById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User account not found.' });
+        }
+
+        if (!user.otp_hash || !user.otp_expires_at) {
+            return res.status(400).json({ message: 'No pending OTP request found. Request a new OTP first.' });
+        }
+
+        if (new Date(user.otp_expires_at).getTime() < Date.now()) {
+            await clearPendingProfileUpdate(user.id);
+            return res.status(400).json({ message: 'OTP expired. Request a new one.' });
+        }
+
+        if (createOtpHash(otp) !== user.otp_hash) {
+            return res.status(400).json({ message: 'Invalid OTP. Request a new code if needed.' });
+        }
+
+        const nextUsername = normalizeUsername(user.pending_username || user.username);
+        const nextEmail = normalizeEmail(user.pending_email || '');
+        const nextPasswordHash = user.pending_password_hash || user.password_hash;
+
+        const usernameConflict = await db.query(
+            'SELECT id FROM users WHERE LOWER(username) = LOWER($1) AND id <> $2 LIMIT 1',
+            [nextUsername, user.id]
+        );
+        if (usernameConflict.rows.length) {
+            return res.status(409).json({ message: 'That username is already in use.' });
+        }
+
+        if (nextEmail) {
+            const emailConflict = await db.query(
+                'SELECT id FROM users WHERE LOWER(COALESCE(email, \'\')) = LOWER($1) AND id <> $2 LIMIT 1',
+                [nextEmail, user.id]
+            );
+            if (emailConflict.rows.length) {
+                return res.status(409).json({ message: 'That email is already in use.' });
+            }
+        }
+
+        const updateResult = await db.query(
+            `UPDATE users
+             SET username = $1,
+                 email = $2,
+                 password_hash = $3,
+                 otp_hash = NULL,
+                 otp_expires_at = NULL,
+                 pending_username = NULL,
+                 pending_email = NULL,
+                 pending_password_hash = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $4
+             RETURNING *`,
+            [nextUsername, nextEmail, nextPasswordHash, user.id]
+        );
+
+        const updatedUser = updateResult.rows[0];
+        const token = buildAuthToken(updatedUser);
+
+        res.json({
+            message: 'Profile updated successfully.',
+            token,
+            user: sanitizeUser(updatedUser)
+        });
+    } catch (err) {
+        console.error('Profile OTP confirm failed:', err);
+        res.status(500).json({ message: 'Failed to update profile.' });
+    }
 });
 
 // --- Upload ---

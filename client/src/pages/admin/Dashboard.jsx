@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import 'react-quill-new/dist/quill.snow.css';
 import { Plus, Trash2, Edit3, Save, ExternalLink, Image as ImageIcon, GraduationCap, Briefcase, FileText, User, Share2, Github, Linkedin, Twitter, Mail, Instagram, Globe, X, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 import api from '../../api';
 import ConfirmModal from '../../components/ConfirmModal';
 import { showSiteAlert } from '../../utils/siteAlerts';
+import { expireSessionAndRedirect, getStoredToken, isTokenExpired, storeSessionToken } from '../../utils/authSession';
 import {
     createStructuredItem,
     parseStructuredItems,
@@ -34,6 +35,7 @@ const Field = ({ label, required, children }) => (
 
 const MAX_UPLOAD_SIZE_MB = 4;
 const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
+const PROFILE_OTP_REGEX = /^\d{0,6}$/;
 
 const getAcceptedFileLabel = (accept = 'image/*') => {
     if (!accept || accept === 'image/*') return 'Images only';
@@ -1334,10 +1336,17 @@ const GalleryBulkUploadField = ({ files = [], onChange, disabled = false }) => {
 const Dashboard = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const VALID_TABS = ['about', 'academics', 'experiences', 'trainings', 'skills', 'research-interests', 'research', 'publications', 'blog', 'gallery', 'messages', 'social'];
+    const VALID_TABS = ['about', 'profile', 'academics', 'experiences', 'trainings', 'skills', 'research-interests', 'research', 'publications', 'blog', 'gallery', 'messages', 'social'];
     const STRUCTURED_TABS = ['academics', 'experiences', 'trainings', 'skills', 'research-interests', 'research', 'publications', 'blog'];
     const rawTab = searchParams.get('tab') || 'about';
     const activeTab = VALID_TABS.includes(rawTab) ? rawTab : 'about';
+
+    useEffect(() => {
+        const token = getStoredToken();
+        if (!token || isTokenExpired(token)) {
+            expireSessionAndRedirect({ showAlert: window.location.pathname !== '/admin' });
+        }
+    }, []);
 
     // Redirect unknown tabs (e.g. old ?tab=navigation) back to default
     useEffect(() => {
@@ -1389,6 +1398,8 @@ const Dashboard = () => {
         try {
             const endpoint = activeTab === 'social'
                 ? '/social-links'
+                : activeTab === 'profile'
+                    ? '/profile'
                 : activeTab === 'blog'
                     ? '/pages?includeContent=1'
                     : `/${activeTab}`;
@@ -1453,6 +1464,64 @@ const Dashboard = () => {
         try {
             const endpoint = (activeTab === 'social' ? '/social-links' : activeTab === 'blog' ? '/pages' : `/${activeTab}`);
             const hasQueuedGalleryFiles = activeTab === 'gallery' && Array.isArray(formData.gallery_files) && formData.gallery_files.length > 0;
+
+            if (activeTab === 'profile') {
+                const username = (formData.username || '').trim();
+                const email = (formData.email || '').trim().toLowerCase();
+                const password = formData.password || '';
+                const confirmPassword = formData.confirm_password || '';
+                const otp = (formData.otp || '').trim();
+
+                if (!username) {
+                    throw new Error('Username is required.');
+                }
+
+                if (!email) {
+                    throw new Error('Email is required for OTP verification.');
+                }
+
+                if (password && password.length < 6) {
+                    throw new Error('Password must be at least 6 characters long.');
+                }
+
+                if (password !== confirmPassword) {
+                    throw new Error('Passwords do not match.');
+                }
+
+                if (!formData.otp_requested) {
+                    const res = await api.post('/profile/request-otp', {
+                        username,
+                        email,
+                        password
+                    });
+
+                    setFormData((prev) => ({
+                        ...prev,
+                        username,
+                        email,
+                        otp_requested: true,
+                        otp: '',
+                        otp_recipient: res.data?.recipientEmail || email
+                    }));
+                    setNotice({ type: 'success', message: res.data?.message || 'OTP sent successfully.' });
+                    return;
+                }
+
+                if (!/^\d{6}$/.test(otp)) {
+                    throw new Error('Enter the 6-digit OTP sent to your email.');
+                }
+
+                const res = await api.post('/profile/confirm-update', { otp });
+                if (res.data?.token) {
+                    storeSessionToken(res.data.token);
+                }
+
+                setIsEditing(false);
+                setFormData({});
+                setNotice({ type: 'success', message: res.data?.message || 'Profile updated successfully.' });
+                fetchData();
+                return;
+            }
 
             if (activeTab === 'gallery' && !formData.id && !hasQueuedGalleryFiles && !formData.image_url) {
                 throw new Error('Please upload at least one gallery image before saving.');
@@ -1672,6 +1741,27 @@ const Dashboard = () => {
         highlight_items: parseHighlightItems(about.sub_bio || '')
     });
 
+    const prepareProfileFormData = (profile = {}) => ({
+        ...profile,
+        username: profile.username || '',
+        email: profile.email || '',
+        password: '',
+        confirm_password: '',
+        otp: '',
+        otp_requested: false,
+        otp_recipient: ''
+    });
+
+    const updateProfileDraft = (field, value) => {
+        setFormData((prev) => ({
+            ...prev,
+            [field]: value,
+            otp_requested: false,
+            otp: '',
+            otp_recipient: ''
+        }));
+    };
+
     const buildLegacyStructuredItems = (tab, record = {}) => {
         if (tab === 'academics') {
             const items = [];
@@ -1885,6 +1975,8 @@ const Dashboard = () => {
     const openEditor = (nextFormData = {}) => {
         const normalizedFormData = activeTab === 'about'
                 ? prepareAboutFormData(nextFormData)
+                : activeTab === 'profile'
+                    ? prepareProfileFormData(nextFormData)
                 : STRUCTURED_TABS.includes(activeTab)
                     ? prepareStructuredFormData(nextFormData)
                     : nextFormData;
@@ -1908,11 +2000,14 @@ const Dashboard = () => {
             ? 'Blog Page'
             : activeTab === 'gallery'
                 ? 'Add to Gallery'
+                : activeTab === 'profile'
+                    ? 'Profile'
                 : activeTab.slice(0, -1);
 
     const getAdminDetailsPreview = (item = {}) => {
         if (activeTab === 'gallery') return item.category || 'Uncategorized';
         if (activeTab === 'messages') return item.message || 'No message';
+        if (activeTab === 'profile') return item.email || 'No email configured';
 
         if (STRUCTURED_TABS.includes(activeTab)) {
             const structuredPreview = buildStructuredPreview(item.details_json || '');
@@ -1939,6 +2034,80 @@ const Dashboard = () => {
 
     const renderForm = () => {
         switch (activeTab) {
+            case 'profile':
+                return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+                            Save once to send a 6-digit OTP. Save again with that OTP to confirm the update. Requesting a new OTP immediately invalidates the previous one.
+                        </div>
+                        <Field label="Username" required>
+                            <input
+                                className="input"
+                                value={formData.username || ''}
+                                onChange={(e) => updateProfileDraft('username', e.target.value)}
+                                required
+                            />
+                        </Field>
+                        <Field label="Email" required>
+                            <input
+                                type="email"
+                                className="input"
+                                value={formData.email || ''}
+                                onChange={(e) => updateProfileDraft('email', e.target.value)}
+                                required
+                            />
+                        </Field>
+                        <Field label="New Password">
+                            <input
+                                type="password"
+                                className="input"
+                                value={formData.password || ''}
+                                onChange={(e) => updateProfileDraft('password', e.target.value)}
+                                placeholder="Leave empty to keep the current password"
+                            />
+                        </Field>
+                        <Field label="Confirm New Password">
+                            <input
+                                type="password"
+                                className="input"
+                                value={formData.confirm_password || ''}
+                                onChange={(e) => updateProfileDraft('confirm_password', e.target.value)}
+                                placeholder="Repeat the new password"
+                            />
+                        </Field>
+                        {formData.otp_requested && (
+                            <>
+                                <div className="md:col-span-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                                    OTP sent to {formData.otp_recipient || formData.email}. It stays valid for 5 minutes unless you request a new code.
+                                </div>
+                                <Field label="6-Digit OTP" required>
+                                    <input
+                                        className="input tracking-[0.4em] text-center text-lg font-bold"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        value={formData.otp || ''}
+                                        onChange={(e) => {
+                                            const nextValue = e.target.value.replace(/\D/g, '');
+                                            if (!PROFILE_OTP_REGEX.test(nextValue)) return;
+                                            setFormData((prev) => ({ ...prev, otp: nextValue }));
+                                        }}
+                                        placeholder="000000"
+                                        required
+                                    />
+                                </Field>
+                                <div className="flex items-end">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData((prev) => ({ ...prev, otp_requested: false, otp: '', otp_recipient: '' }))}
+                                        className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50"
+                                    >
+                                        Request New OTP
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                );
             case 'academics':
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2437,14 +2606,14 @@ const Dashboard = () => {
                                 <p className="text-sm text-gray-500 font-medium">Currently managing {content.length} records.</p>
                             </div>
                             <div className="flex gap-3 w-full md:w-auto">
-                                {activeTab !== 'about' && activeTab !== 'messages' && (
+                                {activeTab !== 'about' && activeTab !== 'messages' && activeTab !== 'profile' && (
                                     <button onClick={() => openEditor({})} className="bg-gray-800 hover:bg-black text-white px-6 py-2.5 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 flex-1 md:flex-none">
                                         <Plus size={18} /> {activeTab === 'gallery' ? addButtonLabel : `Add New ${addButtonLabel}`}
                                     </button>
                                 )}
-                                {activeTab === 'about' && (
-                                    <button onClick={() => openEditor(prepareAboutFormData(content[0] || {}))} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 flex-1 md:flex-none">
-                                        <Edit3 size={18} /> Edit Biography
+                                {(activeTab === 'about' || activeTab === 'profile') && (
+                                    <button onClick={() => openEditor(activeTab === 'profile' ? prepareProfileFormData(content[0] || {}) : prepareAboutFormData(content[0] || {}))} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-md font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 flex-1 md:flex-none">
+                                        <Edit3 size={18} /> {activeTab === 'profile' ? 'Edit Profile' : 'Edit Biography'}
                                     </button>
                                 )}
                             </div>
@@ -2468,10 +2637,16 @@ const Dashboard = () => {
                                                         <div className="font-bold text-gray-900 text-base leading-tight">
                                                             {activeTab === 'messages'
                                                                 ? (item.name || item.email || 'Message')
+                                                                : activeTab === 'profile'
+                                                                    ? (item.username || 'Admin User')
                                                                 : (item.interest || item.company || item.platform || item.title || item.category || item.institution || item.caption || (item.image_url ? 'Gallery Image' : '') || (activeTab === 'about' ? 'Biography' : 'Nameless Item'))}
                                                         </div>
                                                         <div className="text-[10px] font-mono text-gray-400 mt-0.5 uppercase">
-                                                            {activeTab === 'messages' ? (item.email || 'No email') : `ID: #${item.id || 'N/A'}`}
+                                                            {activeTab === 'messages'
+                                                                ? (item.email || 'No email')
+                                                                : activeTab === 'profile'
+                                                                    ? (item.email || 'No email configured')
+                                                                    : `ID: #${item.id || 'N/A'}`}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -2483,7 +2658,7 @@ const Dashboard = () => {
                                             </td>
                                             <td className="py-4 pl-6 pr-8 text-right whitespace-nowrap">
                                                 <div className="flex items-center justify-end gap-1">
-                                                    {activeTab !== 'about' && activeTab !== 'blog' && activeTab !== 'messages' && (
+                                                    {activeTab !== 'about' && activeTab !== 'blog' && activeTab !== 'messages' && activeTab !== 'profile' && (
                                                         <div className="flex flex-col gap-0.5 mr-2">
                                                             <button 
                                                                 onClick={(e) => { e.stopPropagation(); handleMove(idx, -1); }}
@@ -2508,7 +2683,7 @@ const Dashboard = () => {
                                                             <Edit3 size={18} />
                                                         </button>
                                                     )}
-                                                    {activeTab !== 'about' && (
+                                                    {activeTab !== 'about' && activeTab !== 'profile' && (
                                                         <button onClick={() => handleDelete(item.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all" title="Delete">
                                                             <Trash2 size={18} />
                                                         </button>
@@ -2564,9 +2739,17 @@ const Dashboard = () => {
                 ) : (
                     <form onSubmit={handleSave} className="max-w-3xl mx-auto py-4">
                         <div className="mb-10 text-center border-b pb-8">
-                            <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">{formData.id ? 'Edit Entry' : 'Add New Entry'}</h2>
+                            <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">
+                                {activeTab === 'profile'
+                                    ? 'Update Profile'
+                                    : formData.id
+                                        ? 'Edit Entry'
+                                        : 'Add New Entry'}
+                            </h2>
                             <p className="text-gray-500 text-sm">
-                                {STRUCTURED_TABS.includes(activeTab)
+                                {activeTab === 'profile'
+                                    ? 'Update your username, email, or password. A 6-digit OTP will be sent to verify the change before it is applied.'
+                                    : STRUCTURED_TABS.includes(activeTab)
                                     ? 'Use any fields you want. You can keep them empty, mix title, label + value, and text only, and arrange the content your own way.'
                                     : <>Fill in the fields below. Fields marked with <span className="text-red-500">*</span> are mandatory.</>}
                             </p>
@@ -2582,7 +2765,7 @@ const Dashboard = () => {
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3 mt-12 justify-center">
                             <button type="submit" disabled={saving} className={`bg-gray-900 hover:bg-black text-white px-10 py-3 rounded font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 sm:min-w-[200px] ${saving ? 'opacity-70 cursor-wait' : ''}`}>
-                                <Save size={18} /> {saving ? 'Saving...' : formData.id ? 'Update Record' : 'Save Record'}
+                                <Save size={18} /> {saving ? 'Saving...' : activeTab === 'profile' ? (formData.otp_requested ? 'Verify OTP & Update' : 'Send OTP') : formData.id ? 'Update Record' : 'Save Record'}
                             </button>
                             <button type="button" onClick={() => setIsEditing(false)} disabled={saving} className="px-10 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded font-bold text-sm text-gray-600 transition-all sm:min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed">Cancel</button>
                         </div>

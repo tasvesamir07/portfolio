@@ -136,6 +136,7 @@ const AdminLayout = () => {
 
                     {[
                         { id: 'about', label: 'Branding & About', icon: User },
+                        { id: 'profile', label: 'Profile', icon: User },
                         { id: 'academics', label: 'Academics', icon: GraduationCap },
                         { id: 'experiences', label: 'Experiences', icon: Briefcase },
                         { id: 'trainings', label: 'Training', icon: ExternalLink },
