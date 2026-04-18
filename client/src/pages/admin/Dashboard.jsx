@@ -1426,7 +1426,6 @@ const Dashboard = () => {
     }, [activeTab]);
 
     const handleAddCategory = async (e) => {
-    const handleAddCategory = async (e) => {
         e.preventDefault();
         if (!newCategoryName.trim()) return;
         try {
