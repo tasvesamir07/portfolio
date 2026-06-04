@@ -158,6 +158,29 @@ app.use('/api/gallery', require('./routes/gallery'));
 app.use('/api/gallery-categories', require('./routes/galleryCategories'));
 app.use('/api/social-links', require('./routes/socialLinks'));
 app.use('/api/pages', require('./routes/pages'));
+app.get('/api/page', async (req, res) => {
+    try {
+        const slug = String(req.query?.slug || '').trim();
+        const id = Number(req.query?.id);
+        const LANGUAGE_HEADER = 'x-translate-language';
+        const { localizeDataObject } = require('./middleware/autoTranslate');
+        let result;
+
+        if (slug) {
+            result = await db.query('SELECT * FROM pages WHERE slug = $1', [slug]);
+        } else if (Number.isFinite(id) && id > 0) {
+            result = await db.query('SELECT * FROM pages WHERE id = $1', [id]);
+        } else {
+            return res.status(400).json({ message: 'slug or id is required' });
+        }
+
+        if (result.rows.length === 0) return res.status(404).json({ message: 'Page not found' });
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows[0], language));
+    } catch (err) {
+        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    }
+});
 app.use('/api/trainings', require('./routes/trainings'));
 app.use('/api/skills', require('./routes/skills'));
 app.use('/api/experiences', require('./routes/experiences'));
