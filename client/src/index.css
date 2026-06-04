@@ -1,31 +1,89 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --color-background: #ffffff;
-  --color-foreground: #1a1a1a;
-  --color-brand-blue: #0b3b75;
-  --color-brand-gold: #ceb079;
-  --color-accent-primary: #0b3b75; 
-  --color-accent-secondary: #ceb079;
-  --color-muted: #f3f4f6;
-  --color-border-light: #e5e7eb;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-gold: var(--brand-gold);
+  --color-accent-primary: var(--accent-primary); 
+  --color-accent-secondary: var(--accent-secondary);
+  --color-muted: var(--muted);
+  --color-border-light: var(--border-light);
   
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-
   --breakpoint-xs: 400px;
 }
-
 
 @layer base {
   :root {
     color-scheme: light;
+    --background: #ffffff;
+    --foreground: #1a1a1a;
+    --brand-blue: #0b3b75;
+    --brand-gold: #ceb079;
+    --accent-primary: #0b3b75; 
+    --accent-secondary: #ceb079;
+    --muted: #f3f4f6;
+    --border-light: #e5e7eb;
   }
+
+  .dark {
+    color-scheme: dark;
+    --background: #0f172a;
+    --foreground: #f8fafc;
+    --brand-blue: #38bdf8;
+    --brand-gold: #fbbf24;
+    --accent-primary: #38bdf8; 
+    --accent-secondary: #fbbf24;
+    --muted: #1e293b;
+    --border-light: #334155;
+  }
+
+  /* Global dark mode style overrides for compatibility */
+  .dark .bg-\[\#fcfaf7\] {
+    background-color: #0f172a !important;
+  }
+  .dark .bg-white {
+    background-color: #1e293b !important;
+  }
+  .dark .text-gray-700 {
+    color: #cbd5e1 !important;
+  }
+  .dark .text-gray-600 {
+    color: #94a3b8 !important;
+  }
+  .dark .text-gray-900 {
+    color: #f8fafc !important;
+  }
+  .dark .text-\[\#0b3b75\] {
+    color: #38bdf8 !important;
+  }
+  .dark .border-gray-200, .dark .border-gray-100 {
+    border-color: #334155 !important;
+  }
+  .dark .border-gray-300 {
+    border-color: #475569 !important;
+  }
+  .dark .quill-content strong {
+    color: #f8fafc !important;
+  }
+  .dark .quill-content h1, .dark .quill-content h2, .dark .quill-content h3 {
+    color: #38bdf8 !important;
+  }
+
   html {
     overflow-x: hidden;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
   }
+
+  /* Keyboard Focus Indicator */
+  *:focus-visible {
+    outline: 3px solid var(--brand-gold) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(206, 176, 121, 0.4) !important;
+  }
+
   body {
     @apply bg-background text-foreground font-sans selection:bg-[#0b3b75]/20 selection:text-[#0b3b75] leading-relaxed overflow-x-hidden;
     word-break: normal;
@@ -35,21 +93,10 @@
     hyphens: none;
     -webkit-hyphens: none;
     -ms-hyphens: none;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
   }
   #root {
     min-height: 100%;
     overflow-x: hidden;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-  }
-  html::-webkit-scrollbar,
-  body::-webkit-scrollbar,
-  #root::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
   }
   * {
     hyphens: none;
@@ -88,6 +135,15 @@
   
   .input {
     @apply w-full bg-gray-50/50 border border-gray-200 rounded-xl px-4 py-3.5 focus:border-[#0b3b75] focus:ring-4 focus:ring-[#0b3b75]/10 outline-none transition-all text-gray-900 shadow-sm text-sm placeholder:text-gray-400 focus:bg-white;
+  }
+
+  .hover-glow {
+    transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease;
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 25px rgba(206, 176, 121, 0.35), 0 0 60px rgba(206, 176, 121, 0.1);
+    transform: translateY(-2px);
+    border-color: rgba(206, 176, 121, 0.4) !important;
   }
 }
 
@@ -305,3 +361,5 @@
   height: 0 !important;
   display: none !important;
 }
+
+

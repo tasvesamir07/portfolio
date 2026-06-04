@@ -1,0 +1,70 @@
+const express = require('express');
+const router = express.Router();
+const db = require('../db');
+const authenticateToken = require('../auth');
+const { localizeDataObject } = require('../middleware/autoTranslate');
+const { cleanMediaUrls, diffRemovedMediaUrls } = require('../utils/media');
+
+const LANGUAGE_HEADER = 'x-translate-language';
+
+router.get('/', async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM newspapers ORDER BY sort_order ASC, created_at DESC');
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.json(localizeDataObject(result.rows, language));
+    } catch (err) {
+        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    }
+});
+
+router.post('/', authenticateToken, async (req, res) => {
+    const { title, title_bn, title_ko, short_description, short_description_bn, short_description_ko, image_url, link_url } = req.body;
+    try {
+        // Find next sort_order
+        const maxSortRes = await db.query('SELECT COALESCE(MAX(sort_order), -1) AS max_order FROM newspapers');
+        const nextOrder = (maxSortRes.rows[0]?.max_order ?? -1) + 1;
+
+        const result = await db.query(
+            'INSERT INTO newspapers (title, title_bn, title_ko, short_description, short_description_bn, short_description_ko, image_url, link_url, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+            [title || '', title_bn || '', title_ko || '', short_description || '', short_description_bn || '', short_description_ko || '', image_url || '', link_url || '', nextOrder]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    }
+});
+
+router.put('/:id', authenticateToken, async (req, res) => {
+    const { title, title_bn, title_ko, short_description, short_description_bn, short_description_ko, image_url, link_url } = req.body;
+    try {
+        const previousResult = await db.query('SELECT image_url FROM newspapers WHERE id = $1', [req.params.id]);
+        const previousRow = previousResult.rows[0] || {};
+        
+        const result = await db.query(
+            'UPDATE newspapers SET title = $1, title_bn = $2, title_ko = $3, short_description = $4, short_description_bn = $5, short_description_ko = $6, image_url = $7, link_url = $8 WHERE id = $9 RETURNING *',
+            [title || '', title_bn || '', title_ko || '', short_description || '', short_description_bn || '', short_description_ko || '', image_url || '', link_url || '', req.params.id]
+        );
+        
+        await cleanMediaUrls(diffRemovedMediaUrls(
+            [previousRow.image_url],
+            [image_url || '']
+        ));
+        
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    }
+});
+
+router.delete('/:id', authenticateToken, async (req, res) => {
+    try {
+        const previousResult = await db.query('SELECT image_url FROM newspapers WHERE id = $1', [req.params.id]);
+        await db.query('DELETE FROM newspapers WHERE id = $1', [req.params.id]);
+        await cleanMediaUrls(previousResult.rows.map(row => row.image_url));
+        res.sendStatus(204);
+    } catch (err) {
+        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    }
+});
+
+module.exports = router;

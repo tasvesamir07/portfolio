@@ -1,17 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Github, Linkedin, Mail, Twitter, Instagram, Globe, FileText } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
-
-const IconMap = {
-    Github,
-    Linkedin,
-    Twitter,
-    Mail,
-    Instagram,
-    Globe,
-    FileText
-};
+import { getSocialIcon } from '../utils/socialIcons';
 
 const Footer = () => {
     const [socialLinks, setSocialLinks] = useState([]);
@@ -20,8 +10,8 @@ const Footer = () => {
     useEffect(() => {
         const fetchLinks = async () => {
             try {
-                const res = await api.get('/social-links');
-                setSocialLinks(res.data);
+                const res = await api.get('/page-data?resources=social-links');
+                setSocialLinks(res.data.socialLinks || res.data['social-links'] || []);
             } catch (err) {
                 console.error('Error fetching social links:', err);
             }
@@ -36,7 +26,7 @@ const Footer = () => {
             <div className="max-w-7xl mx-auto px-6 text-center">
                 <div className="flex flex-wrap justify-center gap-6 md:gap-10 mb-10 md:mb-16">
                     {socialLinks.map((social, idx) => {
-                        const IconComponent = IconMap[social.icon_name] || Globe;
+                        const IconComponent = getSocialIcon(social.icon_name || social.platform);
 
                         return (
                             <a
@@ -46,6 +36,7 @@ const Footer = () => {
                                 rel="noopener noreferrer"
                                 className="text-[#0b3b75]/60 transition-all hover:-translate-y-2 hover:text-[#0b3b75] drop-shadow-sm hover:drop-shadow-md"
                                 title={social.platform}
+                                aria-label={social.platform}
                             >
                                 <IconComponent size={32} strokeWidth={2} />
                             </a>

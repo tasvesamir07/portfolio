@@ -7,13 +7,13 @@ import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
-import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
+import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 
 const Research = () => {
     const [research, setResearch] = useState([]);
+    const [brokenImages, setBrokenImages] = useState([]);
     const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
-    const translatedResearch = useTranslatedDataRows(research, ['title', 'status', 'date_text'], language);
     const noDataLabel = getNoDataLabel(language);
 
     useEffect(() => {
@@ -58,7 +58,7 @@ const Research = () => {
                 <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('research.titleMain')} <span className="text-brand-blue font-black">{t('research.titleAccent')}</span></h2>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                    {translatedResearch.map((item, index) => {
+                    {research.map((item, index) => {
                         // Merge both structured data and legacy description to prevent content being hidden
                         const structuredData = getLocalizedField(item, 'details_json', language, '');
                         const descriptionText = getLocalizedField(item, 'description', language, '');
@@ -81,11 +81,19 @@ const Research = () => {
                                 className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-gray-100 hover:shadow-2xl transition-all group flex flex-col md:flex-row shadow-xl shadow-gray-200/20"
                             >
                                 <div className="w-full md:w-2/5 h-48 sm:h-64 md:h-full relative overflow-hidden bg-gray-50 flex-shrink-0">
-                                    {item.image_url ? (
+                                    {item.image_url && !brokenImages.includes(item.id) ? (
                                         <img 
-                                            src={item.image_url} 
+                                            src={getTransformedUrl(item.image_url, 480, 75)} 
+                                            srcSet={buildSrcSet(item.image_url)}
+                                            sizes="(max-width: 768px) 100vw, 480px"
                                             alt={title} 
+                                            loading="lazy"
+                                            decoding="async"
+                                            width="480"
+                                            height="320"
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                            style={{ maxWidth: '100%', height: 'auto' }}
+                                            onError={() => setBrokenImages((prev) => [...prev, item.id])}
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-200">

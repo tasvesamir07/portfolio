@@ -4,6 +4,12 @@
     "api/[...all].js": {
       "maxDuration": 60
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/prewarm",
+      "schedule": "0 * * * *"
+    }
+  ]
 }
 

@@ -6,6 +6,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
+import { getTransformedUrl } from '../utils/imageUrl';
 
 const getGalleryCardLayout = (index) => {
     const layouts = [
@@ -119,24 +120,29 @@ const Gallery = () => {
                                 ? 'border-brand-blue bg-brand-blue text-white shadow-lg shadow-brand-blue/20'
                                 : 'border-gray-200 bg-white text-gray-600 hover:border-brand-blue/20 hover:bg-white hover:text-brand-blue'
                         }`}
+                        title={t('common.all') || 'All'}
                     >
                         {t('common.all')}
                     </button>
-                    {usedCategories.map(cat => (
-                        <button 
-                            key={cat.id}
-                            onClick={() => handleCategoryChange(cat.name)}
-                            className={`max-w-full rounded-full border px-5 py-2.5 text-sm font-bold transition-all sm:px-7 sm:text-base ${
-                                activeCategory === cat.name
-                                    ? 'border-brand-blue bg-brand-blue text-white shadow-lg shadow-brand-blue/20'
-                                    : 'border-gray-200 bg-white text-gray-600 hover:border-brand-blue/20 hover:bg-white hover:text-brand-blue'
-                            }`}
-                        >
-                            <span className="block max-w-[170px] truncate sm:max-w-none">
-                                {getLocalizedField(cat, 'name', language, cat.name)}
-                            </span>
-                        </button>
-                    ))}
+                    {usedCategories.map(cat => {
+                        const localizedName = getLocalizedField(cat, 'name', language, cat.name);
+                        return (
+                            <button 
+                                key={cat.id}
+                                onClick={() => handleCategoryChange(cat.name)}
+                                className={`max-w-full rounded-full border px-5 py-2.5 text-sm font-bold transition-all sm:px-7 sm:text-base ${
+                                    activeCategory === cat.name
+                                        ? 'border-brand-blue bg-brand-blue text-white shadow-lg shadow-brand-blue/20'
+                                        : 'border-gray-200 bg-white text-gray-600 hover:border-brand-blue/20 hover:bg-white hover:text-brand-blue'
+                                }`}
+                                title={localizedName}
+                            >
+                                <span className="block max-w-[170px] truncate sm:max-w-none">
+                                    {localizedName}
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
 
                 <motion.div
@@ -157,11 +163,11 @@ const Gallery = () => {
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 14, scale: 0.97 }}
                                 transition={{ duration: 0.28, ease: 'easeOut' }}
-                                className={`group relative min-h-0 cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/90 bg-slate-200 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[2rem] ${cardLayout}`}
+                                className={`group relative min-h-0 cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/90 bg-slate-200 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[2rem] hover-glow ${cardLayout}`}
                                 onClick={() => setSelectedImage(img)}
                             >
                                 <img 
-                                    src={img.image_url} 
+                                    src={getTransformedUrl(img.image_url, 600, 75)} 
                                     alt={localizedCaption}
                                     onError={() => {
                                         setBrokenImageIds((current) => current.includes(img.id) ? current : [...current, img.id]);
@@ -207,7 +213,7 @@ const Gallery = () => {
                             onClick={(event) => event.stopPropagation()}
                         >
                             <img 
-                                src={selectedImage.image_url} 
+                                src={getTransformedUrl(selectedImage.image_url, 1200, 80)} 
                                 alt={getLocalizedField(selectedImage, 'caption', language, selectedImage.caption)} 
                                 className="max-h-[78vh] w-full rounded-[1.75rem] object-contain shadow-2xl"
                             />

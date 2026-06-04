@@ -1,14 +1,11 @@
-import React, { useLayoutEffect, useRef, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
-import { useTranslatedTexts } from '../i18n/translator';
+import { getTransformedUrl } from '../utils/imageUrl';
 
 const About = ({ data }) => {
     const { language, t } = useI18n();
     const { name, hero_image_url, sub_bio, bio_text, resume_url } = data || {};
-    const imageColumnRef = useRef(null);
-    const highlightPanelRef = useRef(null);
-    const highlightListRef = useRef(null);
 
     const isHTML = (str) => /<[a-z][\s\S]*>/i.test(str);
     const normalizeText = (value = '') =>
@@ -256,180 +253,17 @@ const About = ({ data }) => {
     const highlightItems = useMemo(() => extractHighlights(localizedSubBio), [localizedSubBio]);
     const bioBlocks = useMemo(() => extractBioBlocks(localizedBioText), [localizedBioText]);
 
-    // Extract all translatable strings from the parsed items, then translate them in batch
-    const highlightTextsToTranslate = useMemo(() => [
-        ...highlightItems.map(item => item.label || ''),
-        ...highlightItems.map(item => item.text || '')
-    ], [highlightItems]);
-    const bioTextsToTranslate = useMemo(() => bioBlocks.map(b => b.items ? b.items.join('\n') : b.text || ''), [bioBlocks]);
-
-    const translatedHighlightTexts = useTranslatedTexts(highlightTextsToTranslate, language);
-    const translatedBioTexts = useTranslatedTexts(bioTextsToTranslate, language);
-
-    // Rebuild highlight items with translated text
-    const translatedHighlightItems = useMemo(() => {
-        if (!translatedHighlightTexts?.length) return highlightItems;
-        const half = highlightItems.length;
-        return highlightItems.map((item, i) => {
-            const translatedLabel = translatedHighlightTexts[i] || item.label;
-            const translatedFullText = translatedHighlightTexts[half + i] || item.text;
-            
-            // For pairs, we should extract the value part from the translated full text if it contains a colon
-            // followed by the translated label. 
-            let translatedValueHtmls = item.valueHtmls;
-            if (item.kind === 'pair' && item.valueHtmls?.length > 0) {
-                // If it's a single value pair, we can try to extract the value from the full text
-                if (item.valueHtmls.length === 1 && translatedFullText.includes(':')) {
-                    const parts = translatedFullText.split(':');
-                    const valuePart = parts.slice(1).join(':').trim();
-                    if (valuePart) {
-                        translatedValueHtmls = [sanitizeInlineHtml(valuePart)];
-                    }
-                }
-            }
-
-            return {
-                ...item,
-                label: translatedLabel,
-                text: translatedFullText,
-                textHtml: sanitizeInlineHtml(translatedFullText),
-                valueHtmls: translatedValueHtmls
-            };
-        });
-    }, [highlightItems, translatedHighlightTexts, language, sanitizeInlineHtml]);
-
-    // Rebuild bio blocks with translated text
-    const translatedBioBlocks = useMemo(() => {
-        if (!translatedBioTexts?.length) return bioBlocks;
-        return bioBlocks.map((block, i) => {
-            if (block.items) {
-                const lines = (translatedBioTexts[i] || '').split('\n').filter(Boolean);
-                return { ...block, items: lines.length ? lines : block.items };
-            }
-            return { ...block, text: translatedBioTexts[i] || block.text };
-        });
-    }, [bioBlocks, translatedBioTexts, language]);
+    const translatedHighlightItems = highlightItems;
+    const translatedBioBlocks = bioBlocks;
 
     const highlightTextStyle = {
-        fontSize: 'var(--about-highlight-font-size, clamp(1.08rem, 1rem + 0.85vw, 1.7rem))',
-        lineHeight: 'var(--about-highlight-line-height, 1.22)'
+        fontSize: 'clamp(1.05rem, 0.95rem + 0.55vw, 1.45rem)',
+        lineHeight: '1.4'
     };
 
     const highlightListStyle = {
-        rowGap: 'var(--about-highlight-gap, 0.9rem)'
+        rowGap: '1.1rem'
     };
-
-    useLayoutEffect(() => {
-        const imageColumn = imageColumnRef.current;
-        const panel = highlightPanelRef.current;
-        const list = highlightListRef.current;
-
-        if (!imageColumn || !panel || !list) return;
-
-        const resetMobilePanelStyles = () => {
-            panel.style.removeProperty('min-height');
-            panel.style.removeProperty('max-height');
-            panel.style.setProperty('--about-highlight-font-size', 'clamp(1.08rem, 1rem + 0.85vw, 1.7rem)');
-            panel.style.setProperty('--about-highlight-gap', '0.9rem');
-            panel.style.setProperty('--about-highlight-line-height', '1.24');
-            list.style.removeProperty('height');
-            list.style.removeProperty('justify-content');
-            list.style.removeProperty('row-gap');
-        };
-
-        if (window.innerWidth < 1024) {
-            resetMobilePanelStyles();
-            return;
-        }
-
-        const syncPanelHeight = () => {
-            const imageHeight = imageColumn.getBoundingClientRect().height;
-            const itemCount = Math.max(highlightItems.length, 1);
-
-            if (imageHeight > 0) {
-                const exactHeight = `${Math.ceil(imageHeight)}px`;
-                panel.style.minHeight = exactHeight;
-                panel.style.maxHeight = exactHeight;
-            }
-
-            const availableHeight = Math.max(imageHeight - 6, 0);
-            let low = 20;
-            let high = 38;
-            let bestFont = low;
-            let bestHeight = Infinity;
-
-            const measureHeight = (fontPx) => {
-                panel.style.setProperty('--about-highlight-font-size', `${fontPx}px`);
-                panel.style.setProperty('--about-highlight-gap', '0px');
-                panel.style.setProperty('--about-highlight-line-height', '1.16');
-                list.style.height = 'auto';
-                list.style.justifyContent = 'flex-start';
-                list.style.rowGap = '0px';
-                return list.scrollHeight;
-            };
-
-            while (high - low > 0.5) {
-                const mid = (low + high) / 2;
-                const measuredHeight = measureHeight(mid);
-
-                if (measuredHeight <= availableHeight) {
-                    bestFont = mid;
-                    bestHeight = measuredHeight;
-                    low = mid;
-                } else {
-                    high = mid;
-                }
-            }
-
-            const fittedHeight = Number.isFinite(bestHeight) ? bestHeight : measureHeight(bestFont);
-            const remainingSpace = Math.max(availableHeight - fittedHeight, 0);
-            const distributedGap = itemCount > 1
-                ? Math.max(0, Math.min(18, remainingSpace / (itemCount - 1)))
-                : 0;
-
-            panel.style.setProperty('--about-highlight-font-size', `${bestFont}px`);
-            panel.style.setProperty('--about-highlight-gap', `${distributedGap}px`);
-            panel.style.setProperty('--about-highlight-line-height', '1.16');
-            list.style.height = `${availableHeight}px`;
-            list.style.justifyContent = 'space-between';
-            list.style.rowGap = '0px';
-        };
-
-        syncPanelHeight();
-
-        let resizeRafId = null;
-        const runSyncInNextFrame = () => {
-            if (resizeRafId != null) {
-                cancelAnimationFrame(resizeRafId);
-            }
-            resizeRafId = requestAnimationFrame(() => {
-                syncPanelHeight();
-                resizeRafId = null;
-            });
-        };
-
-        const resizeObserver = new ResizeObserver(runSyncInNextFrame);
-
-        // Observing panel/list can create resize-feedback loops because this effect mutates their size.
-        resizeObserver.observe(imageColumn);
-        window.addEventListener('resize', runSyncInNextFrame, { passive: true });
-
-        return () => {
-            if (resizeRafId != null) {
-                cancelAnimationFrame(resizeRafId);
-            }
-            resizeObserver.disconnect();
-            window.removeEventListener('resize', runSyncInNextFrame);
-            panel.style.removeProperty('min-height');
-            panel.style.removeProperty('max-height');
-            panel.style.removeProperty('--about-highlight-font-size');
-            panel.style.removeProperty('--about-highlight-gap');
-            panel.style.removeProperty('--about-highlight-line-height');
-            list.style.removeProperty('height');
-            list.style.removeProperty('justify-content');
-            list.style.removeProperty('row-gap');
-        };
-    }, [hero_image_url, localizedSubBio, language, translatedHighlightItems.length]);
 
     if (!data) return null;
 
@@ -437,27 +271,32 @@ const About = ({ data }) => {
         <section className="bg-white py-12 md:py-16 w-full shadow-md z-20 relative -mt-4 text-left" id="about">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 xl:px-12 overflow-x-hidden">
                 <div className="grid grid-cols-1 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)] gap-8 md:gap-12 lg:gap-14 items-start lg:items-stretch">
-                    <div ref={imageColumnRef} className="w-full flex justify-center lg:justify-start">
+                    <div className="w-full flex justify-center lg:justify-start">
                         <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[320px] pt-3 pb-5">
-                            <div>
-                                <div className="bg-white p-2 rounded-sm shadow-2xl border border-gray-100 aspect-[3/4] overflow-hidden">
-                                    <img
-                                        src={hero_image_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'}
-                                        alt={localizedName || 'Profile'}
-                                        className="w-full h-full object-cover object-top filter contrast-105 pointer-events-none select-none"
-                                    />
-                                </div>
+                            <div className="bg-white p-2 rounded-sm shadow-2xl border border-gray-100 aspect-[3/4] overflow-hidden">
+                                <img
+                                    src={getTransformedUrl(hero_image_url, 320, 75) || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'}
+                                    alt={localizedName || 'Profile'}
+                                    width="320"
+                                    height="426"
+                                    fetchpriority="high"
+                                    className="w-full h-full object-cover object-top filter contrast-105 pointer-events-none select-none"
+                                    style={{ maxWidth: '100%', height: 'auto' }}
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d';
+                                    }}
+                                />
                             </div>
                         </div>
                     </div>
 
-                    <div className="w-full min-w-0">
+                    <div className="w-full min-w-0 flex flex-col justify-center">
                         <div
-                            ref={highlightPanelRef}
-                            className="w-full min-w-0 border-l-4 sm:border-l-[6px] border-[#ceb079] pl-4 sm:pl-6 lg:pl-8 xl:pl-10 py-1 sm:py-2 overflow-hidden lg:flex lg:flex-col lg:justify-start"
+                            className="w-full min-w-0 border-l-4 sm:border-l-[6px] border-[#ceb079] pl-4 sm:pl-6 lg:pl-8 xl:pl-10 py-1 sm:py-2 overflow-hidden"
                         >
                             {translatedHighlightItems.length > 0 && (
-                                <ul ref={highlightListRef} className="flex flex-col w-full min-w-0" style={highlightListStyle}>
+                                <ul className="flex flex-col w-full min-w-0" style={highlightListStyle}>
                                     {translatedHighlightItems.map((item, i) => {
                                         const point = item.text;
                                         const label = item.kind === 'pair'

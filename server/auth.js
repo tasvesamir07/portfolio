@@ -18,6 +18,63 @@ const authenticateToken = (req, res, next) => {
             });
         }
         req.user = user;
+
+        // Mutation Audit Interceptor
+        if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
+            const originalJson = res.json.bind(res);
+            const originalSendStatus = res.sendStatus.bind(res);
+            const originalSend = res.send.bind(res);
+
+            let logged = false;
+            const logMutation = (payload, status) => {
+                if (logged) return;
+                if (status >= 200 && status < 300) {
+                    logged = true;
+                    const urlPath = req.originalUrl || req.path || '';
+                    const parts = urlPath.split('/').filter(Boolean);
+                    
+                    const moduleName = parts[1] || 'unknown';
+                    const targetId = req.params?.id || payload?.id || parts[2] || null;
+                    const action = `${req.method}_${moduleName.toUpperCase()}`;
+                    
+                    let details = null;
+                    if (req.body && !urlPath.includes('profile') && !urlPath.includes('login')) {
+                        const bodyCopy = { ...req.body };
+                        delete bodyCopy.password;
+                        delete bodyCopy.password_hash;
+                        delete bodyCopy.image_url;
+                        delete bodyCopy.thumbnail_url;
+                        delete bodyCopy.file_url;
+                        delete bodyCopy.logo_url;
+                        delete bodyCopy.content;
+                        details = bodyCopy;
+                    }
+                    
+                    try {
+                        const { logAuditActivity } = require('./utils/audit');
+                        logAuditActivity(req, action, targetId, details);
+                    } catch (auditError) {
+                        console.error('Failed to log audit activity:', auditError.message);
+                    }
+                }
+            };
+
+            res.json = (payload) => {
+                logMutation(payload, res.statusCode || 200);
+                return originalJson(payload);
+            };
+
+            res.send = (payload) => {
+                logMutation(null, res.statusCode || 200);
+                return originalSend(payload);
+            };
+
+            res.sendStatus = (statusCode) => {
+                logMutation(null, statusCode);
+                return originalSendStatus(statusCode);
+            };
+        }
+
         next();
     });
 };

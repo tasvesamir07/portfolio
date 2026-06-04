@@ -55,7 +55,7 @@ export const useTranslatedDataRows = (rows, fields, language, options = {}) => {
                 setTranslatedRows(next);
             })
             .catch(() => setTranslatedRows(rows));
-    }, [language, JSON.stringify(rows?.map(r => fields.map(f => r[f]).join('|'))), force]);
+    }, [language, rows?.map(r => fields.map(f => r[f]).join('|')).join(','), force]);
 
     return translatedRows;
 };

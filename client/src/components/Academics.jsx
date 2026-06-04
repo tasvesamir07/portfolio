@@ -7,13 +7,13 @@ import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
-import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
+import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 
 const Academics = () => {
     const [academics, setAcademics] = useState([]);
+    const [brokenLogos, setBrokenLogos] = useState([]);
     const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
-    const translatedAcademics = useTranslatedDataRows(academics, ['degree', 'institution', 'location'], language);
     const noDataLabel = getNoDataLabel(language);
 
     useEffect(() => {
@@ -68,7 +68,7 @@ const Academics = () => {
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('academics.kicker')}</span>
                 <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('academics.titleMain')} {t('academics.titleAccent') ? <span className="text-brand-gold font-black">{t('academics.titleAccent')}</span> : null}</h2>
                 <div className="flex flex-col gap-10">
-                    {translatedAcademics.map((item, index) => (
+                    {academics.map((item, index) => (
                         (() => {
                             const hasSavedStructuredJson =
                                 typeof item.details_json === 'string' && item.details_json.trim().startsWith('[');
@@ -128,11 +128,22 @@ const Academics = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: index * 0.1 }}
-                            className="bg-white p-6 md:p-9 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-start gap-5 md:gap-7 group hover:border-brand-blue/30 border border-gray-100 transition-all shadow-sm hover:shadow-md"
+                            className="bg-white p-6 md:p-9 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-start gap-5 md:gap-7 group hover:border-brand-blue/30 border border-gray-100 transition-all shadow-sm hover:shadow-md hover-glow"
                         >
                             <div className="flex-shrink-0 w-16 h-16 sm:w-[74px] sm:h-[74px] bg-brand-blue/5 rounded-2xl flex items-center justify-center transition-all mt-1">
-                                {item.logo_url ? (
-                                    <img src={item.logo_url} alt={institution} className="w-full h-full object-cover rounded-2xl" />
+                                {item.logo_url && !brokenLogos.includes(item.id) ? (
+                                    <img 
+                                        src={getTransformedUrl(item.logo_url, 74, 75)} 
+                                        srcSet={buildSrcSet(item.logo_url)}
+                                        sizes="74px"
+                                        alt={institution} 
+                                        loading="lazy"
+                                        decoding="async"
+                                        width="74"
+                                        height="74"
+                                        className="w-full h-full object-cover rounded-2xl" 
+                                        onError={() => setBrokenLogos((prev) => [...prev, item.id])}
+                                    />
                                 ) : (
                                     <GraduationCap className="w-8 h-8 sm:w-9 sm:h-9 text-brand-blue" strokeWidth={2.3} />
                                 )}

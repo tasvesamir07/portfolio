@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedNavName, normalizeLabel } from '../i18n/localize';
 import LanguageSwitcher from './LanguageSwitcher';
-import { useTranslatedText } from '../i18n/translator';
+import ThemeToggle from './ThemeToggle';
+import { useFocusTrap } from '../hooks/useFocusTrap';
+import { getTransformedUrl } from '../utils/imageUrl';
 
 const isBlogMenuLink = (link = {}, t) => {
     const label = normalizeLabel(link.name);
@@ -45,8 +47,12 @@ const Navbar = () => {
     const [about, setAbout] = useState(null);
     const [blogPages, setBlogPages] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(null);
+    const [logoBroken, setLogoBroken] = useState(false);
     const location = useLocation();
     const { language, t } = useI18n();
+
+    const triggerRef = useRef(null);
+    const menuContainerRef = useFocusTrap(isOpen, triggerRef);
 
     useEffect(() => {
         setIsOpen(false);
@@ -78,13 +84,9 @@ const Navbar = () => {
     useEffect(() => {
         const fetchNavbarData = async () => {
             try {
-                const [aboutRes, pagesRes] = await Promise.all([
-                    api.get('/about'),
-                    api.get('/pages')
-                ]);
-
-                setAbout(aboutRes.data);
-                setBlogPages((pagesRes.data || []).filter((page) => page.show_in_nav));
+                const res = await api.get('/page-data?resources=about,pages');
+                setAbout(res.data.about);
+                setBlogPages((res.data.pages || []).filter((page) => page.show_in_nav));
             } catch (err) {
                 console.error('Error fetching navbar data:', err);
             }
@@ -105,13 +107,14 @@ const Navbar = () => {
         },
         { name: 'Research', path: '/research' },
         { name: 'Publications', path: '/publications' },
+        { name: 'Newspaper', path: '/newspaper' },
+        { name: 'Anon. Message', path: '/anonymous-message' },
         { name: 'Gallery', path: '/gallery' },
         { name: 'Contact', path: '/contact' }
     ];
     const localizedSiteName = getLocalizedField(about, 'site_name', language, about?.site_name || '');
     const localizedOwnerName = getLocalizedField(about, 'name', language, about?.name || '');
-    const rawBrandLabel = localizedSiteName?.trim() || localizedOwnerName?.trim() || 'Portfolio';
-    const brandLabel = useTranslatedText(rawBrandLabel, language);
+    const brandLabel = localizedSiteName?.trim() || localizedOwnerName?.trim() || 'Portfolio';
 
     const activeNavLinks = (() => {
         const normalizedLinks = baseNavLinks.map((link) => ({ ...link }));
@@ -167,8 +170,16 @@ const Navbar = () => {
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="flex items-center justify-between gap-4">
                         <Link to="/" className="flex items-center gap-3 group min-w-0" onClick={() => setIsOpen(false)}>
-                            {about?.logo_url ? (
-                                <img src={about.logo_url} alt="Logo" className="w-14 h-14 object-contain group-hover:scale-105 transition-transform" />
+                            {about?.logo_url && !logoBroken ? (
+                                <img
+                                    src={getTransformedUrl(about.logo_url, 56, 75)}
+                                    alt="Logo"
+                                    width="56"
+                                    height="56"
+                                    fetchpriority="high"
+                                    className="w-14 h-14 object-contain group-hover:scale-105 transition-transform"
+                                    onError={() => setLogoBroken(true)}
+                                />
                             ) : (
                                 <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-[#ceb079] font-black text-xl border border-white/20">
                                     {brandLabel[0]}
@@ -230,6 +241,7 @@ const Navbar = () => {
 
                         <div className="hidden lg:flex items-center gap-4">
                             <LanguageSwitcher />
+                            <ThemeToggle />
                             {about?.resume_url && (
                                 <a
                                     href={about.resume_url}
@@ -243,8 +255,9 @@ const Navbar = () => {
                         </div>
 
                         <button
+                            ref={triggerRef}
                             onClick={() => setIsOpen((prev) => !prev)}
-                            className="lg:hidden p-2 text-white hover:text-brand-gold transition-colors"
+                            className="lg:hidden p-2 text-white hover:text-brand-gold transition-colors cursor-pointer"
                             aria-label={t('nav.toggleMenu')}
                         >
                             {isOpen ? <X size={28} /> : <Menu size={28} />}
@@ -255,6 +268,10 @@ const Navbar = () => {
 
             {isOpen && (
                 <div
+                    ref={menuContainerRef}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Mobile Navigation Menu"
                     style={{
                         position: 'fixed',
                         top: 0,
@@ -280,8 +297,16 @@ const Navbar = () => {
                         }}
                     >
                         <Link to="/" onClick={() => setIsOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            {about?.logo_url ? (
-                                <img src={about.logo_url} alt="Logo" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+                            {about?.logo_url && !logoBroken ? (
+                                <img
+                                    src={getTransformedUrl(about.logo_url, 40, 75)}
+                                    alt="Logo"
+                                    width="40"
+                                    height="40"
+                                    fetchpriority="high"
+                                    style={{ width: 40, height: 40, objectFit: 'contain' }}
+                                    onError={() => setLogoBroken(true)}
+                                />
                             ) : (
                                 <div
                                     style={{
@@ -325,7 +350,10 @@ const Navbar = () => {
                     </div>
 
                     <div style={{ padding: '16px 24px 32px', flex: 1 }}>
-                        <LanguageSwitcher className="mb-6 flex w-full justify-center" fullWidth />
+                        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+                            <LanguageSwitcher className="flex-1" fullWidth />
+                            <ThemeToggle />
+                        </div>
 
                         {flatMobileLinks.map((link, idx) => (
                             <Link

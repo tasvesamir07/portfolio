@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { translateApiData } from './i18n/translator';
 import { expireSessionAndRedirect, getStoredToken } from './utils/authSession';
 const STORAGE_KEY = 'portfolio-language';
 const LANGUAGE_HEADER = 'X-Translate-Language';
@@ -82,6 +81,9 @@ defaultBaseUrl = resolveRuntimeApiBaseUrl(defaultBaseUrl);
 
 const api = axios.create({
     baseURL: defaultBaseUrl,
+    withCredentials: true,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN'
 });
 
 // Flush response cache immediately when user switches language
@@ -179,10 +181,6 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     async (response) => {
         try {
-            const method = (response.config?.method || 'get').toLowerCase();
-            const language = response.config?.metadataLanguage || response.config?.headers?.[LANGUAGE_HEADER] || 'en';
-            const configUrl = String(response.config?.url || '');
-            const configHeaders = response.config?.headers || {};
             const fromCache = response._fromCache === true;
             const serverAlreadyTranslated = String(
                 response.headers?.['x-response-translated']
@@ -190,39 +188,7 @@ api.interceptors.response.use(
                 || ''
             ) === '1';
 
-            const shouldTranslate = method === 'get'
-                && response.config?.enableAutoTranslate === true
-                && !configUrl.includes('/translate')
-                && !fromCache
-                && !serverAlreadyTranslated
-                && configHeaders?.['X-Skip-Auto-Translate'] !== '1'
-                && ['en', 'bn', 'ko'].includes(language);
-
-            if (shouldTranslate) {
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Auto-translation timed out')), 60000)
-                );
-                let translationApplied = false;
-
-                try {
-                    response.data = await Promise.race([
-                        translateApiData(response.data, language),
-                        timeoutPromise
-                    ]);
-                    translationApplied = true;
-                } catch (timeoutOrError) {
-                    console.warn('Auto-translation deferred or failed:', timeoutOrError.message);
-                }
-
-                // Cache only when translation was actually applied.
-                // Otherwise we'd cache untranslated fallback data and keep serving it.
-                const cacheKey = response.config?.metadataCacheKey;
-                if (cacheKey && translationApplied) {
-                    const translatedSnapshot = cloneCachedResponse(response, response.config);
-                    getResponseCache.set(cacheKey, translatedSnapshot);
-                    trimGetResponseCache();
-                }
-            } else if (!fromCache && serverAlreadyTranslated) {
+            if (!fromCache && serverAlreadyTranslated) {
                 const cacheKey = response.config?.metadataCacheKey;
                 if (cacheKey) {
                     const translatedSnapshot = cloneCachedResponse(response, response.config);
@@ -230,8 +196,8 @@ api.interceptors.response.use(
                     trimGetResponseCache();
                 }
             }
-        } catch (translationError) {
-            console.error('Auto-translation failed:', translationError);
+        } catch (e) {
+            console.error('Response caching failed:', e);
         }
 
         return response;

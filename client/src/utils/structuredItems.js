@@ -336,7 +336,7 @@ export const useTranslatedStructuredItems = (items, language, options = {}) => {
             });
             setTranslated(next);
         }).catch(() => setTranslated(items));
-    }, [language, JSON.stringify(items?.map(it => ({ t: it.title, x: it.text, v: it.values }))), force]);
+    }, [language, items?.map(it => `${it.title}|${it.text}|${(it.values || []).join(',')}`).join('||'), force]);
 
     return translated;
 };

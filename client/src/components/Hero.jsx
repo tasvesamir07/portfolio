@@ -1,28 +1,13 @@
 import React from 'react';
-import { Github, Twitter, Linkedin, Globe, Mail, Instagram, FileText } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
-import { useTranslatedText } from '../i18n/translator';
-
-const iconMap = {
-    Github,
-    Linkedin,
-    Twitter,
-    Instagram,
-    Mail,
-    Globe,
-    FileText
-};
+import { getSocialIcon } from '../utils/socialIcons';
 
 const Hero = ({ data, socialLinks = [] }) => {
     const { language, t } = useI18n();
 
-    const nameVal = getLocalizedField(data, 'name', language, data?.name);
-    const titleVal = getLocalizedField(data, 'title', language, data?.title);
-    
-    // Dynamic translation - Hook must be top-level
-    const name = useTranslatedText(nameVal, language);
-    const title = useTranslatedText(titleVal, language);
+    const name = getLocalizedField(data, 'name', language, data?.name);
+    const title = getLocalizedField(data, 'title', language, data?.title);
 
     if (!data) return <div className="h-48 bg-[#0a2f5c]" />;
 
@@ -41,7 +26,7 @@ const Hero = ({ data, socialLinks = [] }) => {
                     {/* Social Icons Row */}
                     <div className="flex flex-wrap justify-center items-center gap-3 mt-4">
                         {socialLinks.map((link, idx) => {
-                            const IconComponent = iconMap[link.icon_name] || Globe;
+                            const IconComponent = getSocialIcon(link.icon_name || link.platform);
                             return (
                                 <a 
                                     key={idx}
@@ -50,6 +35,7 @@ const Hero = ({ data, socialLinks = [] }) => {
                                     rel="noopener noreferrer"
                                     className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-lg hover:-translate-y-1 hover:shadow-xl transition-all group overflow-hidden relative"
                                     title={link.platform}
+                                    aria-label={link.platform}
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-tr from-gray-100 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                     <IconComponent 

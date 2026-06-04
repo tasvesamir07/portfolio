@@ -29,7 +29,9 @@ export const translations = {
             contact: 'Contact',
             blog: 'Blog',
             downloadCv: 'Download CV',
-            toggleMenu: 'Toggle menu'
+            toggleMenu: 'Toggle menu',
+            newspaper: 'Newspaper',
+            anonymousMessage: 'Anon. Message'
         },
         hero: {
             professionalPortfolio: 'Professional Portfolio'
@@ -113,9 +115,27 @@ export const translations = {
         dynamicPage: {
             notFoundDescription: "The page you're looking for doesn't exist."
         },
+        error: {
+            somethingWrong: 'Something went wrong.',
+            tryAgain: 'Try Again',
+            pageNotFound: 'Page Not Found',
+            backToHome: 'Back to Home'
+        },
         footer: {
             developedWithPassion: 'Developed with Passion',
             copyright: '© {{year}}, All rights reserved'
+        },
+        anonymous: {
+            kicker: 'Secure & Private',
+            titleMain: 'Send An',
+            titleAccent: 'Anonymous Message',
+            successTitle: 'Message Sent',
+            successMessage: 'Your message has been sent successfully. It is completely anonymous and encrypted.',
+            formInstructions: 'Write anything you want below. The recipient will see your message but no identifiers (no name, no email, no logging).',
+            messageLabel: 'Your Message',
+            messagePlaceholder: 'Type your message here...',
+            sending: 'Sending...',
+            sendMessage: 'Send Anonymously'
         }
     },
     bn: {
@@ -142,7 +162,9 @@ export const translations = {
             contact: 'যোগাযোগ',
             blog: 'ব্লগ',
             downloadCv: 'সিভি ডাউনলোড',
-            toggleMenu: 'মেনু খুলুন'
+            toggleMenu: 'মেনু খুলুন',
+            newspaper: 'পত্রিকা',
+            anonymousMessage: 'বেনামী বার্তা'
         },
         hero: {
             professionalPortfolio: 'পেশাগত পোর্টফোলিও'
@@ -226,9 +248,27 @@ export const translations = {
         dynamicPage: {
             notFoundDescription: 'আপনি যে পেজটি খুঁজছেন সেটি পাওয়া যায়নি।'
         },
+        error: {
+            somethingWrong: 'কিছু ভুল হয়েছে।',
+            tryAgain: 'আবার চেষ্টা করুন',
+            pageNotFound: 'পৃষ্ঠাটি পাওয়া যায়নি',
+            backToHome: 'হোমে ফিরে যান'
+        },
         footer: {
             developedWithPassion: 'আন্তরিকতায় নির্মিত',
             copyright: '© {{year}}, সর্বস্বত্ব সংরক্ষিত'
+        },
+        anonymous: {
+            kicker: 'নিরাপদ ও গোপনীয়',
+            titleMain: 'বেনামী',
+            titleAccent: 'বার্তা পাঠান',
+            successTitle: 'বার্তা পাঠানো হয়েছে!',
+            successMessage: 'আপনার বার্তাটি সফলভাবে পাঠানো হয়েছে। এটি সম্পূর্ণ বেনামী এবং এনক্রিপ্ট করা।',
+            formInstructions: 'নিচে আপনার মনের কথা লিখুন। প্রাপক আপনার বার্তাটি দেখতে পাবেন তবে আপনার কোনো পরিচয় (নাম, ইমেল বা লগ) দেখতে পাবেন না।',
+            messageLabel: 'আপনার বার্তা',
+            messagePlaceholder: 'এখানে আপনার বার্তা লিখুন...',
+            sending: 'পাঠানো হচ্ছে...',
+            sendMessage: 'বেনামী বার্তা পাঠান'
         }
     },
     ko: {
@@ -255,7 +295,9 @@ export const translations = {
             contact: '문의',
             blog: '블로그',
             downloadCv: '이력서 다운로드',
-            toggleMenu: '메뉴 열기'
+            toggleMenu: '메뉴 열기',
+            newspaper: '신문',
+            anonymousMessage: '익명 메시지'
         },
         hero: {
             professionalPortfolio: '전문 포트폴리오'
@@ -339,9 +381,27 @@ export const translations = {
         dynamicPage: {
             notFoundDescription: '찾으시는 페이지가 존재하지 않습니다.'
         },
+        error: {
+            somethingWrong: '문제가 발생했습니다.',
+            tryAgain: '다시 시도',
+            pageNotFound: '페이지를 찾을 수 없습니다',
+            backToHome: '홈으로 돌아가기'
+        },
         footer: {
             developedWithPassion: '열정을 담아 제작',
             copyright: '© {{year}}, 모든 권리 보유'
+        },
+        anonymous: {
+            kicker: '안전 및 개인정보 보호',
+            titleMain: '익명',
+            titleAccent: '메시지 보내기',
+            successTitle: '메시지 전송 완료!',
+            successMessage: '메시지가 성공적으로 전송되었습니다. 완전히 익명이며 암호화됩니다.',
+            formInstructions: '아래에 원하시는 내용을 자유롭게 작성해 주세요. 수신자는 메시지만 볼 수 있으며 발신자의 식별 정보(이름, 이메일, 로그 등)는 일체 기록되지 않습니다.',
+            messageLabel: '메시지 내용',
+            messagePlaceholder: '여기에 메시지를 입력해 주세요...',
+            sending: '전송 중...',
+            sendMessage: '익명으로 보내기'
         }
     }
 };

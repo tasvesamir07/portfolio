@@ -6,6 +6,7 @@ import StructuredDetails from '../components/StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { useSeo } from '../hooks/useSeo';
 
 const normalizePageContent = (html = '') => {
     if (!html || typeof window === 'undefined') return html;
@@ -36,6 +37,11 @@ const DynamicPage = () => {
     const structuredItems = parseStructuredItems(getLocalizedFirstField(page, ['details_json'], language, ''));
     const renderedContentRaw = normalizePageContent(getLocalizedField(page, 'content', language, page?.content || ''));
     const pageTitleRaw = getLocalizedField(page, 'title', language, page?.title || '');
+
+    useSeo({
+        title: page ? `${pageTitleRaw} | Samir Hossain` : 'Samir Hossain | Portfolio',
+        description: page ? `Detail page of ${pageTitleRaw}` : 'Samir Hossain | Portfolio'
+    });
 
     useEffect(() => {
         const fetchPage = async () => {

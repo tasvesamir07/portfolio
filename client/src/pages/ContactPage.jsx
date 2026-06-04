@@ -1,9 +1,17 @@
 import React from 'react';
 import Contact from '../components/Contact';
+import SEO from '../hooks/useSeo';
+import { useI18n } from '../i18n/I18nContext';
 
 const ContactPage = () => {
+    const { t } = useI18n();
+
     return (
         <div className="pt-20 bg-[#fcfaf7] min-h-screen">
+            <SEO 
+                title={`${t('nav.contact')} | Samir Hossain`}
+                description="Get in touch with Samir Hossain. Submit questions, project inquiries, or collaborative opportunities."
+            />
             <Contact />
         </div>
     );

@@ -6,30 +6,24 @@ import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
-import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
+import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 
 const Experiences = () => {
     const [experiences, setExperiences] = useState([]);
+    const [brokenLogos, setBrokenLogos] = useState([]);
     const [trainings, setTrainings] = useState([]);
     const [skills, setSkills] = useState([]);
     const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
-    const translatedExperiences = useTranslatedDataRows(experiences, ['position', 'company', 'location', 'description'], language);
-    const translatedTrainings = useTranslatedDataRows(trainings, ['title', 'topic', 'instructor', 'date_text'], language);
-    const translatedSkills = useTranslatedDataRows(skills, ['category'], language);
 
     useEffect(() => {
         const fetchAll = async () => {
             setLoading(true);
             try {
-                const [expRes, trainRes, skillsRes] = await Promise.all([
-                    api.get('/experiences'),
-                    api.get('/trainings'),
-                    api.get('/skills')
-                ]);
-                setExperiences(expRes.data);
-                setTrainings(trainRes.data);
-                setSkills(skillsRes.data);
+                const res = await api.get('/page-data?resources=experiences,trainings,skills');
+                setExperiences(res.data.experiences || []);
+                setTrainings(res.data.trainings || []);
+                setSkills(res.data.skills || []);
             } catch (err) {
                 console.error('Error fetching data:', err);
             } finally {
@@ -49,7 +43,7 @@ const Experiences = () => {
                 <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('experiences.workTitleMain')} <span className="text-brand-gold font-black">{t('experiences.workTitleAccent')}</span></h2>
                 
                 <div className="flex flex-col gap-10 mb-24">
-                    {translatedExperiences.length > 0 ? translatedExperiences.map((item, index) => (
+                    {experiences.length > 0 ? experiences.map((item, index) => (
                         (() => {
                             // Combine both structured details and legacy description to ensure nothing is hidden
                             const structuredPart = getLocalizedField(item, 'details_json', language, '');
@@ -70,11 +64,22 @@ const Experiences = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: index * 0.1 }}
-                            className="bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-center md:items-start gap-6 group hover:border-brand-blue/30 border border-gray-100 transition-all shadow-sm hover:shadow-md"
+                            className="bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-center md:items-start gap-6 group hover:border-brand-blue/30 border border-gray-100 transition-all shadow-sm hover:shadow-md hover-glow"
                         >
                             <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl flex items-center justify-center transition-all">
-                                {item.logo_url ? (
-                                    <img src={item.logo_url} alt={company} className="w-full h-full object-cover rounded-2xl" />
+                                {item.logo_url && !brokenLogos.includes(item.id) ? (
+                                    <img 
+                                        src={getTransformedUrl(item.logo_url, 80, 75)} 
+                                        srcSet={buildSrcSet(item.logo_url)}
+                                        sizes="80px"
+                                        alt={company} 
+                                        loading="lazy"
+                                        decoding="async"
+                                        width="80"
+                                        height="80"
+                                        className="w-full h-full object-cover rounded-2xl" 
+                                        onError={() => setBrokenLogos((prev) => [...prev, item.id])}
+                                    />
                                 ) : (
                                     <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 text-brand-gold" strokeWidth={2.5} />
                                 )}
@@ -123,7 +128,7 @@ const Experiences = () => {
                         <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-12 text-gray-900 tracking-tight">{t('experiences.trainingTitleMain')} <span className="text-brand-blue">{t('experiences.trainingTitleAccent')}</span></h2>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
-                            {translatedTrainings.map((item, index) => (
+                            {trainings.map((item, index) => (
                                 (() => {
                                     const detailItems = parseStructuredItems(getLocalizedFirstField(item, ['details_json'], language, ''));
                                     const title = getLocalizedField(item, 'title', language, item.title);
@@ -138,7 +143,7 @@ const Experiences = () => {
                                     whileInView={{ opacity: 1, scale: 1 }}
                                     viewport={{ once: true }}
                                     transition={{ duration: 0.4, delay: index * 0.05 }}
-                                    className="bg-white p-5 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 hover:border-brand-blue/30 transition-all shadow-sm hover:shadow-md group flex flex-col sm:flex-row gap-5 items-center sm:items-start"
+                                    className="bg-white p-5 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 hover:border-brand-blue/30 transition-all shadow-sm hover:shadow-md group flex flex-col sm:flex-row gap-5 items-center sm:items-start hover-glow"
                                 >
                                     <div className="p-4 bg-brand-blue/5 text-brand-blue rounded-2xl group-hover:bg-brand-blue group-hover:text-white transition-colors">
                                         <Award size={24} />
@@ -177,7 +182,7 @@ const Experiences = () => {
                         <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-12 text-gray-900 tracking-tight">{t('experiences.skillsTitleMain')} <span className="text-brand-gold font-black">{t('experiences.skillsTitleAccent')}</span></h2>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {translatedSkills.map((item, index) => (
+                            {skills.map((item, index) => (
                                 (() => {
                                     const localizedItemsText = getLocalizedField(item, 'items', language, item.items || '');
                                     const detailItems = parseStructuredItems(
@@ -197,7 +202,7 @@ const Experiences = () => {
                                     whileInView={{ opacity: 1, x: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ duration: 0.5, delay: index * 0.1 }}
-                                    className="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl text-gray-900 border border-gray-100 shadow-sm transition-all hover:shadow-md"
+                                    className="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl text-gray-900 border border-gray-100 shadow-sm transition-all hover:shadow-md hover-glow"
                                 >
                                     <h3 className="text-lg font-black uppercase tracking-[0.15em] text-[#0b3b75] mb-5 border-b border-gray-100 pb-3 text-center md:text-left">{category}</h3>
                                     {detailItems.length > 0 ? (

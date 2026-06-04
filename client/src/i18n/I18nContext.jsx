@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supportedLanguages, translations } from './translations';
 import { clearTranslationCaches } from './translator';
 
@@ -11,12 +11,6 @@ const applyLanguageSideEffects = (language) => {
     if (typeof document !== 'undefined') {
         document.documentElement.lang = language === 'bn' ? 'bn-BD' : language === 'ko' ? 'ko-KR' : 'en';
     }
-};
-
-const reloadCurrentPage = () => {
-    if (typeof window === 'undefined') return;
-    // Use a full document reload so every page re-fetches API content in the new language.
-    window.location.reload();
 };
 
 const getTranslationValue = (language, key) => {
@@ -64,7 +58,6 @@ export const I18nProvider = ({ children }) => {
                 window.dispatchEvent(new CustomEvent('portfolio:languageChange', { detail: { language: resolvedLanguage } }));
             }
             setLanguageState(resolvedLanguage);
-            reloadCurrentPage();
             return;
         }
 
@@ -75,10 +68,10 @@ export const I18nProvider = ({ children }) => {
         applyLanguageSideEffects(language);
     }, [language]);
 
-    const t = (key, variables = {}) => {
+    const t = useCallback((key, variables = {}) => {
         const localizedValue = getTranslationValue(language, key) ?? getTranslationValue(defaultLanguage, key) ?? key;
         return typeof localizedValue === 'string' ? interpolate(localizedValue, variables) : key;
-    };
+    }, [language]);
 
     return (
         <I18nContext.Provider value={{ language, setLanguage, t, languages: supportedLanguages }}>

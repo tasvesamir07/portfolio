@@ -40,7 +40,9 @@ const knownNavLabelKeys = {
     publications: 'nav.publications',
     gallery: 'nav.gallery',
     contact: 'nav.contact',
-    blog: 'nav.blog'
+    blog: 'nav.blog',
+    newspaper: 'nav.newspaper',
+    'anon. message': 'nav.anonymousMessage'
 };
 
 export const normalizeLabel = (value = '') =>

@@ -1,3 +1,22 @@
+const fs = require('fs');
+const path = require('path');
+const { Redis } = require('@upstash/redis');
+
+let redis = null;
+if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+    try {
+        redis = new Redis({
+            url: process.env.UPSTASH_REDIS_URL,
+            token: process.env.UPSTASH_REDIS_TOKEN
+        });
+        console.log('[Auto-Translate] Upstash Redis client initialized successfully.');
+    } catch (e) {
+        console.error('[Auto-Translate] Failed to initialize Upstash Redis:', e.message);
+    }
+} else {
+    console.warn('[Auto-Translate] Upstash Redis credentials not set. Falling back to local/memory cache.');
+}
+
 let translator = null;
 const translationCache = new Map();
 const MAX_CACHE_ENTRIES = 6000;
@@ -8,6 +27,45 @@ const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 const LATIN_REGEX = /[A-Za-z]/;
 const MAX_RETRY_CHUNK_CHARS = 220;
+
+const CACHE_FILE = path.join(__dirname, '.translation-cache.json');
+
+// On startup, load cache from disk if Redis is not used
+if (!redis) {
+    try {
+        if (fs.existsSync(CACHE_FILE)) {
+            const rawData = fs.readFileSync(CACHE_FILE, 'utf-8');
+            const parsed = JSON.parse(rawData);
+            Object.entries(parsed).forEach(([k, v]) => {
+                if (typeof v === 'string') {
+                    translationCache.set(k, v);
+                }
+            });
+            console.log(`[Auto-Translate] Loaded ${translationCache.size} persistent cache entries from disk.`);
+        }
+    } catch (e) {
+        console.warn('[Auto-Translate] Failed to load persistent translation cache:', e.message);
+    }
+}
+
+// Debounce helper to prevent excessive disk writes
+const debounce = (func, wait) => {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+    };
+};
+
+const saveCacheToDisk = debounce(() => {
+    if (redis) return;
+    try {
+        const obj = Object.fromEntries(translationCache);
+        fs.writeFileSync(CACHE_FILE, JSON.stringify(obj, null, 2), 'utf-8');
+    } catch (e) {
+        console.warn('[Auto-Translate] Failed to save translation cache to disk:', e.message);
+    }
+}, 5000);
 
 /**
  * Decodes common HTML entities that might be returned by the translation service.
@@ -200,21 +258,74 @@ const trimCache = () => {
     }
 };
 
-const readCachedTranslation = (text = '', targetLanguage = 'en', sourceLanguage = 'en') => {
+const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLanguage = 'en') => {
     const key = getCacheKey(text, targetLanguage, sourceLanguage);
-    if (!translationCache.has(key)) return null;
+    
+    // 1. Check L1 in-memory Map
+    if (translationCache.has(key)) {
+        const value = translationCache.get(key);
+        // Refresh insertion order for basic LRU behavior.
+        translationCache.delete(key);
+        translationCache.set(key, value);
+        return value;
+    }
 
-    const value = translationCache.get(key);
-    // Refresh insertion order for basic LRU behavior.
-    translationCache.delete(key);
-    translationCache.set(key, value);
-    return value;
+    // 2. Check L2 Redis Cache
+    if (redis) {
+        try {
+            const value = await redis.get(key);
+            if (value) {
+                // Populate L1 cache
+                translationCache.set(key, value);
+                trimCache();
+                return value;
+            }
+        } catch (e) {
+            console.warn('[Auto-Translate] Redis get failed:', e.message);
+        }
+    }
+
+    return null;
 };
 
-const writeCachedTranslation = (text = '', targetLanguage = 'en', sourceLanguage = 'en', translated = '') => {
+const writeCachedTranslation = async (text = '', targetLanguage = 'en', sourceLanguage = 'en', translated = '') => {
     const key = getCacheKey(text, targetLanguage, sourceLanguage);
+    
+    // 1. Write to L1 in-memory Map
     translationCache.set(key, translated);
     trimCache();
+    if (!redis) {
+        saveCacheToDisk();
+    }
+
+    // 2. Write to L2 Redis Cache
+    if (redis) {
+        try {
+            // Set with 7-day TTL (7 * 24 * 3600 = 604800 seconds)
+            await redis.set(key, translated, { ex: 604800 });
+        } catch (e) {
+            console.warn('[Auto-Translate] Redis set failed:', e.message);
+        }
+    }
+};
+
+/**
+ * Concurrency control pool helper to process items in parallel up to limit.
+ */
+const processWithConcurrency = async (items, concurrency, processor) => {
+    const limit = Math.max(1, concurrency);
+    const results = new Array(items.length);
+    let nextIndex = 0;
+
+    const workers = Array.from({ length: limit }, async () => {
+        while (nextIndex < items.length) {
+            const currentIndex = nextIndex++;
+            results[currentIndex] = await processor(items[currentIndex], currentIndex);
+        }
+    });
+
+    await Promise.all(workers);
+    return results;
 };
 
 /**
@@ -233,7 +344,7 @@ const translateText = async (text = '', language = 'en') => {
         return text;
     }
 
-    const cached = readCachedTranslation(text, targetLanguage, sourceLanguage);
+    const cached = await readCachedTranslation(text, targetLanguage, sourceLanguage);
     if (cached != null) {
         return cached;
     }
@@ -241,7 +352,7 @@ const translateText = async (text = '', language = 'en') => {
     try {
         const fragments = splitForRetry(text);
         if (fragments.length > 1 && (String(text).includes('\n') || String(text).length > 280)) {
-            const translatedFragments = await processInChunks(
+            const translatedFragments = await processWithConcurrency(
                 fragments,
                 CHUNK_CONCURRENCY,
                 (fragment) => translateText(fragment, language)
@@ -249,7 +360,7 @@ const translateText = async (text = '', language = 'en') => {
             const resolved = translatedFragments.join('');
 
             if (!looksLikeBrokenTranslation(resolved, text, targetLanguage)) {
-                writeCachedTranslation(text, targetLanguage, sourceLanguage, resolved);
+                await writeCachedTranslation(text, targetLanguage, sourceLanguage, resolved);
                 return resolved;
             }
         }
@@ -263,7 +374,7 @@ const translateText = async (text = '', language = 'en') => {
             && (String(text).includes('\n') || String(text).length > 220)
         ) {
             if (fragments.length > 1) {
-                const translatedFragments = await processInChunks(
+                const translatedFragments = await processWithConcurrency(
                     fragments,
                     CHUNK_CONCURRENCY,
                     async (fragment) => {
@@ -290,7 +401,7 @@ const translateText = async (text = '', language = 'en') => {
         }
 
         if (!looksLikeBrokenTranslation(resolved, text, targetLanguage)) {
-            writeCachedTranslation(text, targetLanguage, sourceLanguage, resolved);
+            await writeCachedTranslation(text, targetLanguage, sourceLanguage, resolved);
         }
 
         return decodeHtmlEntities(resolved);
@@ -298,19 +409,6 @@ const translateText = async (text = '', language = 'en') => {
         console.error(`Translation proxy failed:`, error.message);
         return text;
     }
-};
-
-/**
- * Helper to process an array in chunks.
- */
-const processInChunks = async (items, chunkSize, processor) => {
-    const results = [];
-    for (let i = 0; i < items.length; i += chunkSize) {
-        const chunk = items.slice(i, i + chunkSize);
-        const chunkResults = await Promise.all(chunk.map((item) => processor(item)));
-        results.push(...chunkResults);
-    }
-    return results;
 };
 
 /**
@@ -322,33 +420,112 @@ const translateTexts = async (texts = [], language = 'en') => {
 
     const normalizedTexts = texts.map((text) => String(text || ''));
     const uniqueTexts = [...new Set(normalizedTexts)];
-    const unresolved = uniqueTexts.filter((text) => {
+    
+    const unresolved = [];
+    await Promise.all(uniqueTexts.map(async (text) => {
         const targetLanguage = normalizeTargetLanguage(language);
-        if (!needsTranslationForTarget(text, targetLanguage)) return false;
+        if (!needsTranslationForTarget(text, targetLanguage)) return;
         const sourceLanguage = detectSourceLanguage(text, targetLanguage);
-        if (sourceLanguage === targetLanguage) return false;
-        return readCachedTranslation(text, targetLanguage, sourceLanguage) == null;
-    });
+        if (sourceLanguage === targetLanguage) return;
+        const cached = await readCachedTranslation(text, targetLanguage, sourceLanguage);
+        if (cached == null) {
+            unresolved.push(text);
+        }
+    }));
 
     if (unresolved.length > 0) {
-        await processInChunks(
+        await processWithConcurrency(
             unresolved,
             CHUNK_CONCURRENCY,
             (text) => translateText(text, language)
         );
     }
 
-    return normalizedTexts.map((text) => {
+    return Promise.all(normalizedTexts.map(async (text) => {
         const targetLanguage = normalizeTargetLanguage(language);
         if (!needsTranslationForTarget(text, targetLanguage)) return text;
         const sourceLanguage = detectSourceLanguage(text, targetLanguage);
         if (sourceLanguage === targetLanguage) return text;
-        const cached = readCachedTranslation(text, targetLanguage, sourceLanguage);
+        const cached = await readCachedTranslation(text, targetLanguage, sourceLanguage);
         return decodeHtmlEntities(cached != null ? cached : text);
+    }));
+};
+
+const getAllCachedTranslations = async () => {
+    const items = [];
+    if (redis) {
+        try {
+            const keys = await redis.keys('v5::*');
+            if (keys && keys.length > 0) {
+                for (let i = 0; i < keys.length; i += 100) {
+                    const chunkKeys = keys.slice(i, i + 100);
+                    const values = await Promise.all(chunkKeys.map(k => redis.get(k)));
+                    chunkKeys.forEach((key, idx) => {
+                        if (values[idx]) {
+                            items.push({ key, value: values[idx] });
+                        }
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('[Auto-Translate] Redis keys/get failed in getAllCachedTranslations:', e.message);
+        }
+    }
+    
+    const mapEntries = Array.from(translationCache.entries());
+    mapEntries.forEach(([key, value]) => {
+        if (!items.find(item => item.key === key)) {
+            items.push({ key, value });
+        }
     });
+    
+    return items.map(item => {
+        const parts = item.key.split('::');
+        const version = parts[0];
+        const sourceLang = parts[1] || 'en';
+        const targetLang = parts[2] || 'en';
+        const originalText = parts.slice(3).join('::');
+        return {
+            key: item.key,
+            version,
+            sourceLang,
+            targetLang,
+            originalText,
+            translatedText: item.value
+        };
+    });
+};
+
+const updateCachedTranslation = async (key, translatedText) => {
+    translationCache.set(key, translatedText);
+    if (!redis) {
+        saveCacheToDisk();
+    } else {
+        try {
+            await redis.set(key, translatedText);
+        } catch (e) {
+            console.warn('[Auto-Translate] Redis set failed in updateCachedTranslation:', e.message);
+        }
+    }
+};
+
+const deleteCachedTranslation = async (key) => {
+    translationCache.delete(key);
+    if (!redis) {
+        saveCacheToDisk();
+    } else {
+        try {
+            await redis.del(key);
+        } catch (e) {
+            console.warn('[Auto-Translate] Redis del failed in deleteCachedTranslation:', e.message);
+        }
+    }
 };
 
 module.exports = {
     translateText,
-    translateTexts
+    translateTexts,
+    getAllCachedTranslations,
+    updateCachedTranslation,
+    deleteCachedTranslation
 };

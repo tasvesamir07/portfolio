@@ -245,15 +245,6 @@ const requestTranslatedTexts = async (texts, language) => {
     }
 };
 
-const processInChunks = async (items, chunkSize, processor) => {
-    const results = [];
-    for (let i = 0; i < items.length; i += chunkSize) {
-        const chunk = items.slice(i, i + chunkSize);
-        const chunkResults = await Promise.all(chunk.map(item => processor(item)));
-        results.push(...chunkResults);
-    }
-    return results;
-};
 
 const runWithConcurrency = async (items, concurrency, worker) => {
     const safeConcurrency = Math.max(1, Math.min(concurrency, items.length || 1));
@@ -367,7 +358,7 @@ export const translateText = async (text = '', language = 'en') => {
         // Split by lines but keep empty lines/newlines by using a regex that captures separators
         const fragments = text.split(/(\r?\n)/);
         if (fragments.length > 1) {
-            const translatedFragments = await processInChunks(
+            const translatedFragments = await runWithConcurrency(
                 fragments,
                 10,
                 async (frag) => {
@@ -388,7 +379,7 @@ export const translateText = async (text = '', language = 'en') => {
         // Split by major punctuation followed by whitespace
         const sentences = trimmed.split(/(?<=[.!?])\s+(?=[A-Z\u0980-\u09FF\uAC00-\uD7AF])/);
         if (sentences.length > 1) {
-            const translatedSentences = await processInChunks(
+            const translatedSentences = await runWithConcurrency(
                 sentences,
                 MAX_CONCURRENT_CHUNKS,
                 s => translateText(s, language)
@@ -664,8 +655,8 @@ export const useTranslatedTexts = (texts, language, options = {}) => {
     const force = options?.force === true;
 
     useEffect(() => {
-        const key = `${language}::${JSON.stringify(texts)}`;
-        if (prevKey.current === key) return;
+        const key = `${language}::${texts ? texts.join('||') : ''}`;
+        if (prevKey.current === key && !force) return;
         prevKey.current = key;
 
         if (!texts?.length || (!force && !shouldRunLiveClientTranslation())) {
@@ -677,7 +668,7 @@ export const useTranslatedTexts = (texts, language, options = {}) => {
         Promise.all(texts.map(t => translateText(t, language)))
             .then(setTranslated)
             .catch(() => setTranslated(texts));
-    }, [JSON.stringify(texts), language, force]);
+    }, [texts, language, force]);
 
     return translated;
 };
