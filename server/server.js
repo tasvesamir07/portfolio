@@ -161,7 +161,6 @@ app.use('/api/skills', require('./routes/skills'));
 app.use('/api/experiences', require('./routes/experiences'));
 app.use('/api/prewarm', require('./routes/prewarm'));
 app.use('/api/page-data', require('./routes/pageData'));
-app.use('/api/diagnostics-test', (req, res) => res.json({ works: true, routesAfter: ['prewarm', 'page-data'] }));
 app.use('/api/messages', messageLimiter, require('./routes/messages'));
 app.use('/api/anonymous-messages', anonymousLimiter, require('./routes/anonymousMessages'));
 app.use('/api/reorder', require('./routes/reorder'));
