@@ -48,3 +48,5 @@ Thumbs.db
 *.txt
 *.env
 *.env.*
+.vercel
+.env*.local
