@@ -167,7 +167,7 @@ app.use('/api/reorder', require('./routes/reorder'));
 
 app.get('/sitemap.xml', async (req, res) => {
     res.header('Content-Type', 'application/xml');
-    const baseUrl = process.env.BASE_URL || 'https://samirhossain.com';
+    const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
     try {
         const pagesRes = await db.query("SELECT slug FROM pages WHERE show_in_nav = true");
         const blogUrls = pagesRes.rows.map(row => `
@@ -234,7 +234,7 @@ app.get('/sitemap.xml', async (req, res) => {
 
 app.get('/robots.txt', (req, res) => {
     res.header('Content-Type', 'text/plain');
-    const baseUrl = process.env.BASE_URL || 'https://samirhossain.com';
+    const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
     res.send(`User-agent: *
 Allow: /
 Sitemap: ${baseUrl}/sitemap.xml`);
