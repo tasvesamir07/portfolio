@@ -197,7 +197,7 @@ const Navbar = () => {
                             )}
                         </Link>
 
-                        <div className="hidden lg:flex items-center gap-8">
+                        <div className="hidden xl:flex items-center gap-4 2xl:gap-8">
                             {activeNavLinks.map((link, idx) => (
                                 link.dropdown ? (
                                     <div
@@ -206,7 +206,7 @@ const Navbar = () => {
                                         onMouseEnter={() => setIsDropdownOpen(idx)}
                                         onMouseLeave={() => setIsDropdownOpen(null)}
                                     >
-                                        <button className={`flex items-center gap-1.5 whitespace-nowrap text-[15px] font-bold tracking-tight transition-all hover:text-[#ceb079] ${(link.dropdown || []).some((entry) => isActive(entry.path)) ? 'text-[#ceb079]' : 'text-white'}`}>
+                                        <button className={`flex items-center gap-1 whitespace-nowrap text-[13px] 2xl:text-[15px] font-bold tracking-tight transition-all hover:text-[#ceb079] ${(link.dropdown || []).some((entry) => isActive(entry.path)) ? 'text-[#ceb079]' : 'text-white'}`}>
                                             {link.name}
                                             {link.dropdown && (
                                                 <ChevronDown size={16} className={`transition-transform duration-200 ${isDropdownOpen === idx ? 'rotate-180' : ''}`} />
@@ -230,7 +230,7 @@ const Navbar = () => {
                                     <Link
                                         key={idx}
                                         to={link.path || '#'}
-                                        className={`text-[15px] font-bold whitespace-nowrap tracking-tight transition-all hover:text-[#ceb079] ${isActive(link.path) ? 'text-[#ceb079]' : 'text-white'}`}
+                                        className={`text-[13px] 2xl:text-[15px] font-bold whitespace-nowrap tracking-tight transition-all hover:text-[#ceb079] ${isActive(link.path) ? 'text-[#ceb079]' : 'text-white'}`}
                                     >
                                         {link.name}
                                     </Link>
@@ -238,7 +238,7 @@ const Navbar = () => {
                             ))}
                         </div>
 
-                        <div className="hidden lg:flex items-center gap-4">
+                        <div className="hidden xl:flex items-center gap-3 2xl:gap-4">
                             <LanguageSwitcher />
                             {about?.resume_url && (
                                 <a
@@ -255,7 +255,7 @@ const Navbar = () => {
                         <button
                             ref={triggerRef}
                             onClick={() => setIsOpen((prev) => !prev)}
-                            className="lg:hidden p-2 text-white hover:text-brand-gold transition-colors cursor-pointer"
+                            className="xl:hidden p-2 text-white hover:text-brand-gold transition-colors cursor-pointer"
                             aria-label={t('nav.toggleMenu')}
                         >
                             {isOpen ? <X size={28} /> : <Menu size={28} />}
