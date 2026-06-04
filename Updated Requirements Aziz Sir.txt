@@ -1,6 +1,0 @@
-1. Hover krle glow effect 
-2. Paper and publications er khetre link thakbe Doi number e click korle alada tab e khulbe oi paper 
-3. Fast korte hbe 
-4. Publication tab er pore Newspaper er jonno (Short description + Image thakbe + link + title)
-5. ORC id, EScopas , Webofscience, Googlescholar, GitHub, facebook ,Instagram, linkedin, x 
-6. Publication Tab ta https://alomgirh.weebly.com/publications.html etar moton hbe
