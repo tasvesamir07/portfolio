@@ -36,6 +36,10 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - Stale-While-Revalidate caching strategy
 self.addEventListener('fetch', (event) => {
+  // Filter out non-http/https requests (e.g. chrome-extension://)
+  const url = new URL(event.request.url);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+
   // Only handle GET requests and skip API/external resources check
   if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
     return;
