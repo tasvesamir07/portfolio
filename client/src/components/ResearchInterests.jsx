@@ -77,7 +77,7 @@ const ResearchInterests = () => {
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                                className="bg-white p-10 rounded-[3rem] border-2 border-gray-100 hover:border-brand-blue/80/50 transition-all shadow-xl shadow-gray-200/20 group"
+                                className="bg-white p-10 rounded-[3rem] border-2 border-gray-100 hover:border-brand-blue/80/50 transition-all shadow-xl shadow-gray-200/20 group hover-glow"
                             >
                                 <div className="w-16 h-16 bg-brand-blue/5 rounded-2xl flex items-center justify-center text-brand-blue mb-8 group-hover:bg-brand-blue group-hover:text-white transition-all shadow-lg shadow-brand-blue/10">
                                     {React.createElement(iconMap[item.icon_name] || FileText, { size: 32 })}

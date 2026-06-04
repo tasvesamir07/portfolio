@@ -7,7 +7,7 @@ const NotFound = () => {
 
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center bg-[#fcfaf7] py-20">
-      <div className="max-w-md w-full bg-white border border-[#eae5dd] rounded-2xl shadow-xl p-10 flex flex-col items-center transition-all duration-300 hover:shadow-2xl">
+      <div className="max-w-md w-full bg-white border border-[#eae5dd] rounded-2xl shadow-xl p-10 flex flex-col items-center transition-all duration-300 hover:shadow-2xl hover-glow">
         <div className="w-24 h-24 rounded-full bg-[#f6f1ea] flex items-center justify-center mb-6">
           <svg
             className="w-12 h-12 text-[#0b3b75]"

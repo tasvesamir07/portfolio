@@ -5,7 +5,6 @@ import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedNavName, normalizeLabel } from '../i18n/localize';
 import LanguageSwitcher from './LanguageSwitcher';
-import ThemeToggle from './ThemeToggle';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { getTransformedUrl } from '../utils/imageUrl';
 
@@ -108,9 +107,9 @@ const Navbar = () => {
         { name: 'Research', path: '/research' },
         { name: 'Publications', path: '/publications' },
         { name: 'Newspaper', path: '/newspaper' },
-        { name: 'Anon. Message', path: '/anonymous-message' },
         { name: 'Gallery', path: '/gallery' },
-        { name: 'Contact', path: '/contact' }
+        { name: 'Contact', path: '/contact' },
+        { name: 'Anon. Message', path: '/anonymous-message' }
     ];
     const localizedSiteName = getLocalizedField(about, 'site_name', language, about?.site_name || '');
     const localizedOwnerName = getLocalizedField(about, 'name', language, about?.name || '');
@@ -241,7 +240,6 @@ const Navbar = () => {
 
                         <div className="hidden lg:flex items-center gap-4">
                             <LanguageSwitcher />
-                            <ThemeToggle />
                             {about?.resume_url && (
                                 <a
                                     href={about.resume_url}
@@ -352,7 +350,6 @@ const Navbar = () => {
                     <div style={{ padding: '16px 24px 32px', flex: 1 }}>
                         <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
                             <LanguageSwitcher className="flex-1" fullWidth />
-                            <ThemeToggle />
                         </div>
 
                         {flatMobileLinks.map((link, idx) => (

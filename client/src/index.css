@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-@variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-background: var(--background);
@@ -29,49 +28,7 @@
     --border-light: #e5e7eb;
   }
 
-  .dark {
-    color-scheme: dark;
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --brand-blue: #38bdf8;
-    --brand-gold: #fbbf24;
-    --accent-primary: #38bdf8; 
-    --accent-secondary: #fbbf24;
-    --muted: #1e293b;
-    --border-light: #334155;
-  }
 
-  /* Global dark mode style overrides for compatibility */
-  .dark .bg-\[\#fcfaf7\] {
-    background-color: #0f172a !important;
-  }
-  .dark .bg-white {
-    background-color: #1e293b !important;
-  }
-  .dark .text-gray-700 {
-    color: #cbd5e1 !important;
-  }
-  .dark .text-gray-600 {
-    color: #94a3b8 !important;
-  }
-  .dark .text-gray-900 {
-    color: #f8fafc !important;
-  }
-  .dark .text-\[\#0b3b75\] {
-    color: #38bdf8 !important;
-  }
-  .dark .border-gray-200, .dark .border-gray-100 {
-    border-color: #334155 !important;
-  }
-  .dark .border-gray-300 {
-    border-color: #475569 !important;
-  }
-  .dark .quill-content strong {
-    color: #f8fafc !important;
-  }
-  .dark .quill-content h1, .dark .quill-content h2, .dark .quill-content h3 {
-    color: #38bdf8 !important;
-  }
 
   html {
     overflow-x: hidden;
@@ -142,7 +99,7 @@
   }
   .hover-glow:hover {
     box-shadow: 0 0 25px rgba(206, 176, 121, 0.35), 0 0 60px rgba(206, 176, 121, 0.1);
-    transform: translateY(-2px);
+    transform: translateY(-4px) scale(1.02);
     border-color: rgba(206, 176, 121, 0.4) !important;
   }
 }

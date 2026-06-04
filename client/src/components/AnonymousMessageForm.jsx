@@ -38,20 +38,20 @@ const AnonymousMessageForm = () => {
     return (
         <section className="py-16 md:py-24 bg-[#fcfaf7] min-h-[70vh] flex items-center">
             <div className="max-w-xl mx-auto px-6 w-full">
-                <span className="text-[#0b3b75] dark:text-[#38bdf8] font-bold uppercase tracking-widest mb-4 block text-center text-sm">
+                <span className="text-[#0b3b75] font-bold uppercase tracking-widest mb-4 block text-center text-sm">
                     {t('anonymous.kicker') || 'Secure & Private'}
                 </span>
                 <h2 className="text-3xl sm:text-5xl font-black text-center mb-10 text-gray-900 tracking-tight leading-tight">
-                    {t('anonymous.titleMain') || 'Send An'} <span className="text-[#ceb079] dark:text-[#fbbf24] font-black">{t('anonymous.titleAccent') || 'Anonymous Message'}</span>
+                    {t('anonymous.titleMain') || 'Send An'} <span className="text-[#ceb079] font-black">{t('anonymous.titleAccent') || 'Anonymous Message'}</span>
                 </h2>
                 
                 {status === 'success' ? (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-3xl border border-gray-100 shadow-2xl p-10 text-center"
+                        className="bg-white rounded-3xl border border-gray-100 shadow-2xl p-10 text-center hover-glow"
                     >
-                        <CheckCircle size={72} className="mx-auto text-[#ceb079] dark:text-[#fbbf24] mb-6 stroke-[1.5]" />
+                        <CheckCircle size={72} className="mx-auto text-[#ceb079] mb-6 stroke-[1.5]" />
                         <h3 className="text-2xl font-bold text-gray-900 mb-3 uppercase tracking-tight">
                             {t('anonymous.successTitle') || 'Message Sent'}
                         </h3>
@@ -64,7 +64,7 @@ const AnonymousMessageForm = () => {
                         onSubmit={handleSubmit}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white p-8 sm:p-10 rounded-3xl border border-gray-100 shadow-xl flex flex-col gap-6"
+                        className="bg-white p-8 sm:p-10 rounded-3xl border border-gray-100 shadow-xl flex flex-col gap-6 hover-glow"
                     >
                         <p className="text-xs text-gray-500 font-semibold text-center leading-relaxed">
                             {t('anonymous.formInstructions') || 'Write anything you want below. The recipient will see your message but no identifiers (no name, no email, no logging).'}

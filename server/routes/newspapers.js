@@ -18,15 +18,15 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', authenticateToken, async (req, res) => {
-    const { title, title_bn, title_ko, short_description, short_description_bn, short_description_ko, image_url, link_url } = req.body;
+    const { title, short_description, image_url, link_url } = req.body;
     try {
         // Find next sort_order
         const maxSortRes = await db.query('SELECT COALESCE(MAX(sort_order), -1) AS max_order FROM newspapers');
         const nextOrder = (maxSortRes.rows[0]?.max_order ?? -1) + 1;
 
         const result = await db.query(
-            'INSERT INTO newspapers (title, title_bn, title_ko, short_description, short_description_bn, short_description_ko, image_url, link_url, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
-            [title || '', title_bn || '', title_ko || '', short_description || '', short_description_bn || '', short_description_ko || '', image_url || '', link_url || '', nextOrder]
+            'INSERT INTO newspapers (title, short_description, image_url, link_url, sort_order) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [title || '', short_description || '', image_url || '', link_url || '', nextOrder]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -35,14 +35,14 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 router.put('/:id', authenticateToken, async (req, res) => {
-    const { title, title_bn, title_ko, short_description, short_description_bn, short_description_ko, image_url, link_url } = req.body;
+    const { title, short_description, image_url, link_url } = req.body;
     try {
         const previousResult = await db.query('SELECT image_url FROM newspapers WHERE id = $1', [req.params.id]);
         const previousRow = previousResult.rows[0] || {};
         
         const result = await db.query(
-            'UPDATE newspapers SET title = $1, title_bn = $2, title_ko = $3, short_description = $4, short_description_bn = $5, short_description_ko = $6, image_url = $7, link_url = $8 WHERE id = $9 RETURNING *',
-            [title || '', title_bn || '', title_ko || '', short_description || '', short_description_bn || '', short_description_ko || '', image_url || '', link_url || '', req.params.id]
+            'UPDATE newspapers SET title = $1, short_description = $2, image_url = $3, link_url = $4 WHERE id = $5 RETURNING *',
+            [title || '', short_description || '', image_url || '', link_url || '', req.params.id]
         );
         
         await cleanMediaUrls(diffRemovedMediaUrls(

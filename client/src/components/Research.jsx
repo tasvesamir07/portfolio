@@ -78,7 +78,7 @@ const Research = () => {
                                 whileInView={{ opacity: 1, x: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.6 }}
-                                className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-gray-100 hover:shadow-2xl transition-all group flex flex-col md:flex-row shadow-xl shadow-gray-200/20"
+                                className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-gray-100 hover:shadow-2xl transition-all group flex flex-col md:flex-row shadow-xl shadow-gray-200/20 hover-glow"
                             >
                                 <div className="w-full md:w-2/5 h-48 sm:h-64 md:h-full relative overflow-hidden bg-gray-50 flex-shrink-0">
                                     {item.image_url && !brokenImages.includes(item.id) ? (

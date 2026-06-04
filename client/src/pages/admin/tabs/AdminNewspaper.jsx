@@ -56,11 +56,7 @@ const AdminNewspaper = () => {
         setFormData({
             ...record,
             title: record.title || '',
-            title_bn: record.title_bn || '',
-            title_ko: record.title_ko || '',
             short_description: record.short_description || '',
-            short_description_bn: record.short_description_bn || '',
-            short_description_ko: record.short_description_ko || '',
             image_url: record.image_url || '',
             link_url: record.link_url || ''
         });
@@ -90,11 +86,7 @@ const AdminNewspaper = () => {
         try {
             const payload = {
                 title: formData.title || '',
-                title_bn: formData.title_bn || '',
-                title_ko: formData.title_ko || '',
                 short_description: formData.short_description || '',
-                short_description_bn: formData.short_description_bn || '',
-                short_description_ko: formData.short_description_ko || '',
                 image_url: formData.image_url || '',
                 link_url: formData.link_url || ''
             };
@@ -303,29 +295,7 @@ const AdminNewspaper = () => {
                                 </div>
                             </div>
 
-                            <div className="border-b pb-4">
-                                <h3 className="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider text-brand-gold">Bangla Translation (Optional)</h3>
-                                <div className="grid grid-cols-1 gap-4">
-                                    <Field label="Title (Bangla)">
-                                        <input className="input" value={formData.title_bn || ''} onChange={e => setFormData({...formData, title_bn: e.target.value})} />
-                                    </Field>
-                                    <Field label="Short Description (Bangla)">
-                                        <textarea className="input min-h-[80px]" value={formData.short_description_bn || ''} onChange={e => setFormData({...formData, short_description_bn: e.target.value})} />
-                                    </Field>
-                                </div>
-                            </div>
 
-                            <div className="border-b pb-4">
-                                <h3 className="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider text-brand-blue">Korean Translation (Optional)</h3>
-                                <div className="grid grid-cols-1 gap-4">
-                                    <Field label="Title (Korean)">
-                                        <input className="input" value={formData.title_ko || ''} onChange={e => setFormData({...formData, title_ko: e.target.value})} />
-                                    </Field>
-                                    <Field label="Short Description (Korean)">
-                                        <textarea className="input min-h-[80px]" value={formData.short_description_ko || ''} onChange={e => setFormData({...formData, short_description_ko: e.target.value})} />
-                                    </Field>
-                                </div>
-                            </div>
 
                             <div>
                                 <h3 className="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Media & Link</h3>

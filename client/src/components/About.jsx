@@ -273,7 +273,7 @@ const About = ({ data }) => {
                 <div className="grid grid-cols-1 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)] gap-8 md:gap-12 lg:gap-14 items-start lg:items-stretch">
                     <div className="w-full flex justify-center lg:justify-start">
                         <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[320px] pt-3 pb-5">
-                            <div className="bg-white p-2 rounded-sm shadow-2xl border border-gray-100 aspect-[3/4] overflow-hidden">
+                            <div className="bg-white p-2 rounded-sm shadow-2xl border border-gray-100 aspect-[3/4] overflow-hidden hover-glow">
                                 <img
                                     src={getTransformedUrl(hero_image_url, 320, 75) || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'}
                                     alt={localizedName || 'Profile'}
