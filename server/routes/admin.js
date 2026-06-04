@@ -7,6 +7,7 @@ const nodemailer = require('nodemailer');
 const db = require('../db');
 const authenticateToken = require('../auth');
 const { upload, processFile, MAX_UPLOAD_SIZE_MB } = require('../upload');
+const { loginLimiter } = require('../middleware/rateLimit');
 
 const OTP_TTL_MINUTES = 5;
 const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
@@ -125,7 +126,7 @@ const clearPendingProfileUpdate = async (userId) => {
 };
 
 // --- Authentication / Session endpoints ---
-router.post('/admin-login', async (req, res) => {
+router.post('/admin-login', loginLimiter, async (req, res) => {
     const identifier = normalizeIdentifier(req.body?.identifier || req.body?.username || req.body?.email);
     const password = String(req.body?.password || '');
 
@@ -158,7 +159,7 @@ router.post('/admin-login', async (req, res) => {
     }
 });
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', loginLimiter, async (req, res) => {
     const email = normalizeEmail(req.body?.email || '');
     if (!email || !EMAIL_REGEX.test(email)) {
         return res.status(400).json({ message: 'Enter a valid email address.' });
@@ -199,7 +200,7 @@ router.post('/forgot-password', async (req, res) => {
     }
 });
 
-router.post('/reset-password', async (req, res) => {
+router.post('/reset-password', loginLimiter, async (req, res) => {
     const email = normalizeEmail(req.body?.email || '');
     const otp = String(req.body?.otp || '').trim();
     const newPassword = String(req.body?.newPassword || '');
@@ -271,7 +272,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/profile-otp', authenticateToken, async (req, res) => {
+router.post('/profile-otp', authenticateToken, loginLimiter, async (req, res) => {
     try {
         const user = await getUserById(req.user.id);
         if (!user) {

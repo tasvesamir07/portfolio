@@ -148,7 +148,7 @@ app.use('/api/translate', translateLimiter, require('./routes/translate'));
 app.use('/api/errors', require('./routes/errors'));
 
 // --- Mounting Refactored Route Modules ---
-app.use('/api', loginLimiter, require('./routes/admin')); // login handlers, session, forgot password, upload
+app.use('/api', require('./routes/admin')); // login handlers, session, forgot password, upload
 app.use('/api/about', require('./routes/about'));
 app.use('/api/academics', require('./routes/academics'));
 app.use('/api/publications', require('./routes/publications'));
