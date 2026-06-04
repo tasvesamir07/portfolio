@@ -24,6 +24,9 @@ const { loginLimiter, translateLimiter, messageLimiter, anonymousLimiter } = req
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust Vercel's reverse proxy for accurate IP rate limiting
+app.set('trust proxy', 1);
+
 app.use(compression());
 app.use(helmet({
     contentSecurityPolicy: {
