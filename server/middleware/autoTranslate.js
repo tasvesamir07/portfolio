@@ -75,6 +75,7 @@ const shouldSkipStringTranslation = (key = '', value = '', language = 'en') => {
     if (URLISH_REGEX.test(value.trim())) return true;
     if (EMAIL_REGEX.test(value.trim())) return true;
     if (NON_TRANSLATABLE_SYMBOLIC_REGEX.test(value.trim())) return true;
+    if (isLikelyAlreadyInTargetLanguage(value, language)) return true;
     return false;
 };
 
@@ -300,9 +301,6 @@ const middleware = (req, res, next) => {
 
     res.json = (payload) => {
         const language = req.headers[LANGUAGE_HEADER] || 'en';
-        if (language === 'en') {
-            return originalJson(payload);
-        }
 
         const method = String(req.method || 'GET').toUpperCase();
         const fullPath = (req.originalUrl || '').split('?')[0];
