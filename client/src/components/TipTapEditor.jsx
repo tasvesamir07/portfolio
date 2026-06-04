@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
@@ -35,18 +34,19 @@ const FontSize = Mark.create({
 export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography...', className = '' }) => {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: {
+          openOnClick: false,
+          HTMLAttributes: {
+            class: 'text-blue-600 underline hover:text-blue-800 transition-colors',
+            target: '_blank',
+            rel: 'noopener noreferrer'
+          }
+        }
+      }),
       TextStyle,
       Color,
       FontSize,
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-blue-600 underline hover:text-blue-800 transition-colors',
-          target: '_blank',
-          rel: 'noopener noreferrer'
-        }
-      }),
       Placeholder.configure({
         placeholder,
       }),
@@ -205,18 +205,19 @@ export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography..
 export const TipTapMinimal = ({ value, onChange, placeholder = 'Enter details...', className = '' }) => {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: {
+          openOnClick: false,
+          HTMLAttributes: {
+            class: 'text-blue-600 underline hover:text-blue-800 transition-colors',
+            target: '_blank',
+            rel: 'noopener noreferrer'
+          }
+        }
+      }),
       TextStyle,
       Color,
       FontSize,
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-blue-600 underline hover:text-blue-800 transition-colors',
-          target: '_blank',
-          rel: 'noopener noreferrer'
-        }
-      }),
       Placeholder.configure({
         placeholder,
       }),

@@ -1,7 +1,14 @@
 const { neon } = require('@neondatabase/serverless');
 
-// We use a "lazy" variable so we only connect when needed
 let pool;
+let neonSql;
+
+const getNeonSql = () => {
+    if (!neonSql && process.env.DATABASE_URL) {
+        neonSql = neon(process.env.DATABASE_URL);
+    }
+    return neonSql;
+};
 
 const getPool = () => {
     if (pool) return pool;
@@ -22,7 +29,6 @@ const getPool = () => {
             ssl: { rejectUnauthorized: false }
         });
     } else {
-        // Fallback for local development
         const { Pool } = require('pg');
         pool = new Pool({
             user: process.env.DB_USER,
@@ -37,16 +43,14 @@ const getPool = () => {
 };
 
 module.exports = {
-    // We wrap the queries to use the lazy pool
     query: async (text, params) => {
         const isProduction = process.env.NODE_ENV === 'production' || process.env.CF_PAGES;
         if (isProduction && process.env.DATABASE_URL) {
-            const sql = neon(process.env.DATABASE_URL);
+            const sql = getNeonSql();
             const result = await sql.query(text, params);
             return Array.isArray(result) ? { rows: result } : result;
         }
         return getPool().query(text, params);
     },
-    // Used specifically for transactions
     connect: () => getPool().connect(),
 };

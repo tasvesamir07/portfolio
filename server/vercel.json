@@ -5,6 +5,9 @@
       "maxDuration": 60
     }
   },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/[...all].js" }
+  ],
   "crons": [
     {
       "path": "/api/prewarm",

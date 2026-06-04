@@ -123,14 +123,13 @@ if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
 
 app.use(csrfMiddleware);
 
-// Ensure CMS database tables exist on startup
+// Ensure CMS database tables exist on startup (non-fatal in serverless)
 const ensureCmsTables = async () => {
     try {
         const { runMigrations } = require('./utils/migrator');
         await runMigrations();
     } catch (err) {
-        console.error('Database migration failed on startup:', err.message);
-        process.exit(1);
+        console.error('Database migration failed on startup (non-fatal):', err.message);
     }
 };
 
