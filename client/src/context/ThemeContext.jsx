@@ -7,7 +7,9 @@ export const ThemeProvider = ({ children }) => {
         if (typeof window !== 'undefined') {
             const savedTheme = localStorage.getItem('portfolio-theme');
             if (savedTheme) return savedTheme;
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const prefersDark = typeof window.matchMedia === 'function' 
+                ? window.matchMedia('(prefers-color-scheme: dark)').matches 
+                : false;
             return prefersDark ? 'dark' : 'light';
         }
         return 'light';

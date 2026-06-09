@@ -361,19 +361,57 @@ const AdminPublications = () => {
                                 </Field>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                 <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50">
+                                     <label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wider mb-2">
+                                         Cover Image Options
+                                     </label>
+                                     <div className="space-y-4">
+                                         <input 
+                                             type="text" 
+                                             className="input" 
+                                             placeholder="Paste custom cover image URL here..." 
+                                             value={formData.thumbnail_url || ''} 
+                                             onChange={e => setFormData({...formData, thumbnail_url: e.target.value})} 
+                                         />
+                                         
+                                         <FileUploadField 
+                                             label="Or Upload Cover Image file" 
+                                             value={formData.thumbnail_url} 
+                                             onChange={url => setFormData({...formData, thumbnail_url: url})} 
+                                         />
+                                         
+                                         <div>
+                                             <span className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                                 Quick Journal Preset Covers
+                                             </span>
+                                             <div className="flex flex-wrap gap-2">
+                                                 {[
+                                                     { name: 'Medicinal Chem', url: 'https://images.unsplash.com/photo-1532187863486-abf9d39d66e8?auto=format&fit=crop&q=80&w=150' },
+                                                     { name: 'PLoS One', url: 'https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&q=80&w=150' },
+                                                     { name: 'IEEE', url: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=150' },
+                                                     { name: 'Nature', url: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&q=80&w=150' },
+                                                 ].map((preset, idx) => (
+                                                     <button
+                                                         key={idx}
+                                                         type="button"
+                                                         onClick={() => setFormData({...formData, thumbnail_url: preset.url})}
+                                                         className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${formData.thumbnail_url === preset.url ? 'bg-gray-800 border-gray-800 text-white' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                                                     >
+                                                         {preset.name}
+                                                     </button>
+                                                 ))}
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
                                  <FileUploadField 
-                                    label="Thumbnail / Cover Image" 
-                                    value={formData.thumbnail_url} 
-                                    onChange={url => setFormData({...formData, thumbnail_url: url})} 
-                                />
-                                 <FileUploadField 
-                                    label="Full Publication PDF" 
-                                    value={formData.file_url} 
-                                    onChange={url => setFormData({...formData, file_url: url})} 
-                                    accept=".pdf"
-                                />
-                            </div>
+                                     label="Full Publication PDF" 
+                                     value={formData.file_url} 
+                                     onChange={url => setFormData({...formData, file_url: url})} 
+                                     accept=".pdf"
+                                 />
+                             </div>
 
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                  <Field label="DOI URL (Optional)">
