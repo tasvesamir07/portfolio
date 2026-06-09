@@ -3,6 +3,12 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import viteCompression from 'vite-plugin-compression';
 import { analyzer } from 'vite-bundle-analyzer';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -11,6 +17,18 @@ export default defineConfig({
     tailwindcss(),
     viteCompression({ algorithm: 'brotliCompress', ext: '.br' }),
     analyzer({ analyzerMode: 'static', fileName: 'bundle-report' }),
+    {
+      name: 'inject-sw-version',
+      closeBundle() {
+        const swPath = path.resolve(__dirname, 'dist/sw.js');
+        if (fs.existsSync(swPath)) {
+          let content = fs.readFileSync(swPath, 'utf8');
+          content = `// Build Timestamp: ${Date.now()}\n` + content;
+          fs.writeFileSync(swPath, content, 'utf8');
+          console.log('Injected build timestamp into dist/sw.js');
+        }
+      }
+    }
   ],
   build: {
     cssCodeSplit: true,                // Split CSS per entry point
