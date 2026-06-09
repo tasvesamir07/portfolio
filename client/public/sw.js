@@ -1,67 +1,81 @@
-const CACHE_NAME = 'samir-portfolio-cache-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/favicon.svg',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
-];
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js');
 
-// Install event - caching basic shell
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+if (workbox) {
+  // Force development logs off in production
+  workbox.setConfig({ debug: false });
+
+  // Precache basic layouts
+  workbox.precaching.precacheAndRoute([
+    { url: '/', revision: '1' },
+    { url: '/index.html', revision: '1' },
+    { url: '/favicon.svg', revision: '1' },
+    { url: '/manifest.json', revision: '1' },
+    { url: '/icon-192.png', revision: '1' },
+    { url: '/icon-512.png', revision: '1' }
+  ]);
+
+  // Cache JS/CSS assets (hashed by Vite) with Cache-First strategy
+  workbox.routing.registerRoute(
+    ({ request }) => request.destination === 'script' || request.destination === 'style',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'samir-assets-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 100,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+        }),
+      ],
     })
   );
-  self.skipWaiting();
-});
 
-// Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
-      );
+  // Cache images with Cache-First strategy
+  workbox.routing.registerRoute(
+    ({ request }) => request.destination === 'image',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'samir-images-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 100,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+        }),
+      ],
     })
   );
-  self.clients.claim();
-});
 
-// Fetch event - Stale-While-Revalidate caching strategy
-self.addEventListener('fetch', (event) => {
-  // Filter out non-http/https requests (e.g. chrome-extension://)
-  const url = new URL(event.request.url);
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
-
-  // Only handle GET requests and skip API/external resources check
-  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
-    return;
-  }
-
-  event.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(event.request).then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        }).catch(() => {
-          // If offline and request is navigation, fallback to index.html
-          if (event.request.mode === 'navigate') {
-            return cache.match('/index.html');
-          }
-        });
-
-        return cachedResponse || fetchPromise;
-      });
+  // Stale-While-Revalidate for /api/v1/page-data
+  workbox.routing.registerRoute(
+    ({ url }) => url.pathname.includes('/api/v1/page-data'),
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName: 'samir-api-page-data-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 10,
+          maxAgeSeconds: 24 * 60 * 60, // 1 Day max
+        }),
+      ],
     })
   );
-});
+
+  // Cache-first for self-hosted font files
+  workbox.routing.registerRoute(
+    ({ url }) => url.origin === self.location.origin && (url.pathname.includes('.woff') || url.pathname.includes('.ttf')),
+    new workbox.strategies.CacheFirst({
+      cacheName: 'samir-fonts-cache',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 10,
+          maxAgeSeconds: 365 * 24 * 60 * 60, // 1 Year
+        }),
+      ],
+    })
+  );
+
+  // Fallback for navigation requests (SPA routing)
+  workbox.routing.registerRoute(
+    ({ request }) => request.mode === 'navigate',
+    async () => {
+      return (await caches.match('/index.html')) || fetch('/index.html');
+    }
+  );
+}
+
