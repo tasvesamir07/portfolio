@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Edit3, Save, AlertCircle } from 'lucide-react';
 import api, { clearResponseCache } from '../../../api';
 import { clearTranslationCache } from '../../../i18n/translator';
 import { storeSessionToken } from '../../../utils/authSession';
 import { Field } from '../components/AdminSharedComponents';
+import StickySaveBar from '../components/StickySaveBar';
 
 const PROFILE_OTP_REGEX = /^\d{0,6}$/;
 
@@ -15,6 +16,8 @@ const AdminProfile = () => {
     const [notice, setNotice] = useState(null);
     const [saveError, setSaveError] = useState('');
     const [saving, setSaving] = useState(false);
+
+    const headerRef = useRef(null);
 
     useEffect(() => {
         if (!notice) return undefined;
@@ -207,15 +210,22 @@ const AdminProfile = () => {
                     </div>
                 </div>
             ) : (
-                <form onSubmit={handleSave} className="max-w-3xl mx-auto py-4">
-                    <div className="mb-10 text-center border-b pb-8">
+                <form id="tab-form" onSubmit={handleSave} className="max-w-3xl mx-auto py-4">
+                    <header ref={headerRef} className="mb-10 text-center border-b pb-8">
                         <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">
                             Update Profile
                         </h2>
                         <p className="text-gray-500 text-sm">
                             Update your username, email, or password. A 6-digit OTP will be sent to verify the change before it is applied.
                         </p>
-                    </div>
+                    </header>
+                    <StickySaveBar 
+                        formId="tab-form" 
+                        saving={saving} 
+                        onCancel={() => setIsEditing(false)}
+                        saveLabel={formData.otp_requested ? 'Verify OTP & Update' : 'Send OTP'}
+                        headerRef={headerRef}
+                    />
                     {saveError && (
                         <div className="mb-6 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                             <AlertCircle size={16} className="mt-0.5 shrink-0" />
@@ -295,7 +305,7 @@ const AdminProfile = () => {
                             )}
                         </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3 mt-12 justify-center">
+                    <div className="lg:hidden flex flex-col sm:flex-row gap-3 mt-12 justify-center">
                         <button type="submit" disabled={saving} className={`bg-gray-900 hover:bg-black text-white px-10 py-3 rounded font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 sm:min-w-[200px] ${saving ? 'opacity-70 cursor-wait' : ''}`}>
                             <Save size={18} /> {saving ? 'Saving...' : formData.otp_requested ? 'Verify OTP & Update' : 'Send OTP'}
                         </button>

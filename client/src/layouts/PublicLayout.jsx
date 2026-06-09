@@ -6,6 +6,7 @@ import PublicAppPreloader from '../components/PublicAppPreloader';
 import DynamicFallback from '../pages/skeletons/DynamicFallback';
 import StructuredData from '../components/StructuredData';
 import Analytics from '../components/Analytics';
+import BackToTop from '../components/BackToTop';
 
 const PublicLayout = () => {
     return (
@@ -20,6 +21,7 @@ const PublicLayout = () => {
                 </Suspense>
             </main>
             <Footer />
+            <BackToTop />
         </div>
     );
 };

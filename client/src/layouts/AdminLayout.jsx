@@ -3,6 +3,7 @@ import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { LogOut, FileText, Briefcase, GraduationCap, Image as ImageIcon, User, ExternalLink, Share2, Mail, Menu, X, Languages } from 'lucide-react';
 import { clearSessionToken, expireSessionAndRedirect, getStoredToken, getTokenExpiryTime, isTokenExpired, SESSION_CHANGED_EVENT } from '../utils/authSession';
 import api from '../api';
+import BackToTop from '../components/BackToTop';
 const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -270,6 +271,7 @@ const AdminLayout = () => {
                 <div className="min-h-full">
                     <Outlet />
                 </div>
+                <BackToTop />
             </main>
         </div>
     );
