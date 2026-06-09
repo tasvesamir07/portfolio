@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Hero from '../components/Hero';
 import About from '../components/About';
 import api from '../api';
@@ -6,22 +7,18 @@ import { useI18n } from '../i18n/I18nContext';
 import SEO from '../hooks/useSeo';
 
 const Home = () => {
-    const [aboutData, setAboutData] = useState(null);
-    const [socialLinks, setSocialLinks] = useState([]);
     const { language } = useI18n();
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await api.get('/page-data?resources=about,social-links');
-                setAboutData(res.data.about);
-                setSocialLinks(res.data.socialLinks || res.data['social-links'] || []);
-            } catch (err) {
-                console.error('Error fetching home data:', err);
-            }
-        };
-        fetchData();
-    }, [language]);
+    const { data: pageData } = useQuery({
+        queryKey: ['page-data', 'home', language],
+        queryFn: async () => {
+            const res = await api.get('/page-data?resources=about,social-links');
+            return res.data;
+        }
+    });
+
+    const aboutData = pageData?.about || null;
+    const socialLinks = pageData?.socialLinks || pageData?.['social-links'] || [];
 
     return (
         <div className="bg-[#fcfaf7] min-h-screen">

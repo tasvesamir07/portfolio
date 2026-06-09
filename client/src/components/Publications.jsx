@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink, Download } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
@@ -10,29 +11,19 @@ import { getNoDataLabel } from '../utils/publicSectionState';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 
 const Publications = () => {
-    const [publications, setPublications] = useState([]);
     const [brokenThumbnails, setBrokenThumbnails] = useState([]);
-    const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
     const noDataLabel = getNoDataLabel(language);
 
-    useEffect(() => {
-        const fetchPublications = async () => {
-            setLoading(true);
-            try {
-                const res = await api.get('/publications');
-                setPublications(Array.isArray(res.data) ? res.data : []);
-            } catch (err) {
-                console.error('Error fetching publications:', err);
-                setPublications([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPublications();
-    }, [language]);
+    const { data: publications = [], isLoading } = useQuery({
+        queryKey: ['publications', language],
+        queryFn: async () => {
+            const res = await api.get('/publications');
+            return Array.isArray(res.data) ? res.data : [];
+        }
+    });
 
-    if (loading) return (
+    if (isLoading) return (
          <section id="publications" className="py-16 md:py-24 bg-white min-h-[60vh] flex items-center justify-center">
             <div className="max-w-5xl mx-auto px-6 text-center">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('publications.kicker')}</span>

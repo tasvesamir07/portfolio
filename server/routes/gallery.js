@@ -9,9 +9,30 @@ const { cleanMediaUrls, diffRemovedMediaUrls } = require('../utils/media');
 router.get('/', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM gallery ORDER BY sort_order ASC, id DESC');
-        res.json(result.rows);
+        const data = result.rows;
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Transfer-Encoding', 'chunked');
+        res.flushHeaders();
+
+        res.write('[');
+        for (let i = 0; i < data.length; i++) {
+            if (i > 0) {
+                res.write(',');
+            }
+            res.write(JSON.stringify(data[i]));
+            if (typeof res.flush === 'function') {
+                res.flush();
+            }
+        }
+        res.write(']');
+        res.end();
     } catch (err) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+        if (res.headersSent) {
+            res.end();
+        } else {
+            res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+        }
     }
 });
 

@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { FileText, GraduationCap, Briefcase, Globe } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
@@ -16,28 +17,18 @@ const iconMap = {
 };
 
 const ResearchInterests = () => {
-    const [interests, setInterests] = useState([]);
-    const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
     const noDataLabel = getNoDataLabel(language);
 
-    useEffect(() => {
-        const fetchInterests = async () => {
-            setLoading(true);
-            try {
-                const res = await api.get('/research-interests');
-                setInterests(Array.isArray(res.data) ? res.data : []);
-            } catch (err) {
-                console.error('Error fetching research interests:', err);
-                setInterests([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchInterests();
-    }, [language]);
+    const { data: interests = [], isLoading } = useQuery({
+        queryKey: ['research-interests', language],
+        queryFn: async () => {
+            const res = await api.get('/research-interests');
+            return Array.isArray(res.data) ? res.data : [];
+        }
+    });
 
-    if (loading) {
+    if (isLoading) {
         return (
             <section id="research-interests" className="py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
                 <div className="max-w-7xl mx-auto px-6 text-center">

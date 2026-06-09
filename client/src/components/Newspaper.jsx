@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Newspaper as NewspaperIcon, ExternalLink, ArrowRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
@@ -8,27 +9,17 @@ import { getNoDataLabel } from '../utils/publicSectionState';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 
 const Newspaper = () => {
-    const [articles, setArticles] = useState([]);
     const [brokenImages, setBrokenImages] = useState([]);
-    const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
     const noDataLabel = getNoDataLabel(language);
 
-    useEffect(() => {
-        const fetchNewspapers = async () => {
-            setLoading(true);
-            try {
-                const res = await api.get('/newspapers');
-                setArticles(Array.isArray(res.data) ? res.data : []);
-            } catch (err) {
-                console.error('Error fetching newspapers:', err);
-                setArticles([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchNewspapers();
-    }, [language]);
+    const { data: articles = [], isLoading } = useQuery({
+        queryKey: ['newspapers', language],
+        queryFn: async () => {
+            const res = await api.get('/newspapers');
+            return Array.isArray(res.data) ? res.data : [];
+        }
+    });
 
     // Localized labels for Newspaper
     const kickerLabel = language === 'bn' ? 'মিডিয়া কভারেজ' : language === 'ko' ? '미디어 보도' : 'Media Coverage';
@@ -37,7 +28,7 @@ const Newspaper = () => {
     const readMoreLabel = language === 'bn' ? 'আরও পড়ুন' : language === 'ko' ? '자세히 보기' : 'Read Article';
     const emptyLabel = language === 'bn' ? 'কোনো সংবাদ নিবন্ধ পাওয়া যায়নি।' : language === 'ko' ? '보도된 뉴스 기사가 없습니다.' : 'No news articles found.';
 
-    if (loading) return (
+    if (isLoading) return (
          <section id="newspaper" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
             <div className="max-w-7xl mx-auto px-6 text-center">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{kickerLabel}</span>

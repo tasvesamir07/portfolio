@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Briefcase, Calendar, MapPin, GraduationCap, Award, CheckCircle2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
@@ -9,31 +10,22 @@ import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 
 const Experiences = () => {
-    const [experiences, setExperiences] = useState([]);
     const [brokenLogos, setBrokenLogos] = useState([]);
-    const [trainings, setTrainings] = useState([]);
-    const [skills, setSkills] = useState([]);
-    const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
 
-    useEffect(() => {
-        const fetchAll = async () => {
-            setLoading(true);
-            try {
-                const res = await api.get('/page-data?resources=experiences,trainings,skills');
-                setExperiences(res.data.experiences || []);
-                setTrainings(res.data.trainings || []);
-                setSkills(res.data.skills || []);
-            } catch (err) {
-                console.error('Error fetching data:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchAll();
-    }, [language]);
+    const { data: pageData, isLoading } = useQuery({
+        queryKey: ['page-data', 'experiences-trainings-skills', language],
+        queryFn: async () => {
+            const res = await api.get('/page-data?resources=experiences,trainings,skills');
+            return res.data;
+        }
+    });
 
-    if (loading) return <div className="py-24 text-center text-gray-400 font-bold uppercase tracking-widest animate-pulse">{t('experiences.loading')}</div>;
+    const experiences = pageData?.experiences || [];
+    const trainings = pageData?.trainings || [];
+    const skills = pageData?.skills || [];
+
+    if (isLoading) return <div className="py-24 text-center text-gray-400 font-bold uppercase tracking-widest animate-pulse">{t('experiences.loading')}</div>;
 
     return (
         <section id="experiences" className="py-16 md:py-24 bg-[#fcfaf7]">

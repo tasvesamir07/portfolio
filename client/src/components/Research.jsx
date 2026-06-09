@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Briefcase, ExternalLink, ArrowRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
@@ -10,29 +11,19 @@ import { getNoDataLabel } from '../utils/publicSectionState';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 
 const Research = () => {
-    const [research, setResearch] = useState([]);
     const [brokenImages, setBrokenImages] = useState([]);
-    const [loading, setLoading] = useState(true);
     const { language, t } = useI18n();
     const noDataLabel = getNoDataLabel(language);
 
-    useEffect(() => {
-        const fetchResearch = async () => {
-            setLoading(true);
-            try {
-                const res = await api.get('/research');
-                setResearch(Array.isArray(res.data) ? res.data : []);
-            } catch (err) {
-                console.error('Error fetching research:', err);
-                setResearch([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchResearch();
-    }, [language]);
+    const { data: research = [], isLoading } = useQuery({
+        queryKey: ['research', language],
+        queryFn: async () => {
+            const res = await api.get('/research');
+            return Array.isArray(res.data) ? res.data : [];
+        }
+    });
 
-    if (loading) return (
+    if (isLoading) return (
          <section id="research" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
             <div className="max-w-7xl mx-auto px-6 text-center">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('research.kicker')}</span>

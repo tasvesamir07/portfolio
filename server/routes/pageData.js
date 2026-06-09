@@ -55,6 +55,8 @@ router.get('/', async (req, res) => {
             responseData[key] = localizeDataObject(resolvedData, language);
         }
 
+        res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+        res.setHeader('Vary', 'Accept-Encoding, X-Translate-Language, x-translate-language');
         res.json(responseData);
     } catch (err) {
         console.error('Batch Page Data Error:', err);

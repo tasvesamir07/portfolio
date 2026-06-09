@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import StructuredDetails from '../components/StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
@@ -25,13 +26,33 @@ const normalizePageContent = (html = '') => {
 
 const DynamicPage = () => {
     const { slug } = useParams();
-    const [page, setPage] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [resolvedPageKey, setResolvedPageKey] = useState('');
     const { language, t } = useI18n();
-    const currentPageKey = `${slug || ''}::${language}`;
-    const isCurrentPageReady = Boolean(page) && resolvedPageKey === currentPageKey;
+
+    const { data: page, isLoading, error } = useQuery({
+        queryKey: ['blog', slug, language],
+        queryFn: async () => {
+            let res;
+            try {
+                res = await api.get('/page', {
+                    params: { slug }
+                });
+            } catch (primaryError) {
+                const status = primaryError?.response?.status;
+                if (status && status !== 400 && status !== 404) {
+                    throw primaryError;
+                }
+
+                // Fallback for environments that still only expose /pages/:slug.
+                res = await api.get(`/pages/${slug}`);
+            }
+            return res.data;
+        },
+        retry: (failureCount, err) => {
+            const status = err?.response?.status;
+            if (status === 404 || status === 400) return false;
+            return failureCount < 2;
+        }
+    });
 
     // Hooks at top level to satisfy Rules of Hooks
     const structuredItems = parseStructuredItems(getLocalizedFirstField(page, ['details_json'], language, ''));
@@ -43,42 +64,7 @@ const DynamicPage = () => {
         description: page ? `Detail page of ${pageTitleRaw}` : 'Samir Hossain | Portfolio'
     });
 
-    useEffect(() => {
-        const fetchPage = async () => {
-            setLoading(true);
-            setError(null);
-
-            try {
-                let res;
-                try {
-                    res = await api.get('/page', {
-                        params: { slug }
-                    });
-                } catch (primaryError) {
-                    const status = primaryError?.response?.status;
-                    if (status && status !== 400 && status !== 404) {
-                        throw primaryError;
-                    }
-
-                    // Fallback for environments that still only expose /pages/:slug.
-                    res = await api.get(`/pages/${slug}`);
-                }
-
-                setPage(res.data);
-                setResolvedPageKey(currentPageKey);
-                setError(null);
-            } catch (err) {
-                console.error('Error fetching dynamic page:', err);
-                setResolvedPageKey(currentPageKey);
-                setError('not-found');
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPage();
-    }, [currentPageKey, slug]);
-
-    if (loading || (!error && !isCurrentPageReady)) return (
+    if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center pt-20">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-accent-primary"></div>
         </div>

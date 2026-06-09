@@ -1,6 +1,7 @@
-import React, { useDeferredValue, useEffect, useMemo, useState, useTransition } from 'react';
+import React, { useDeferredValue, useMemo, useState, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
@@ -22,39 +23,33 @@ const getGalleryCardLayout = (index) => {
 };
 
 const Gallery = () => {
-    const [images, setImages] = useState([]);
-    const [categories, setCategories] = useState([]);
     const [activeCategory, setActiveCategory] = useState('all');
     const [selectedImage, setSelectedImage] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [brokenImageIds, setBrokenImageIds] = useState([]);
     const [isPending, startTransition] = useTransition();
     const { language, t } = useI18n();
+
+    const { data: images = [], isLoading: imagesLoading } = useQuery({
+        queryKey: ['gallery', language],
+        queryFn: async () => {
+            const res = await api.get('/gallery');
+            return Array.isArray(res.data) ? res.data : [];
+        }
+    });
+
+    const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+        queryKey: ['gallery-categories', language],
+        queryFn: async () => {
+            const res = await api.get('/gallery-categories');
+            return Array.isArray(res.data) ? res.data : [];
+        }
+    });
+
+    const loading = imagesLoading || categoriesLoading;
     const translatedImages = useTranslatedDataRows(images, ['caption', 'category'], language);
     const translatedCategories = useTranslatedDataRows(categories, ['name'], language);
     const noDataLabel = getNoDataLabel(language);
     const deferredActiveCategory = useDeferredValue(activeCategory);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const [imgRes, catRes] = await Promise.all([
-                    api.get('/gallery'),
-                    api.get('/gallery-categories')
-                ]);
-                setImages(Array.isArray(imgRes.data) ? imgRes.data : []);
-                setCategories(Array.isArray(catRes.data) ? catRes.data : []);
-            } catch (err) {
-                console.error('Error fetching gallery data:', err);
-                setImages([]);
-                setCategories([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [language]);
 
     const visibleImages = useMemo(
         () => translatedImages.filter((img) => !brokenImageIds.includes(img.id)),

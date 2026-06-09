@@ -13,9 +13,30 @@ router.get('/', async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM publications ORDER BY sort_order ASC, pub_year DESC');
         const language = req.headers[LANGUAGE_HEADER] || 'en';
-        res.json(localizeDataObject(result.rows, language));
+        const data = localizeDataObject(result.rows, language);
+
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Transfer-Encoding', 'chunked');
+        res.flushHeaders();
+
+        res.write('[');
+        for (let i = 0; i < data.length; i++) {
+            if (i > 0) {
+                res.write(',');
+            }
+            res.write(JSON.stringify(data[i]));
+            if (typeof res.flush === 'function') {
+                res.flush();
+            }
+        }
+        res.write(']');
+        res.end();
     } catch (err) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+        if (res.headersSent) {
+            res.end();
+        } else {
+            res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+        }
     }
 });
 
