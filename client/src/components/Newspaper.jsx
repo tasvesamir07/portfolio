@@ -65,7 +65,8 @@ const Newspaper = () => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                                className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg transition-all hover-glow flex flex-col shadow-sm"
+                                whileHover={{ scale: 1.02, y: -6 }}
+                                className="bg-white rounded-2xl overflow-hidden border border-gray-100 transition-colors duration-300 motion-card-hover flex flex-col shadow-sm"
                             >
                                 <div className="w-full h-48 relative overflow-hidden bg-gray-50 flex-shrink-0 border-b border-gray-50">
                                     {item.image_url && !brokenImages.includes(item.id) ? (

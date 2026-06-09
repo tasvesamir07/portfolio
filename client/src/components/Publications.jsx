@@ -85,7 +85,7 @@ const Publications = () => {
                 </h2>
                 <div className="w-32 h-[1px] bg-gray-200 mx-auto mb-16" />
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="flex flex-col gap-8 max-w-4xl mx-auto">
                     {publications.map((item) => {
                         let detailItems = parseStructuredItems(getLocalizedFirstField(item, ['details_json'], language, ''));
                         const title = getLocalizedField(item, 'title', language, item.title);
@@ -135,39 +135,40 @@ const Publications = () => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.6 }}
-                                className="group bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-[0_0_30px_rgba(206,176,121,0.4)] hover:border-brand-gold/50 transition-all duration-300 flex flex-col justify-between"
+                                whileHover={{ scale: 1.02, y: -6 }}
+                                className="group bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm motion-card-hover flex flex-col justify-between cursor-pointer"
                             >
                                 <div className="flex-grow flex flex-col justify-start">
                                     {/* Header Section: Image + Meta */}
-                                    <div className="flex flex-col gap-6 mb-6">
+                                    <div className="flex flex-col sm:flex-row gap-6 mb-2">
                                         {item.thumbnail_url && !brokenThumbnails.includes(item.id) && (
-                                            <div className="w-full h-48 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
+                                            <div className="w-full sm:w-44 sm:h-56 h-48 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200/60 shrink-0 shadow-sm">
                                                 <img 
-                                                    src={getTransformedUrl(item.thumbnail_url, 320, 75)} 
+                                                    src={getTransformedUrl(item.thumbnail_url, 240, 75)} 
                                                     srcSet={buildSrcSet(item.thumbnail_url)}
-                                                    sizes="(max-width: 768px) 100vw, 320px"
+                                                    sizes="(max-width: 640px) 100vw, 180px"
                                                     alt={title} 
                                                     loading="lazy"
                                                     decoding="async"
-                                                    width="320"
+                                                    width="180"
                                                     height="240"
                                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                                     onError={() => setBrokenThumbnails((prev) => [...prev, item.id])}
                                                 />
                                             </div>
                                         )}
-                                        <div className="text-left">
-                                            <h3 className="text-lg font-bold text-gray-900 leading-snug mb-3">
+                                        <div className="text-left flex-grow flex flex-col justify-center">
+                                            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-4">
                                                 {titleLink ? (
-                                                    <a href={titleLink} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-[#2d8da8] transition-colors line-clamp-3">
+                                                    <a href={titleLink} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-[#2d8da8] transition-colors">
                                                         {title}
                                                     </a>
                                                 ) : (
-                                                    <span className="line-clamp-3">{title}</span>
+                                                    <span>{title}</span>
                                                 )}
                                             </h3>
-
-                                            <div className="space-y-2 text-xs text-gray-600">
+ 
+                                            <div className="space-y-2 text-xs sm:text-sm text-gray-600">
                                                 <p className="leading-relaxed">
                                                     <span className="font-bold text-gray-900">{t('publications.journalName')}:</span>{' '}
                                                     {item.journal_url ? (
@@ -190,26 +191,26 @@ const Publications = () => {
                                             </div>
                                         </div>
                                     </div>
-
+ 
                                     {/* Content Sections */}
                                     {detailItems.length > 0 && (
-                                        <div className="mt-4 pt-4 border-t border-gray-100">
+                                        <div className="mt-4 pt-6 border-t border-gray-100">
                                             <StructuredDetails
                                                 items={detailItems}
-                                                className="space-y-4 text-gray-700 leading-relaxed"
-                                                titleClassName="text-xs font-black text-gray-900 mt-4 mb-1 text-left uppercase tracking-wider animate-none"
-                                                textClassName="text-[13px] text-gray-600 leading-relaxed text-left mb-2 break-words"
+                                                className="space-y-6 text-gray-700 leading-relaxed"
+                                                titleClassName="text-sm font-black text-gray-900 mt-6 mb-2 text-left uppercase tracking-wider animate-none"
+                                                textClassName="text-[14px] text-gray-600 leading-relaxed text-left mb-3 break-words"
                                                 pairLabelClassName="text-gray-900 font-bold"
-                                                pairValueClassName="text-[13px] text-gray-600 leading-relaxed text-left mb-2 break-words"
-                                                valueStackClassName="space-y-1.5"
+                                                pairValueClassName="text-[14px] text-gray-600 leading-relaxed text-left mb-3 break-words"
+                                                valueStackClassName="space-y-2"
                                             />
                                         </div>
                                     )}
                                 </div>
-
+ 
                                 {/* Actions */}
                                 {(item.link_url || item.file_url) && (
-                                    <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-3 w-full justify-between items-center">
+                                    <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-3 w-full justify-end items-center">
                                         {item.link_url && (
                                             <a 
                                                 href={item.link_url} 
@@ -225,7 +226,7 @@ const Publications = () => {
                                                 href={item.file_url} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-[#ceb079] text-[#0b3b75] px-4 py-2 rounded hover:bg-[#0b3b75] hover:text-white transition-all shadow-sm w-full sm:w-auto justify-center"
+                                                className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-[#ceb079] text-[#0b3b75] px-5 py-2.5 rounded hover:bg-[#0b3b75] hover:text-white transition-all shadow-sm w-full sm:w-auto justify-center"
                                             >
                                                 {t('publications.downloadPdf')} <Download size={14} />
                                             </a>

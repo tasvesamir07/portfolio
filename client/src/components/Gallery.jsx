@@ -158,7 +158,8 @@ const Gallery = () => {
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 14, scale: 0.97 }}
                                 transition={{ duration: 0.28, ease: 'easeOut' }}
-                                className={`group relative min-h-0 cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/90 bg-slate-200 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[2rem] hover-glow ${cardLayout}`}
+                                whileHover={{ scale: 1.02, y: -6 }}
+                                className={`group relative min-h-0 cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/90 bg-slate-200 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[2rem] motion-card-hover ${cardLayout}`}
                                 onClick={() => setSelectedImage(img)}
                             >
                                 <img 

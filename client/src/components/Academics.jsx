@@ -119,7 +119,8 @@ const Academics = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: index * 0.1 }}
-                            className="bg-white p-6 md:p-9 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-start gap-5 md:gap-7 group hover:border-brand-blue/30 border border-gray-100 transition-all shadow-sm hover:shadow-md hover-glow"
+                            whileHover={{ scale: 1.02, y: -6 }}
+                            className="bg-white p-6 md:p-9 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-start gap-5 md:gap-7 group border border-gray-100 transition-colors duration-300 shadow-sm motion-card-hover"
                         >
                             <div className="flex-shrink-0 w-16 h-16 sm:w-[74px] sm:h-[74px] bg-brand-blue/5 rounded-2xl flex items-center justify-center transition-all mt-1">
                                 {item.logo_url && !brokenLogos.includes(item.id) ? (

@@ -56,7 +56,8 @@ const Experiences = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: index * 0.1 }}
-                            className="bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-center md:items-start gap-6 group hover:border-brand-blue/30 border border-gray-100 transition-all shadow-sm hover:shadow-md hover-glow"
+                            whileHover={{ scale: 1.02, y: -6 }}
+                            className="bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-center md:items-start gap-6 group border border-gray-100 transition-colors duration-300 shadow-sm motion-card-hover"
                         >
                             <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl flex items-center justify-center transition-all">
                                 {item.logo_url && !brokenLogos.includes(item.id) ? (
@@ -135,7 +136,8 @@ const Experiences = () => {
                                     whileInView={{ opacity: 1, scale: 1 }}
                                     viewport={{ once: true }}
                                     transition={{ duration: 0.4, delay: index * 0.05 }}
-                                    className="bg-white p-5 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 hover:border-brand-blue/30 transition-all shadow-sm hover:shadow-md group flex flex-col sm:flex-row gap-5 items-center sm:items-start hover-glow"
+                                    whileHover={{ scale: 1.02, y: -6 }}
+                                    className="bg-white p-5 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 transition-colors duration-300 shadow-sm group flex flex-col sm:flex-row gap-5 items-center sm:items-start motion-card-hover"
                                 >
                                     <div className="p-4 bg-brand-blue/5 text-brand-blue rounded-2xl group-hover:bg-brand-blue group-hover:text-white transition-colors">
                                         <Award size={24} />
@@ -194,7 +196,8 @@ const Experiences = () => {
                                     whileInView={{ opacity: 1, x: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ duration: 0.5, delay: index * 0.1 }}
-                                    className="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl text-gray-900 border border-gray-100 shadow-sm transition-all hover:shadow-md hover-glow"
+                                    whileHover={{ scale: 1.02, y: -6 }}
+                                    className="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl text-gray-900 border border-gray-100 shadow-sm transition-colors duration-300 motion-card-hover"
                                 >
                                     <h3 className="text-lg font-black uppercase tracking-[0.15em] text-[#0b3b75] mb-5 border-b border-gray-100 pb-3 text-center md:text-left">{category}</h3>
                                     {detailItems.length > 0 ? (
