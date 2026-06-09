@@ -1,3 +1,5 @@
+const validate = require('../middleware/validation');
+const { researchSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -17,7 +19,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(researchSchema), async (req, res) => {
     const { title, description, image_url, link, file_url, status, date_text, details_json } = req.body;
     try {
         const result = await db.query(
@@ -30,7 +32,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validate(researchSchema), async (req, res) => {
     const { title, description, image_url, link, file_url, status, date_text, details_json } = req.body;
     try {
         const previousResult = await db.query('SELECT image_url, file_url FROM research WHERE id = $1', [req.params.id]);

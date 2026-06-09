@@ -1,3 +1,5 @@
+const validate = require('../middleware/validation');
+const { aboutSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -17,7 +19,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.put('/', authenticateToken, async (req, res) => {
+router.put('/', authenticateToken, validate(aboutSchema), async (req, res) => {
     const {
         bio_text,
         resume_url,

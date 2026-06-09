@@ -9,6 +9,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
 }
 
 const express = require('express');
+const crypto = require('crypto');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
@@ -28,12 +29,18 @@ const PORT = process.env.PORT || 5000;
 app.set('trust proxy', 1);
 
 app.use(compression());
+// Nonce generation middleware for CSP
+app.use((req, res, next) => {
+    res.locals.nonce = crypto.randomBytes(16).toString('base64');
+    next();
+});
+
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`],
+            styleSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`, "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "blob:", "https://*.supabase.co", "https://*.upstash.io", "https://*.googleapis.com", "*"],
             connectSrc: ["'self'", "https://*.supabase.co", "https://*.upstash.io", "https://*.googleapis.com", "*"],
@@ -99,10 +106,8 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request Logger
-app.use((req, res, next) => {
-    console.log(`[Server] ${req.method} ${req.url}`);
-    next();
-});
+const requestLogger = require('./middleware/requestLogger');
+app.use(requestLogger);
 
 // Invalidate translated response cache on any mutation request.
 app.use((req, res, next) => {
@@ -125,6 +130,7 @@ app.use(csrfMiddleware);
 
 // Ensure CMS database tables exist on startup (non-fatal in serverless)
 const ensureCmsTables = async () => {
+    if (process.env.NODE_ENV === 'test') return;
     try {
         const { runMigrations } = require('./utils/migrator');
         await runMigrations();
@@ -137,28 +143,87 @@ ensureCmsTables().catch((err) => {
     console.error('Failed to ensure CMS tables:', err);
 });
 
-// --- Base Health/Ping endpoints ---
-app.get('/api/ping', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
-app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date(), env: process.env.NODE_ENV }));
-app.get('/health', (req, res) => res.json({ status: 'ok', source: 'root' }));
+// --- Versioned Routing Setup ---
+const v1Router = express.Router();
+
+v1Router.get('/ping', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
+v1Router.get('/health', async (req, res) => {
+    const health = {
+        status: 'ok',
+        timestamp: new Date(),
+        env: process.env.NODE_ENV,
+        checks: {
+            database: { status: 'unknown', latencyMs: null },
+            redis: { status: 'unknown' },
+            cache: { l1Size: 0, maxEntries: 0 }
+        }
+    };
+
+    // 1. Check Database Latency
+    const dbStart = Date.now();
+    try {
+        await db.query('SELECT 1');
+        health.checks.database.status = 'connected';
+        health.checks.database.latencyMs = Date.now() - dbStart;
+    } catch (dbErr) {
+        health.status = 'error';
+        health.checks.database.status = 'error';
+        health.checks.database.error = dbErr.message;
+    }
+
+    // 2. Check Redis Status
+    try {
+        const { Redis } = require('@upstash/redis');
+        if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+            const redisClient = new Redis({
+                url: process.env.UPSTASH_REDIS_URL,
+                token: process.env.UPSTASH_REDIS_TOKEN
+            });
+            const redisStart = Date.now();
+            await redisClient.ping();
+            health.checks.redis.status = 'connected';
+            health.checks.redis.latencyMs = Date.now() - redisStart;
+        } else {
+            health.checks.redis.status = 'not_configured';
+        }
+    } catch (redisErr) {
+        health.checks.redis.status = 'error';
+        health.checks.redis.error = redisErr.message;
+    }
+
+    // 3. Get Cache Stats
+    try {
+        const { getCacheStats } = require('./translate');
+        const stats = getCacheStats();
+        health.checks.cache.l1Size = stats.l1Size;
+        health.checks.cache.maxEntries = stats.maxEntries;
+        if (stats.redisConnected) {
+            health.checks.redis.status = 'connected';
+        }
+    } catch (cacheErr) {
+        health.checks.cache.error = cacheErr.message;
+    }
+
+    res.status(health.status === 'ok' ? 200 : 500).json(health);
+});
 
 // --- Translation endpoint (rate-limited) ---
-app.use('/api/translate', translateLimiter, require('./routes/translate'));
-app.use('/api/errors', require('./routes/errors'));
+v1Router.use('/translate', translateLimiter, require('./routes/translate'));
+v1Router.use('/errors', require('./routes/errors'));
 
 // --- Mounting Refactored Route Modules ---
-app.use('/api', require('./routes/admin')); // login handlers, session, forgot password, upload
-app.use('/api/about', require('./routes/about'));
-app.use('/api/academics', require('./routes/academics'));
-app.use('/api/publications', require('./routes/publications'));
-app.use('/api/newspapers', require('./routes/newspapers'));
-app.use('/api/research', require('./routes/research'));
-app.use('/api/research-interests', require('./routes/researchInterests'));
-app.use('/api/gallery', require('./routes/gallery'));
-app.use('/api/gallery-categories', require('./routes/galleryCategories'));
-app.use('/api/social-links', require('./routes/socialLinks'));
-app.use('/api/pages', require('./routes/pages'));
-app.get('/api/page', async (req, res) => {
+v1Router.use('/', require('./routes/admin')); // login handlers, session, forgot password, upload
+v1Router.use('/about', require('./routes/about'));
+v1Router.use('/academics', require('./routes/academics'));
+v1Router.use('/publications', require('./routes/publications'));
+v1Router.use('/newspapers', require('./routes/newspapers'));
+v1Router.use('/research', require('./routes/research'));
+v1Router.use('/research-interests', require('./routes/researchInterests'));
+v1Router.use('/gallery', require('./routes/gallery'));
+v1Router.use('/gallery-categories', require('./routes/galleryCategories'));
+v1Router.use('/social-links', require('./routes/socialLinks'));
+v1Router.use('/pages', require('./routes/pages'));
+v1Router.get('/page', async (req, res) => {
     try {
         const slug = String(req.query?.slug || '').trim();
         const id = Number(req.query?.id);
@@ -181,14 +246,41 @@ app.get('/api/page', async (req, res) => {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
     }
 });
-app.use('/api/trainings', require('./routes/trainings'));
-app.use('/api/skills', require('./routes/skills'));
-app.use('/api/experiences', require('./routes/experiences'));
-app.use('/api/prewarm', require('./routes/prewarm'));
-app.use('/api/page-data', require('./routes/pageData'));
-app.use('/api/messages', messageLimiter, require('./routes/messages'));
-app.use('/api/anonymous-messages', anonymousLimiter, require('./routes/anonymousMessages'));
-app.use('/api/reorder', require('./routes/reorder'));
+v1Router.use('/trainings', require('./routes/trainings'));
+v1Router.use('/skills', require('./routes/skills'));
+v1Router.use('/experiences', require('./routes/experiences'));
+v1Router.use('/prewarm', require('./routes/prewarm'));
+v1Router.use('/page-data', require('./routes/pageData'));
+v1Router.use('/messages', messageLimiter, require('./routes/messages'));
+v1Router.use('/anonymous-messages', anonymousLimiter, require('./routes/anonymousMessages'));
+v1Router.use('/reorder', require('./routes/reorder'));
+v1Router.use('/webhooks', require('./routes/webhooks'));
+
+v1Router.get('/docs', (req, res) => {
+    try {
+        const spec = require('./docs/openapi.json');
+        res.json(spec);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to load API documentation' });
+    }
+});
+
+// Mount Version 1 Router
+app.use('/api/v1', v1Router);
+
+// Legacy Routing with Deprecation & Sunset Headers
+const deprecationMiddleware = (req, res, next) => {
+    res.setHeader('Deprecation', 'true');
+    const sunsetDate = new Date();
+    sunsetDate.setMonth(sunsetDate.getMonth() + 1); // Sunset in 1 month
+    res.setHeader('Sunset', sunsetDate.toUTCString());
+    res.setHeader('Link', `<${req.protocol}://${req.get('host')}/api/v1${req.path}>; rel="successor-version"`);
+    next();
+};
+
+app.use('/api', deprecationMiddleware, v1Router);
+
+app.get('/health', (req, res) => res.json({ status: 'ok', source: 'root' }));
 
 app.get('/sitemap.xml', async (req, res) => {
     res.header('Content-Type', 'application/xml');
@@ -265,6 +357,12 @@ Allow: /
 Sitemap: ${baseUrl}/sitemap.xml`);
 });
 
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('[Global-Error]', err.stack || err);
+    res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+});
+
 // Catch-all logger to debug 404s
 app.use((req, res) => {
     console.log(`[404-Unhandled] ${req.method} ${req.url}`);
@@ -272,7 +370,7 @@ app.use((req, res) => {
 });
 
 // Start listening locally (Node only)
-if (process.env.NODE_ENV !== 'production' && typeof process !== 'undefined' && process.release && process.release.name === 'node') {
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test' && typeof process !== 'undefined' && process.release && process.release.name === 'node') {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });

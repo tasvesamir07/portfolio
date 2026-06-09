@@ -1,9 +1,11 @@
+const validate = require('../middleware/validation');
+const { anonymousMessageSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authenticateToken = require('../auth');
 
-router.post('/', async (req, res) => {
+router.post('/', validate(anonymousMessageSchema), async (req, res) => {
     const { message, website } = req.body || {};
     
     // Honeypot check (website is a hidden field for bots)

@@ -5,6 +5,7 @@ import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedNavName, normalizeLabel } from '../i18n/localize';
 import LanguageSwitcher from './LanguageSwitcher';
+import ThemeToggle from './ThemeToggle';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { getTransformedUrl } from '../utils/imageUrl';
 
@@ -239,6 +240,7 @@ const Navbar = () => {
                         </div>
 
                         <div className="hidden xl:flex items-center gap-3 2xl:gap-4 flex-shrink-0">
+                            <ThemeToggle />
                             <LanguageSwitcher />
                             {about?.resume_url && (
                                 <a
@@ -348,8 +350,9 @@ const Navbar = () => {
                     </div>
 
                     <div style={{ padding: '16px 24px 32px', flex: 1 }}>
-                        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', alignItems: 'center' }}>
                             <LanguageSwitcher className="flex-1" fullWidth />
+                            <ThemeToggle />
                         </div>
 
                         {flatMobileLinks.map((link, idx) => (

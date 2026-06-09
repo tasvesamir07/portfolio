@@ -1,3 +1,5 @@
+const validate = require('../middleware/validation');
+const { researchInterestsSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -16,7 +18,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(researchInterestsSchema), async (req, res) => {
     const { interest, details, icon_name, details_json } = req.body;
     try {
         const result = await db.query(
@@ -29,7 +31,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validate(researchInterestsSchema), async (req, res) => {
     const { interest, details, icon_name, details_json } = req.body;
     try {
         const result = await db.query(

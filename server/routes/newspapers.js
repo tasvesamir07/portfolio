@@ -1,3 +1,5 @@
+const validate = require('../middleware/validation');
+const { newspapersSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -17,7 +19,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(newspapersSchema), async (req, res) => {
     const { title, short_description, image_url, link_url } = req.body;
     try {
         // Find next sort_order
@@ -34,7 +36,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validate(newspapersSchema), async (req, res) => {
     const { title, short_description, image_url, link_url } = req.body;
     try {
         const previousResult = await db.query('SELECT image_url FROM newspapers WHERE id = $1', [req.params.id]);

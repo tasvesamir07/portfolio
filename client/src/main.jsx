@@ -4,12 +4,15 @@ import './index.css'
 import App from './App.jsx'
 import { I18nProvider } from './i18n/I18nContext.jsx'
 import { SiteAlertProvider } from './components/SiteAlertProvider.jsx'
+import { ThemeProvider } from './context/ThemeContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <SiteAlertProvider>
         <I18nProvider>
-          <App />
+          <ThemeProvider>
+            <App />
+          </ThemeProvider>
         </I18nProvider>
     </SiteAlertProvider>
   </StrictMode>,

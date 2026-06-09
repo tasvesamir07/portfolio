@@ -1,9 +1,11 @@
+const validate = require('../middleware/validation');
+const { reorderSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authenticateToken = require('../auth');
 
-router.put('/:table', authenticateToken, async (req, res) => {
+router.put('/:table', authenticateToken, validate(reorderSchema), async (req, res) => {
     const { table } = req.params;
     const { orders } = req.body; // Array of {id, sort_order}
     const allowedTables = ['academics', 'experiences', 'trainings', 'skills', 'research', 'publications', 'social_links', 'research_interests', 'gallery', 'gallery_categories', 'newspapers'];

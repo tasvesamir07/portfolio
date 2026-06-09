@@ -8,6 +8,14 @@ const db = require('../db');
 const authenticateToken = require('../auth');
 const { upload, processFile, MAX_UPLOAD_SIZE_MB } = require('../upload');
 const { loginLimiter } = require('../middleware/rateLimit');
+const validate = require('../middleware/validation');
+const {
+    adminLoginSchema,
+    forgotPasswordSchema,
+    resetPasswordSchema,
+    profileOtpSchema,
+    profileConfirmSchema
+} = require('../utils/validation');
 
 const OTP_TTL_MINUTES = 5;
 const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
@@ -125,8 +133,10 @@ const clearPendingProfileUpdate = async (userId) => {
     );
 };
 
+const { isFeatureEnabled } = require('../utils/featureFlags');
+
 // --- Authentication / Session endpoints ---
-router.post('/admin-login', loginLimiter, async (req, res) => {
+router.post('/admin-login', loginLimiter, validate(adminLoginSchema), async (req, res) => {
     const identifier = normalizeIdentifier(req.body?.identifier || req.body?.username || req.body?.email);
     const password = String(req.body?.password || '');
 
@@ -159,7 +169,7 @@ router.post('/admin-login', loginLimiter, async (req, res) => {
     }
 });
 
-router.post('/forgot-password', loginLimiter, async (req, res) => {
+router.post('/forgot-password', loginLimiter, validate(forgotPasswordSchema), async (req, res) => {
     const email = normalizeEmail(req.body?.email || '');
     if (!email || !EMAIL_REGEX.test(email)) {
         return res.status(400).json({ message: 'Enter a valid email address.' });
@@ -200,7 +210,7 @@ router.post('/forgot-password', loginLimiter, async (req, res) => {
     }
 });
 
-router.post('/reset-password', loginLimiter, async (req, res) => {
+router.post('/reset-password', loginLimiter, validate(resetPasswordSchema), async (req, res) => {
     const email = normalizeEmail(req.body?.email || '');
     const otp = String(req.body?.otp || '').trim();
     const newPassword = String(req.body?.newPassword || '');
@@ -256,6 +266,9 @@ router.get('/session', authenticateToken, (req, res) => {
             id: req.user?.id,
             username: req.user?.username,
             email: req.user?.email || ''
+        },
+        features: {
+            newEditor: isFeatureEnabled('newEditor')
         }
     });
 });
@@ -272,7 +285,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
     }
 });
 
-router.post('/profile-otp', authenticateToken, loginLimiter, async (req, res) => {
+router.post('/profile-otp', authenticateToken, loginLimiter, validate(profileOtpSchema), async (req, res) => {
     try {
         const user = await getUserById(req.user.id);
         if (!user) {
@@ -359,7 +372,7 @@ router.post('/profile-otp', authenticateToken, loginLimiter, async (req, res) =>
     }
 });
 
-router.post('/profile-confirm', authenticateToken, async (req, res) => {
+router.post('/profile-confirm', authenticateToken, validate(profileConfirmSchema), async (req, res) => {
     try {
         const otp = String(req.body?.otp || '').trim();
         if (!/^\d{6}$/.test(otp)) {

@@ -1,3 +1,5 @@
+const validate = require('../middleware/validation');
+const { socialLinksSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -12,7 +14,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(socialLinksSchema), async (req, res) => {
     const { platform, url, icon_name, color_class } = req.body;
     try {
         const result = await db.query(
@@ -25,7 +27,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validate(socialLinksSchema), async (req, res) => {
     const { platform, url, icon_name, color_class } = req.body;
     try {
         const result = await db.query(

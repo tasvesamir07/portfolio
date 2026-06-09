@@ -1,3 +1,5 @@
+const validate = require('../middleware/validation');
+const { galleryCategoriesSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -14,7 +16,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(galleryCategoriesSchema), async (req, res) => {
     try {
         const { name } = req.body;
         const result = await db.query(
@@ -28,7 +30,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validate(galleryCategoriesSchema), async (req, res) => {
     try {
         const { id } = req.params;
         const { name } = req.body;

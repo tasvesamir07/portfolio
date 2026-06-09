@@ -84,6 +84,13 @@ export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography..
   return (
     <div className={`rounded-xl border border-gray-300 bg-white overflow-hidden shadow-sm flex flex-col ${className}`}>
       <div className="flex flex-wrap items-center gap-1 border-b border-gray-200 bg-gray-50 px-3 py-2">
+        {window.APP_FEATURES?.newEditor && (
+          <div className="order-last ml-auto mr-1 flex items-center">
+            <span className="text-[9px] font-black uppercase tracking-[0.15em] bg-[#ceb079]/20 text-[#ceb079] border border-[#ceb079]/30 px-2 py-0.5 rounded-md">
+              New Editor
+            </span>
+          </div>
+        )}
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleBold().run()}

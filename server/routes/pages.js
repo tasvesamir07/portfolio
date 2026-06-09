@@ -1,3 +1,5 @@
+const validate = require('../middleware/validation');
+const { pagesSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -53,7 +55,7 @@ router.get('/:slug', async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(pagesSchema), async (req, res) => {
     const { title, slug, content, show_in_nav, details_json } = req.body;
     try {
         const result = await db.query(
@@ -66,7 +68,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validate(pagesSchema), async (req, res) => {
     const { title, slug, content, show_in_nav, details_json } = req.body;
     try {
         const result = await db.query(

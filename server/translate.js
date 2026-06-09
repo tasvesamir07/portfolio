@@ -522,10 +522,19 @@ const deleteCachedTranslation = async (key) => {
     }
 };
 
+const getCacheStats = () => {
+    return {
+        l1Size: translationCache.size,
+        maxEntries: MAX_CACHE_ENTRIES,
+        redisConnected: !!redis
+    };
+};
+
 module.exports = {
     translateText,
     translateTexts,
     getAllCachedTranslations,
     updateCachedTranslation,
-    deleteCachedTranslation
+    deleteCachedTranslation,
+    getCacheStats
 };

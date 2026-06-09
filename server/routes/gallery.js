@@ -1,3 +1,5 @@
+const validate = require('../middleware/validation');
+const { gallerySchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -13,7 +15,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(gallerySchema), async (req, res) => {
     const { image_url, caption, category } = req.body;
     try {
         const result = await db.query(
@@ -26,7 +28,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validate(gallerySchema), async (req, res) => {
     const { image_url, caption, category } = req.body;
     try {
         const previousResult = await db.query('SELECT image_url FROM gallery WHERE id = $1', [req.params.id]);

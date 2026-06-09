@@ -4,12 +4,17 @@ const router = express.Router();
 router.post('/log', (req, res) => {
     const { message, stack, url, userAgent, componentStack } = req.body || {};
     
+    const reqId = req.id || 'N/A';
+    const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+
     console.error('[Client-Error]', {
         message,
         stack,
         url,
         userAgent,
         componentStack,
+        reqId,
+        clientIp,
         timestamp: new Date().toISOString()
     });
 
@@ -25,6 +30,8 @@ router.post('/log', (req, res) => {
                     fields: [
                         { name: 'Message', value: String(message || 'No message').slice(0, 1024) },
                         { name: 'URL', value: String(url || 'Unknown').slice(0, 1024) },
+                        { name: 'Request ID', value: String(reqId).slice(0, 1024) },
+                        { name: 'Client IP', value: String(clientIp).slice(0, 1024) },
                         { name: 'User Agent', value: String(userAgent || 'Unknown').slice(0, 1024) },
                         { name: 'Stack', value: `\`\`\`js\n${String(stack || 'No stack').slice(0, 1000)}\n\`\`\`` }
                     ],

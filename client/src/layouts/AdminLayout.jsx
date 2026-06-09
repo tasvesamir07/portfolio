@@ -63,7 +63,10 @@ const AdminLayout = () => {
             }
 
             try {
-                await api.get('/session', { enableAutoTranslate: false });
+                const res = await api.get('/session', { enableAutoTranslate: false });
+                if (res.data?.features) {
+                    window.APP_FEATURES = res.data.features;
+                }
             } catch (error) {
                 if (!cancelled) {
                     expireSessionAndRedirect({

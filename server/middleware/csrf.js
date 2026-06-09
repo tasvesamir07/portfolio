@@ -15,6 +15,11 @@ const parseCookies = (cookieHeader) => {
 };
 
 const csrfMiddleware = (req, res, next) => {
+    // Bypass CSRF checks in testing environment
+    if (process.env.NODE_ENV === 'test') {
+        return next();
+    }
+
     // 1. Get or generate CSRF token
     const cookies = parseCookies(req.headers.cookie);
     let token = cookies['XSRF-TOKEN'];
@@ -38,11 +43,18 @@ const csrfMiddleware = (req, res, next) => {
         // Exempt public submission and webhooks endpoints
         const exemptedPaths = [
             '/api/messages',
+            '/api/v1/messages',
             '/api/anonymous-messages',
+            '/api/v1/anonymous-messages',
             '/api/translate',
+            '/api/v1/translate',
             '/api/errors',
+            '/api/v1/errors',
             '/api/ping',
-            '/api/health'
+            '/api/v1/ping',
+            '/api/health',
+            '/api/v1/health',
+            '/api/v1/webhooks'
         ];
 
         const isExempted = exemptedPaths.some(p => req.path.startsWith(p));

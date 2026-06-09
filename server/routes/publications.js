@@ -1,3 +1,5 @@
+const validate = require('../middleware/validation');
+const { publicationsSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -17,7 +19,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(publicationsSchema), async (req, res) => {
     const { title, thumbnail_url, journal_name, pub_year, authors, introduction, methods, link_url, file_url, details_json, doi_url, journal_url } = req.body;
     try {
         const result = await db.query(
@@ -30,7 +32,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validate(publicationsSchema), async (req, res) => {
     const { title, thumbnail_url, journal_name, pub_year, authors, introduction, methods, link_url, file_url, details_json, doi_url, journal_url } = req.body;
     try {
         const previousResult = await db.query('SELECT thumbnail_url, file_url FROM publications WHERE id = $1', [req.params.id]);

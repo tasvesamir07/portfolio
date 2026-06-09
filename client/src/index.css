@@ -28,7 +28,75 @@
     --border-light: #e5e7eb;
   }
 
+  .dark {
+    color-scheme: dark;
+    --background: #0b111e;
+    --foreground: #f3f4f6;
+    --brand-blue: #092040;
+    --brand-gold: #ceb079;
+    --accent-primary: #ceb079;
+    --accent-secondary: #0b111e;
+    --muted: #1e293b;
+    --border-light: #334155;
+  }
 
+  /* Premium Dark Mode Styling Adjustments */
+  .dark body {
+    background-color: var(--background) !important;
+    color: var(--foreground) !important;
+  }
+
+  .dark nav.fixed {
+    background-color: #092040 !important;
+  }
+
+  /* Make sections and content elements adjust gracefully */
+  .dark section,
+  .dark .bg-white {
+    background-color: #0b111e !important;
+  }
+
+  .dark .text-gray-900,
+  .dark .text-gray-800,
+  .dark .text-gray-700,
+  .dark .text-slate-900,
+  .dark .text-slate-800,
+  .dark .text-slate-700 {
+    color: #f3f4f6 !important;
+  }
+
+  .dark .text-gray-600,
+  .dark .text-gray-500,
+  .dark .text-slate-600,
+  .dark .text-slate-500 {
+    color: #94a3b8 !important;
+  }
+
+  .dark .border-gray-100,
+  .dark .border-gray-200,
+  .dark .border-gray-300,
+  .dark .border-slate-100,
+  .dark .border-slate-200,
+  .dark .border-slate-300 {
+    border-color: #334155 !important;
+  }
+
+  .dark .bg-gray-50,
+  .dark .bg-gray-100,
+  .dark .bg-gray-50\/70,
+  .dark .bg-gray-50\/50,
+  .dark .bg-slate-50,
+  .dark .bg-slate-100 {
+    background-color: #1e293b !important;
+  }
+
+  .dark input,
+  .dark select,
+  .dark textarea {
+    background-color: #1e293b !important;
+    color: #f3f4f6 !important;
+    border-color: #334155 !important;
+  }
 
   html {
     overflow-x: hidden;

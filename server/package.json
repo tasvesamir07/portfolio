@@ -7,6 +7,7 @@
     "start": "nodemon",
     "dev": "nodemon",
     "start:once": "node server.js",
+    "lint": "eslint .",
     "test": "jest --runInBand --detectOpenHandles --forceExit"
   },
   "keywords": [],
@@ -29,10 +30,16 @@
     "multer": "^2.1.1",
     "nodemailer": "^8.0.5",
     "pg": "^8.20.0",
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
     "sharp": "^0.34.5",
-    "translate": "^3.0.1"
+    "translate": "^3.0.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.4.1",
+    "globals": "^17.6.0",
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2"

@@ -1,3 +1,5 @@
+const validate = require('../middleware/validation');
+const { academicsSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -17,7 +19,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, validate(academicsSchema), async (req, res) => {
     const { institution, degree, start_year, end_year, logo_url, details_json } = req.body;
     try {
         const result = await db.query(
@@ -30,7 +32,7 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 });
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, validate(academicsSchema), async (req, res) => {
     const { institution, degree, start_year, end_year, logo_url, details_json } = req.body;
     try {
         const previousResult = await db.query('SELECT logo_url FROM academics WHERE id = $1', [req.params.id]);

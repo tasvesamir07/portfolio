@@ -52,9 +52,13 @@ const cloneCachedResponse = (response, config) => ({
     headers: { ...(response.headers || {}) },
     config
 });
-let defaultBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-if (defaultBaseUrl && !defaultBaseUrl.endsWith('/api') && !defaultBaseUrl.endsWith('/api/')) {
-    defaultBaseUrl = defaultBaseUrl.replace(/\/$/, '') + '/api';
+let defaultBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+if (defaultBaseUrl && !defaultBaseUrl.endsWith('/api/v1') && !defaultBaseUrl.endsWith('/api/v1/')) {
+    if (defaultBaseUrl.endsWith('/api') || defaultBaseUrl.endsWith('/api/')) {
+        defaultBaseUrl = defaultBaseUrl.replace(/\/$/, '') + '/v1';
+    } else {
+        defaultBaseUrl = defaultBaseUrl.replace(/\/$/, '') + '/api/v1';
+    }
 }
 
 const resolveRuntimeApiBaseUrl = (configuredBaseUrl) => {
@@ -68,7 +72,7 @@ const resolveRuntimeApiBaseUrl = (configuredBaseUrl) => {
         const isCrossOriginTarget = !isLocalhost && configuredHost && configuredHost !== currentHost;
 
         if (isCrossOriginTarget) {
-            return '/api';
+            return '/api/v1';
         }
     } catch {
         // Fall back to the configured value when it cannot be parsed.

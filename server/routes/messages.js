@@ -1,9 +1,11 @@
+const validate = require('../middleware/validation');
+const { messageSchema } = require('../utils/validation');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const authenticateToken = require('../auth');
 
-router.post('/', async (req, res) => {
+router.post('/', validate(messageSchema), async (req, res) => {
     const { name, email, message } = req.body;
     try {
         await db.query('INSERT INTO messages (name, email, message) VALUES ($1, $2, $3)', [name, email, message]);
