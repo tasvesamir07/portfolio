@@ -53,6 +53,7 @@ export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography..
     ],
     content: value,
     onUpdate: ({ editor }) => {
+      if (editor.isDestroyed) return;
       const html = editor.getHTML();
       if (html !== value) {
         onChange(html === '<p></p>' ? '' : html);
@@ -61,7 +62,7 @@ export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography..
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
+    if (editor && !editor.isDestroyed && value !== editor.getHTML()) {
       editor.commands.setContent(value || '');
     }
   }, [value, editor]);
@@ -231,6 +232,7 @@ export const TipTapMinimal = ({ value, onChange, placeholder = 'Enter details...
     ],
     content: value,
     onUpdate: ({ editor }) => {
+      if (editor.isDestroyed) return;
       const html = editor.getHTML();
       if (html !== value) {
         onChange(html === '<p></p>' ? '' : html);
@@ -239,7 +241,7 @@ export const TipTapMinimal = ({ value, onChange, placeholder = 'Enter details...
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
+    if (editor && !editor.isDestroyed && value !== editor.getHTML()) {
       editor.commands.setContent(value || '');
     }
   }, [value, editor]);
