@@ -1,6 +1,7 @@
 import React from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { useTranslatedStructuredItems } from '../utils/structuredItems';
+import { cleanHtmlInline } from '../utils/htmlRenderer';
 
 const StructuredDetails = ({
     items = [],
@@ -24,9 +25,11 @@ const StructuredDetails = ({
             {translatedItems.map((item, index) => {
                 if (item.type === 'title') {
                     return (
-                        <h4 key={item.id || index} className={titleClassName}>
-                            {item.title}
-                        </h4>
+                        <h4 
+                            key={item.id || index} 
+                            className={titleClassName}
+                            dangerouslySetInnerHTML={{ __html: cleanHtmlInline(item.title) }}
+                        />
                     );
                 }
 
@@ -59,7 +62,10 @@ const StructuredDetails = ({
 
                 return (
                     <div key={item.id || index} className={layoutClassName}>
-                        <span className={pairLabelClassName}>{item.title}:</span>
+                        <span 
+                            className={pairLabelClassName}
+                            dangerouslySetInnerHTML={{ __html: cleanHtmlInline(item.title) + ':' }}
+                        />
                         <div className={valueStackClassName}>
                             {values.map((value, valueIndex) => (
                                 <div

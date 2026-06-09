@@ -11,7 +11,8 @@ import {
     parseHighlightItems,
     serializeHighlightItems,
     normalizeAboutRichText,
-    decodeHtmlPreview
+    decodeHtmlPreview,
+    InlineFormatEditor
 } from '../components/AdminSharedComponents';
 
 const AdminAbout = () => {
@@ -205,12 +206,12 @@ const AdminAbout = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
                                  <Field label="Full Name" required>
-                                    <input className="input" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required />
+                                    <InlineFormatEditor value={formData.name || ''} onChange={val => setFormData({...formData, name: val})} required />
                                 </Field>
                             </div>
                             <div className="md:col-span-2">
                                  <Field label="Portfolio Site Name">
-                                    <input className="input" value={formData.site_name || ''} onChange={e => setFormData({...formData, site_name: e.target.value})} placeholder="Samir's Portfolio" />
+                                    <InlineFormatEditor value={formData.site_name || ''} onChange={val => setFormData({...formData, site_name: val})} placeholder="Samir's Portfolio" />
                                 </Field>
                             </div>
                             <div className="md:col-span-2">
@@ -222,10 +223,10 @@ const AdminAbout = () => {
                                 />
                             </div>
                             <Field label="Professional Title" required>
-                                <input className="input" value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                                <InlineFormatEditor value={formData.title || ''} onChange={val => setFormData({...formData, title: val})} required />
                             </Field>
                             <Field label="Location" required>
-                                <input className="input" value={formData.location || ''} onChange={e => setFormData({...formData, location: e.target.value})} required />
+                                <InlineFormatEditor value={formData.location || ''} onChange={val => setFormData({...formData, location: val})} required />
                             </Field>
                             <div className="md:col-span-2">
                                 <FileUploadField 

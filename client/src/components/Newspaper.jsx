@@ -7,6 +7,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
+import { RenderInlineHtml } from '../utils/htmlRenderer';
 
 const Newspaper = () => {
     const [brokenImages, setBrokenImages] = useState([]);
@@ -74,7 +75,7 @@ const Newspaper = () => {
                                             src={getTransformedUrl(item.image_url, 480, 75)} 
                                             srcSet={buildSrcSet(item.image_url)}
                                             sizes="(max-width: 768px) 100vw, 480px"
-                                            alt={title} 
+                                            alt={title ? title.replace(/<[^>]*>/g, '') : ''} 
                                             loading="lazy"
                                             decoding="async"
                                             width="480"
@@ -94,14 +95,14 @@ const Newspaper = () => {
                                         <h3 className="text-xl font-bold text-gray-900 leading-tight mb-3 line-clamp-2">
                                             {item.link_url ? (
                                                 <a href={item.link_url} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-[#0b3b75] transition-colors">
-                                                    {title}
+                                                    <RenderInlineHtml html={title} />
                                                 </a>
                                             ) : (
-                                                title
+                                                <RenderInlineHtml html={title} />
                                             )}
                                         </h3>
                                         <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3">
-                                            {shortDescription}
+                                            <RenderInlineHtml html={shortDescription} />
                                         </p>
                                     </div>
                                     {item.link_url && (

@@ -2,6 +2,7 @@ import React from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getSocialIcon } from '../utils/socialIcons';
+import { RenderInlineHtml } from '../utils/htmlRenderer';
 
 const Hero = ({ data, socialLinks = [] }) => {
     const { language, t } = useI18n();
@@ -20,7 +21,13 @@ const Hero = ({ data, socialLinks = [] }) => {
                 <div className="flex flex-col items-center gap-6">
                     {/* Name in Gold */}
                     <h1 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight sm:tracking-wide drop-shadow-lg uppercase text-brand-gold px-2 sm:px-4 leading-tight">
-                        {name || title || t('hero.professionalPortfolio')}
+                        {name ? (
+                            name
+                        ) : title ? (
+                            <RenderInlineHtml html={title} />
+                        ) : (
+                            t('hero.professionalPortfolio')
+                        )}
                     </h1>
 
                     {/* Social Icons Row */}

@@ -8,6 +8,7 @@ import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
+import { RenderInlineHtml } from '../utils/htmlRenderer';
 
 const Experiences = () => {
     const [brokenLogos, setBrokenLogos] = useState([]);
@@ -80,16 +81,20 @@ const Experiences = () => {
                             <div className="flex-1 w-full text-center md:text-left">
                                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 md:gap-4 mb-3">
                                     <div className="text-center md:text-left">
-                                        <h3 className="text-xl md:text-2xl font-bold text-[#0b3b75] tracking-tight uppercase leading-tight mb-1">{position}</h3>
-                                        <p className="text-brand-gold font-bold uppercase tracking-wide text-xs">{company}</p>
+                                        <h3 className="text-xl md:text-2xl font-bold text-[#0b3b75] tracking-tight uppercase leading-tight mb-1">
+                                            <RenderInlineHtml html={position} />
+                                        </h3>
+                                        <p className="text-brand-gold font-bold uppercase tracking-wide text-xs">
+                                            <RenderInlineHtml html={company} />
+                                        </p>
                                     </div>
                                     <div className="text-center md:text-right flex flex-col gap-1.5 md:min-w-[140px] pt-1">
                                         <p className="text-[12px] font-bold text-gray-500 flex items-center justify-center md:justify-end gap-1.5">
-                                            <Calendar size={14} className="text-gray-400" /> {item.start_date} - {item.end_date || t('common.present')}
+                                            <Calendar size={14} className="text-gray-400" /> <RenderInlineHtml html={item.start_date} /> - <RenderInlineHtml html={item.end_date || t('common.present')} />
                                         </p>
                                         {locationLabel && (
                                             <p className="text-[11px] font-bold text-gray-400 flex items-center justify-center md:justify-end gap-1.5 uppercase tracking-widest leading-tight">
-                                                <MapPin size={12} className="text-gray-300" /> {locationLabel}
+                                                <MapPin size={12} className="text-gray-300" /> <RenderInlineHtml html={locationLabel} />
                                             </p>
                                         )}
                                     </div>
@@ -143,11 +148,15 @@ const Experiences = () => {
                                         <Award size={24} />
                                     </div>
                                     <div className="text-center sm:text-left w-full">
-                                        <h3 className="text-lg font-bold text-[#0b3b75] mb-1 uppercase tracking-tight leading-tight">{title}</h3>
-                                        <p className="text-brand-gold font-semibold text-sm mb-3 uppercase tracking-wide">{topic}</p>
+                                        <h3 className="text-lg font-bold text-[#0b3b75] mb-1 uppercase tracking-tight leading-tight">
+                                            <RenderInlineHtml html={title} />
+                                        </h3>
+                                        <p className="text-brand-gold font-semibold text-sm mb-3 uppercase tracking-wide">
+                                            <RenderInlineHtml html={topic} />
+                                        </p>
                                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2">
-                                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> {dateText}</span>
-                                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><GraduationCap size={12} className="text-gray-400" /> {instructor}</span>
+                                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> <RenderInlineHtml html={dateText} /></span>
+                                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><GraduationCap size={12} className="text-gray-400" /> <RenderInlineHtml html={instructor} /></span>
                                         </div>
                                         {detailItems.length > 0 && (
                                             <StructuredDetails
@@ -199,7 +208,9 @@ const Experiences = () => {
                                     whileHover={{ scale: 1.02, y: -6 }}
                                     className="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl text-gray-900 border border-gray-100 shadow-sm transition-colors duration-300 motion-card-hover"
                                 >
-                                    <h3 className="text-lg font-black uppercase tracking-[0.15em] text-[#0b3b75] mb-5 border-b border-gray-100 pb-3 text-center md:text-left">{category}</h3>
+                                    <h3 className="text-lg font-black uppercase tracking-[0.15em] text-[#0b3b75] mb-5 border-b border-gray-100 pb-3 text-center md:text-left">
+                                        <RenderInlineHtml html={category} />
+                                    </h3>
                                     {detailItems.length > 0 ? (
                                         <StructuredDetails
                                             items={detailItems}

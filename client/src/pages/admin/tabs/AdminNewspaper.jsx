@@ -8,7 +8,8 @@ import StickySaveBar from '../components/StickySaveBar';
 import {
     Field,
     FileUploadField,
-    decodeHtmlPreview
+    decodeHtmlPreview,
+    InlineFormatEditor
 } from '../components/AdminSharedComponents';
 
 const AdminNewspaper = () => {
@@ -309,10 +310,10 @@ const AdminNewspaper = () => {
                                 <h3 className="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">English (Primary)</h3>
                                 <div className="grid grid-cols-1 gap-4">
                                     <Field label="Title">
-                                        <input className="input" value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                                        <InlineFormatEditor value={formData.title || ''} onChange={val => setFormData({...formData, title: val})} required />
                                     </Field>
                                     <Field label="Short Description">
-                                        <textarea className="input min-h-[80px]" value={formData.short_description || ''} onChange={e => setFormData({...formData, short_description: e.target.value})} />
+                                        <InlineFormatEditor value={formData.short_description || ''} onChange={val => setFormData({...formData, short_description: val})} />
                                     </Field>
                                 </div>
                             </div>

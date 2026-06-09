@@ -8,6 +8,7 @@ import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
+import { RenderInlineHtml } from '../utils/htmlRenderer';
 
 const iconMap = {
     FileText,
@@ -75,7 +76,7 @@ const ResearchInterests = () => {
                                     {React.createElement(iconMap[item.icon_name] || FileText, { size: 32 })}
                                 </div>
                                 <h3 className="text-[1.75rem] md:text-[1.95rem] font-bold text-gray-900 mb-4 group-hover:text-brand-blue transition-colors tracking-tight leading-[1.18] break-words">
-                                    {interest}
+                                    <RenderInlineHtml html={interest} />
                                 </h3>
                                 <StructuredDetails
                                     items={detailItems}

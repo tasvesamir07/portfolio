@@ -8,6 +8,7 @@ import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 import { getTransformedUrl } from '../utils/imageUrl';
+import { RenderInlineHtml } from '../utils/htmlRenderer';
 
 const getGalleryCardLayout = (index) => {
     const layouts = [
@@ -164,7 +165,7 @@ const Gallery = () => {
                             >
                                 <img 
                                     src={getTransformedUrl(img.image_url, 600, 75)} 
-                                    alt={localizedCaption}
+                                    alt={localizedCaption ? localizedCaption.replace(/<[^>]*>/g, '') : ''}
                                     onError={() => {
                                         setBrokenImageIds((current) => current.includes(img.id) ? current : [...current, img.id]);
                                         if (selectedImage?.id === img.id) {
@@ -179,7 +180,7 @@ const Gallery = () => {
                                         {localizedCategory || t('nav.gallery')}
                                     </span>
                                     <p className="line-clamp-2 text-sm font-bold leading-tight text-white drop-shadow-[0_4px_14px_rgba(15,23,42,0.45)] sm:text-base md:text-lg">
-                                        {localizedCaption || localizedCategory || t('nav.gallery')}
+                                        {localizedCaption ? <RenderInlineHtml html={localizedCaption} /> : (localizedCategory || t('nav.gallery'))}
                                     </p>
                                 </div>
                             </motion.div>
@@ -210,15 +211,19 @@ const Gallery = () => {
                         >
                             <img 
                                 src={getTransformedUrl(selectedImage.image_url, 1200, 80)} 
-                                alt={getLocalizedField(selectedImage, 'caption', language, selectedImage.caption)} 
+                                alt={(getLocalizedField(selectedImage, 'caption', language, selectedImage.caption) || '').replace(/<[^>]*>/g, '')} 
                                 className="max-h-[78vh] w-full rounded-[1.75rem] object-contain shadow-2xl"
                             />
                             <div className="absolute inset-x-0 bottom-0 rounded-b-[1.75rem] bg-gradient-to-t from-black/80 via-black/35 to-transparent px-4 pb-4 pt-10 sm:px-6 sm:pb-6">
                                 <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-gold">
                                     {getLocalizedField(selectedImage, 'category', language, selectedImage.category) || t('nav.gallery')}
                                 </div>
-                                <p className="text-base font-semibold text-white sm:text-xl">
-                                    {getLocalizedField(selectedImage, 'caption', language, selectedImage.caption) || getLocalizedField(selectedImage, 'category', language, selectedImage.category) || t('nav.gallery')}
+                                <p className="text-base font-semibold text-white sm:text-xl text-left">
+                                    {getLocalizedField(selectedImage, 'caption', language, selectedImage.caption) ? (
+                                        <RenderInlineHtml html={getLocalizedField(selectedImage, 'caption', language, selectedImage.caption)} />
+                                    ) : (
+                                        getLocalizedField(selectedImage, 'category', language, selectedImage.category) || t('nav.gallery')
+                                    )}
                                 </p>
                             </div>
                         </motion.div>

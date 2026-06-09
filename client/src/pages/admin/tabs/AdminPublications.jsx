@@ -9,7 +9,8 @@ import {
     Field,
     FileUploadField,
     StructuredItemsEditor,
-    decodeHtmlPreview
+    decodeHtmlPreview,
+    InlineFormatEditor
 } from '../components/AdminSharedComponents';
 import {
     parseStructuredItems,
@@ -371,16 +372,16 @@ const AdminPublications = () => {
                         <div className="grid grid-cols-1 gap-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Field label="Publication Title">
-                                    <input className="input" value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} required />
+                                    <InlineFormatEditor value={formData.title || ''} onChange={val => setFormData({...formData, title: val})} required />
                                 </Field>
                                 <Field label="Journal / Conference Name">
-                                    <input className="input" value={formData.journal_name || ''} onChange={e => setFormData({...formData, journal_name: e.target.value})} />
+                                    <InlineFormatEditor value={formData.journal_name || ''} onChange={val => setFormData({...formData, journal_name: val})} />
                                 </Field>
                                 <Field label="Publication Year">
-                                    <input className="input" value={formData.pub_year || ''} onChange={e => setFormData({...formData, pub_year: e.target.value})} required />
+                                    <InlineFormatEditor value={formData.pub_year || ''} onChange={val => setFormData({...formData, pub_year: val})} required />
                                 </Field>
                                 <Field label="Authors (Separate with commas)">
-                                    <input className="input" value={formData.authors || ''} onChange={e => setFormData({...formData, authors: e.target.value})} />
+                                    <InlineFormatEditor value={formData.authors || ''} onChange={val => setFormData({...formData, authors: val})} />
                                 </Field>
                             </div>
 

@@ -11,7 +11,8 @@ import {
     GalleryBulkUploadField,
     uploadFileToMediaApi,
     formatUploadErrorMessage,
-    decodeHtmlPreview
+    decodeHtmlPreview,
+    InlineFormatEditor
 } from '../components/AdminSharedComponents';
 
 const AdminGallery = () => {
@@ -412,7 +413,7 @@ const AdminGallery = () => {
                                 onChange={val => setFormData({...formData, image_url: val})} 
                             />
                             <Field label="Short Caption">
-                                <input className="input" value={formData.caption || ''} onChange={e => setFormData({...formData, caption: e.target.value})} />
+                                <InlineFormatEditor value={formData.caption || ''} onChange={val => setFormData({...formData, caption: val})} />
                             </Field>
                             <Field label="Category" required>
                                 <select 

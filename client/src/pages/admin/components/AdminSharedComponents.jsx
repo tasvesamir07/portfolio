@@ -202,13 +202,15 @@ export const decodeHtmlPreview = (value = '') => {
     return normalizeHighlightText(doc.body.textContent || '');
 };
 
-export const slugify = (value = '') =>
-    value
+export const slugify = (value = '') => {
+    const cleanValue = value.replace(/<[^>]*>/g, '');
+    return cleanValue
         .toLowerCase()
         .trim()
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-');
+};
 
 export const normalizeInlineRichText = (html = '') => {
     if (!html || typeof window === 'undefined') return html;

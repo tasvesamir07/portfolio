@@ -9,7 +9,8 @@ import {
     Field,
     StructuredItemsEditor,
     decodeHtmlPreview,
-    slugify
+    slugify,
+    InlineFormatEditor
 } from '../components/AdminSharedComponents';
 import {
     parseStructuredItems,
@@ -255,11 +256,9 @@ const AdminBlog = () => {
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 gap-4">
                             <Field label="Page Title">
-                                <input
-                                    className="input"
+                                <InlineFormatEditor
                                     value={formData.title || ''}
-                                    onChange={(e) => {
-                                        const nextTitle = e.target.value;
+                                    onChange={(nextTitle) => {
                                         setFormData((prev) => ({
                                             ...prev,
                                             title: nextTitle,

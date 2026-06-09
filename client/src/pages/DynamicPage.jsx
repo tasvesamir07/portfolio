@@ -8,6 +8,7 @@ import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { useSeo } from '../hooks/useSeo';
+import { RenderInlineHtml } from '../utils/htmlRenderer';
 
 const normalizePageContent = (html = '') => {
     if (!html || typeof window === 'undefined') return html;
@@ -89,7 +90,9 @@ const DynamicPage = () => {
                 animate={{ opacity: 1 }}
                 className="dynamic-page-shell max-w-4xl mx-auto glass p-6 sm:p-8 md:p-12 rounded-[32px] border border-gray-200 shadow-2xl shadow-gray-200/50 overflow-hidden"
             >
-                <h1 className="text-4xl sm:text-5xl font-black mb-8 md:mb-10 text-gray-900 tracking-tight break-words">{pageTitleRaw}</h1>
+                <h1 className="text-4xl sm:text-5xl font-black mb-8 md:mb-10 text-gray-900 tracking-tight break-words">
+                    <RenderInlineHtml html={pageTitleRaw} />
+                </h1>
                 {structuredItems.length ? (
                     <StructuredDetails
                         items={structuredItems}

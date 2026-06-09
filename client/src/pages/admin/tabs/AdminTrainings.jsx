@@ -8,7 +8,8 @@ import StickySaveBar from '../components/StickySaveBar';
 import {
     Field,
     StructuredItemsEditor,
-    decodeHtmlPreview
+    decodeHtmlPreview,
+    InlineFormatEditor
 } from '../components/AdminSharedComponents';
 import {
     parseStructuredItems,
@@ -341,16 +342,16 @@ const AdminTrainings = () => {
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Field label="Training / Workshop Title">
-                                <input className="input" value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} />
+                                <InlineFormatEditor value={formData.title || ''} onChange={val => setFormData({...formData, title: val})} />
                             </Field>
                             <Field label="Topic / Content">
-                                <input className="input" value={formData.topic || ''} onChange={e => setFormData({...formData, topic: e.target.value})} />
+                                <InlineFormatEditor value={formData.topic || ''} onChange={val => setFormData({...formData, topic: val})} />
                             </Field>
                             <Field label="Duration / Time">
-                                <input className="input" value={formData.date_text || ''} onChange={e => setFormData({...formData, date_text: e.target.value})} />
+                                <InlineFormatEditor value={formData.date_text || ''} onChange={val => setFormData({...formData, date_text: val})} />
                             </Field>
                             <Field label="Instructor / Organization">
-                                <input className="input" value={formData.instructor || ''} onChange={e => setFormData({...formData, instructor: e.target.value})} />
+                                <InlineFormatEditor value={formData.instructor || ''} onChange={val => setFormData({...formData, instructor: val})} />
                             </Field>
                             <div className="md:col-span-2">
                                 <Field label="Training Details">

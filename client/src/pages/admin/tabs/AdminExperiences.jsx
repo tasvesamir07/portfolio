@@ -11,7 +11,8 @@ import {
     StructuredItemsEditor,
     RichTextEditor,
     decodeHtmlPreview,
-    normalizeAboutRichText
+    normalizeAboutRichText,
+    InlineFormatEditor
 } from '../components/AdminSharedComponents';
 import {
     parseStructuredItems,
@@ -341,19 +342,19 @@ const AdminExperiences = () => {
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Field label="Company / Organization">
-                                <input className="input" value={formData.company || ''} onChange={e => setFormData({...formData, company: e.target.value})} />
+                                <InlineFormatEditor value={formData.company || ''} onChange={val => setFormData({...formData, company: val})} />
                             </Field>
                             <Field label="Position Title">
-                                <input className="input" value={formData.position || ''} onChange={e => setFormData({...formData, position: e.target.value})} />
+                                <InlineFormatEditor value={formData.position || ''} onChange={val => setFormData({...formData, position: val})} />
                             </Field>
                             <Field label="Location">
-                                <input className="input" value={formData.location || ''} onChange={e => setFormData({...formData, location: e.target.value})} />
+                                <InlineFormatEditor value={formData.location || ''} onChange={val => setFormData({...formData, location: val})} />
                             </Field>
                             <Field label="Start Date (e.g. Jan 2023)">
-                                <input className="input" value={formData.start_date || ''} onChange={e => setFormData({...formData, start_date: e.target.value})} />
+                                <InlineFormatEditor value={formData.start_date || ''} onChange={val => setFormData({...formData, start_date: val})} />
                             </Field>
                             <Field label="End Date (or 'Present')">
-                                <input className="input" value={formData.end_date || ''} onChange={e => setFormData({...formData, end_date: e.target.value})} />
+                                <InlineFormatEditor value={formData.end_date || ''} onChange={val => setFormData({...formData, end_date: val})} />
                             </Field>
                             <div className="md:col-span-2 border-t pt-4 mt-2">
                                  <FileUploadField 

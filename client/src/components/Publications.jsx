@@ -9,6 +9,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
+import { RenderInlineHtml } from '../utils/htmlRenderer';
 
 const Publications = () => {
     const [brokenThumbnails, setBrokenThumbnails] = useState([]);
@@ -67,7 +68,7 @@ const Publications = () => {
                                         : 'text-gray-700 hover:text-brand-blue'
                                 }`}
                             >
-                                {trimmed}
+                                <RenderInlineHtml html={trimmed} />
                             </a>
                         </React.Fragment>
                     );
@@ -161,10 +162,10 @@ const Publications = () => {
                                             <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-4">
                                                 {titleLink ? (
                                                     <a href={titleLink} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-[#2d8da8] transition-colors">
-                                                        {title}
+                                                        <RenderInlineHtml html={title} />
                                                     </a>
                                                 ) : (
-                                                    <span>{title}</span>
+                                                    <RenderInlineHtml html={title} />
                                                 )}
                                             </h3>
  
@@ -173,14 +174,19 @@ const Publications = () => {
                                                     <span className="font-bold text-gray-900">{t('publications.journalName')}:</span>{' '}
                                                     {item.journal_url ? (
                                                         <a href={item.journal_url} target="_blank" rel="noopener noreferrer" className="text-[#3a96b7] hover:underline font-semibold">
-                                                            {journalName || t('common.notAvailable')}
+                                                            <RenderInlineHtml html={journalName || t('common.notAvailable')} />
                                                         </a>
                                                     ) : (
-                                                        <span className="text-[#3a96b7] font-semibold">{journalName || t('common.notAvailable')}</span>
+                                                        <span className="text-[#3a96b7] font-semibold">
+                                                            <RenderInlineHtml html={journalName || t('common.notAvailable')} />
+                                                        </span>
                                                     )}
                                                 </p>
                                                 <p className="leading-relaxed">
-                                                    <span className="font-bold text-gray-900">{t('publications.publicationYear')}:</span> <span className="text-gray-600 font-medium">{item.pub_year || t('common.notAvailable')}</span>
+                                                    <span className="font-bold text-gray-900">{t('publications.publicationYear')}:</span>{' '}
+                                                    <span className="text-gray-600 font-medium">
+                                                        <RenderInlineHtml html={item.pub_year || t('common.notAvailable')} />
+                                                    </span>
                                                 </p>
                                                 <p className="leading-relaxed">
                                                     <span className="font-bold text-gray-900">{t('publications.authors')}:</span>{' '}

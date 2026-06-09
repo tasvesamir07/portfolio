@@ -9,6 +9,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
+import { RenderInlineHtml } from '../utils/htmlRenderer';
 
 const Research = () => {
     const [brokenImages, setBrokenImages] = useState([]);
@@ -96,14 +97,14 @@ const Research = () => {
                                 <div className="p-6 md:p-10 flex flex-col justify-center flex-1">
                                     <div className="flex flex-wrap items-center gap-3 mb-3">
                                         <span className="px-3 py-1 bg-brand-blue/5 text-brand-blue text-[10px] font-black uppercase tracking-widest rounded-full border border-brand-blue/10">
-                                            {status || t('research.projectFallback')}
+                                            <RenderInlineHtml html={status || t('research.projectFallback')} />
                                         </span>
                                         <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-                                            {dateText}
+                                            <RenderInlineHtml html={dateText} />
                                         </span>
                                     </div>
                                     <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-4 group-hover:text-brand-blue transition-colors uppercase leading-tight">
-                                        {title}
+                                        <RenderInlineHtml html={title} />
                                     </h3>
                                     <StructuredDetails
                                         items={detailItems}

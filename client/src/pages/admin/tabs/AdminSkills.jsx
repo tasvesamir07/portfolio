@@ -8,7 +8,8 @@ import StickySaveBar from '../components/StickySaveBar';
 import {
     Field,
     StructuredItemsEditor,
-    decodeHtmlPreview
+    decodeHtmlPreview,
+    InlineFormatEditor
 } from '../components/AdminSharedComponents';
 import {
     parseStructuredItems,
@@ -305,9 +306,9 @@ const AdminSkills = () => {
                     )}
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 gap-4">
-                            <Field label="Skill Category (e.g. Programming Languages)">
-                                <input className="input" value={formData.category || ''} onChange={e => setFormData({...formData, category: e.target.value})} />
-                            </Field>
+                             <Field label="Skill Category (e.g. Programming Languages)">
+                                 <InlineFormatEditor value={formData.category || ''} onChange={val => setFormData({...formData, category: val})} />
+                             </Field>
                             <Field label="Skill Details">
                                 <StructuredItemsEditor
                                     items={formData.structured_items || []}

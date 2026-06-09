@@ -9,7 +9,8 @@ import {
     Field,
     FileUploadField,
     StructuredItemsEditor,
-    decodeHtmlPreview
+    decodeHtmlPreview,
+    InlineFormatEditor
 } from '../components/AdminSharedComponents';
 import {
     parseStructuredItems,
@@ -330,16 +331,16 @@ const AdminAcademics = () => {
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Field label="Institution Name">
-                                <input className="input" value={formData.institution || ''} onChange={e => setFormData({...formData, institution: e.target.value})} />
+                                <InlineFormatEditor value={formData.institution || ''} onChange={val => setFormData({...formData, institution: val})} />
                             </Field>
                             <Field label="Degree / Certificate">
-                                <input className="input" value={formData.degree || ''} onChange={e => setFormData({...formData, degree: e.target.value})} />
+                                <InlineFormatEditor value={formData.degree || ''} onChange={val => setFormData({...formData, degree: val})} />
                             </Field>
                             <Field label="Start Year">
-                                <input className="input" value={formData.start_year || ''} onChange={e => setFormData({...formData, start_year: e.target.value})} />
+                                <InlineFormatEditor value={formData.start_year || ''} onChange={val => setFormData({...formData, start_year: val})} />
                             </Field>
                             <Field label="End Year (or 'Present')">
-                                <input className="input" value={formData.end_year || ''} onChange={e => setFormData({...formData, end_year: e.target.value})} />
+                                <InlineFormatEditor value={formData.end_year || ''} onChange={val => setFormData({...formData, end_year: val})} />
                             </Field>
                             <div className="md:col-span-2">
                                 <FileUploadField 

@@ -112,9 +112,13 @@ const Navbar = () => {
         { name: 'Contact', path: '/contact' },
         { name: 'Anon. Message', path: '/anonymous-message' }
     ];
-    const localizedSiteName = getLocalizedField(about, 'site_name', language, about?.site_name || '');
-    const localizedOwnerName = getLocalizedField(about, 'name', language, about?.name || '');
-    const brandLabel = localizedSiteName?.trim() || localizedOwnerName?.trim() || 'Portfolio';
+    const stripHtml = (str) => {
+        if (!str) return '';
+        return str.replace(/<[^>]*>/g, '').replace(/&nbsp;|\u00A0/g, ' ').trim();
+    };
+    const localizedSiteName = stripHtml(getLocalizedField(about, 'site_name', language, about?.site_name || ''));
+    const localizedOwnerName = stripHtml(getLocalizedField(about, 'name', language, about?.name || ''));
+    const brandLabel = localizedSiteName || localizedOwnerName || 'Portfolio';
 
     const activeNavLinks = (() => {
         const normalizedLinks = baseNavLinks.map((link) => ({ ...link }));

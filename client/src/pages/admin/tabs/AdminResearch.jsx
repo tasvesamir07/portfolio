@@ -9,7 +9,8 @@ import {
     Field,
     FileUploadField,
     StructuredItemsEditor,
-    decodeHtmlPreview
+    decodeHtmlPreview,
+    InlineFormatEditor
 } from '../components/AdminSharedComponents';
 import {
     parseStructuredItems,
@@ -302,15 +303,15 @@ const AdminResearch = () => {
                     )}
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Field label="Research Project Title">
-                                <input className="input" value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} />
-                            </Field>
-                            <Field label="Status / Phase (e.g. Ongoing, Completed)">
-                                <input className="input" value={formData.status || ''} onChange={e => setFormData({...formData, status: e.target.value})} placeholder="Ongoing / Published / Case Study" />
-                            </Field>
-                            <Field label="Research Timeline / Date">
-                                <input className="input" value={formData.date_text || ''} onChange={e => setFormData({...formData, date_text: e.target.value})} placeholder="Jan 2023 - Present" />
-                            </Field>
+                             <Field label="Research Project Title">
+                                 <InlineFormatEditor value={formData.title || ''} onChange={val => setFormData({...formData, title: val})} />
+                             </Field>
+                             <Field label="Status / Phase (e.g. Ongoing, Completed)">
+                                 <InlineFormatEditor value={formData.status || ''} onChange={val => setFormData({...formData, status: val})} placeholder="Ongoing / Published / Case Study" />
+                             </Field>
+                             <Field label="Research Timeline / Date">
+                                 <InlineFormatEditor value={formData.date_text || ''} onChange={val => setFormData({...formData, date_text: val})} placeholder="Jan 2023 - Present" />
+                             </Field>
                             <Field label="Project Link (Optional)">
                                 <input className="input" value={formData.link || ''} onChange={e => setFormData({...formData, link: e.target.value})} />
                             </Field>
