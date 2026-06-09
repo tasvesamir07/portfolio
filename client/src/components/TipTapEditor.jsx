@@ -5,7 +5,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { Mark } from '@tiptap/core';
-import { Bold, Italic, List, ListOrdered, Link2, Unlink, PaintBucket, Type } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, Link2, Unlink, Palette, Type } from 'lucide-react';
 
 // Custom inline FontSize extension to generate <span style="font-size: Xrem">
 const FontSize = Mark.create({
@@ -147,7 +147,7 @@ export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography..
 
         <div className="h-4 w-[1px] bg-gray-300 mx-1" />
         <div className="flex items-center gap-1.5 px-1.5" title="Text Color">
-          <PaintBucket size={16} className="text-gray-600 animate-none" />
+          <Palette size={16} className="text-gray-600 animate-none" />
           <div className="relative flex items-center justify-center w-5 h-5 rounded border border-gray-300 overflow-hidden bg-gray-100 shadow-inner">
             <input
               type="color"
@@ -161,8 +161,8 @@ export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography..
                 style={{ backgroundColor: editor.getAttributes('textStyle').color }} 
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                <span className="text-[10px] text-gray-500 font-black">Ø</span>
+              <div className="w-full h-full relative bg-white flex items-center justify-center overflow-hidden" title="Default / Clear Color">
+                <div className="absolute w-[1px] h-[140%] bg-red-500 rotate-45" />
               </div>
             )}
           </div>
@@ -301,7 +301,7 @@ export const TipTapMinimal = ({ value, onChange, placeholder = 'Enter details...
 
         <div className="h-4 w-[1px] bg-gray-300 mx-1" />
         <div className="flex items-center gap-1 px-1" title="Text Color">
-          <PaintBucket size={14} className="text-gray-600" />
+          <Palette size={14} className="text-gray-600" />
           <div className="relative flex items-center justify-center w-4 h-4 rounded border border-gray-300 overflow-hidden bg-gray-100 shadow-inner">
             <input
               type="color"
@@ -315,8 +315,8 @@ export const TipTapMinimal = ({ value, onChange, placeholder = 'Enter details...
                 style={{ backgroundColor: editor.getAttributes('textStyle').color }} 
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                <span className="text-[8px] text-gray-500 font-black leading-none">Ø</span>
+              <div className="w-full h-full relative bg-white flex items-center justify-center overflow-hidden" title="Default / Clear Color">
+                <div className="absolute w-[1px] h-[140%] bg-red-500 rotate-45" />
               </div>
             )}
           </div>

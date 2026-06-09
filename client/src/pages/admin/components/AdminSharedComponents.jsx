@@ -472,10 +472,9 @@ export const HighlightItemsEditor = ({ items = [], onChange }) => {
                                 <label className="block text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 mb-2">
                                     Label
                                 </label>
-                                <input
-                                    className="input"
+                                <InlineFormatEditor
                                     value={item.title}
-                                    onChange={(e) => updateItem(item.id, { title: e.target.value })}
+                                    onChange={(nextValue) => updateItem(item.id, { title: nextValue })}
                                     placeholder="Example: Personal Email"
                                 />
                             </div>
@@ -689,10 +688,9 @@ export const StructuredItemsEditor = ({ items = [], onChange, itemLabel = 'Entry
                             <label className="block text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 mb-2">
                                 Title
                             </label>
-                            <input
-                                className="input"
+                            <InlineFormatEditor
                                 value={item.title}
-                                onChange={(e) => updateItem(item.id, { title: e.target.value })}
+                                onChange={(nextValue) => updateItem(item.id, { title: nextValue })}
                                 placeholder="Example: Research Area"
                             />
                         </div>
@@ -702,10 +700,9 @@ export const StructuredItemsEditor = ({ items = [], onChange, itemLabel = 'Entry
                                 <label className="block text-[11px] font-bold uppercase tracking-[0.16em] text-gray-500 mb-2">
                                     Label
                                 </label>
-                                <input
-                                    className="input"
+                                <InlineFormatEditor
                                     value={item.title}
-                                    onChange={(e) => updateItem(item.id, { title: e.target.value })}
+                                    onChange={(nextValue) => updateItem(item.id, { title: nextValue })}
                                     placeholder="Example: Passing Year"
                                 />
                             </div>

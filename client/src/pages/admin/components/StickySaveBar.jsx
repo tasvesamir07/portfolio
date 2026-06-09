@@ -1,35 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, X } from 'lucide-react';
+import { Save } from 'lucide-react';
 
-const StickySaveBar = ({ formId, saving, onCancel, saveLabel, headerRef }) => {
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-        if (!headerRef || !headerRef.current) return;
-
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                // Show sticky bar when the header exits the top of the viewport
-                setIsVisible(!entry.isIntersecting);
-            },
-            {
-                root: null, // viewport
-                rootMargin: '-80px 0px 0px 0px', // Trigger when header goes past 80px from top
-                threshold: 0
-            }
-        );
-
-        observer.observe(headerRef.current);
-
-        return () => {
-            observer.disconnect();
-        };
-    }, [headerRef]);
-
+const StickySaveBar = ({ formId, saving, onCancel, saveLabel, isDirty = false }) => {
     return (
         <AnimatePresence>
-            {isVisible && (
+            {isDirty && (
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}

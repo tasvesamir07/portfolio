@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Edit3, Save, ArrowUp, ArrowDown, AlertCircle, X } from 'lucide-react';
+import { Plus, Trash2, Edit3, Save, ArrowUp, ArrowDown, AlertCircle, X, ArrowLeft } from 'lucide-react';
 import api, { clearResponseCache } from '../../../api';
 import { clearTranslationCache } from '../../../i18n/translator';
 import ConfirmModal from '../../../components/ConfirmModal';
@@ -25,6 +25,7 @@ const AdminGallery = () => {
     const [notice, setNotice] = useState(null);
     const [saveError, setSaveError] = useState('');
     const [saving, setSaving] = useState(false);
+    const [initialData, setInitialData] = useState({});
 
     const headerRef = useRef(null);
 
@@ -108,6 +109,7 @@ const AdminGallery = () => {
 
     const openEditor = (record = {}) => {
         setFormData(record);
+        setInitialData(record);
         setIsEditing(true);
     };
 
@@ -365,6 +367,15 @@ const AdminGallery = () => {
                 </div>
             ) : (
                 <form id="tab-form" onSubmit={handleSave} className="max-w-3xl mx-auto py-4">
+                    <div className="flex justify-start mb-4">
+                        <button
+                            type="button"
+                            onClick={() => setIsEditing(false)}
+                            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
+                        >
+                            <ArrowLeft size={14} /> Back
+                        </button>
+                    </div>
                     <header ref={headerRef} className="mb-10 text-center border-b pb-8">
                         <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">
                             {formData.id ? 'Edit Entry' : 'Add New Entry'}
@@ -378,7 +389,7 @@ const AdminGallery = () => {
                         saving={saving} 
                         onCancel={() => setIsEditing(false)}
                         saveLabel={formData.id ? 'Update Record' : 'Save Record'}
-                        headerRef={headerRef}
+                        isDirty={JSON.stringify(formData) !== JSON.stringify(initialData)}
                     />
                     {saveError && (
                         <div className="mb-6 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
