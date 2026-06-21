@@ -44,7 +44,7 @@ describe('Public API Routes Tests', () => {
 
             expect(res.body).toHaveProperty('about', mockAbout);
             expect(res.body).toHaveProperty('skills', mockSkills);
-            expect(res.headers['cache-control']).toContain('public');
+            expect(res.headers['cache-control']).toContain('no-cache');
             expect(res.headers['vary']).toContain('X-Translate-Language');
         });
 

@@ -189,6 +189,13 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     async (response) => {
         try {
+            const method = String(response.config?.method || 'get').toLowerCase();
+            if (method !== 'get' && method !== 'head' && method !== 'options') {
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('portfolio:mutation', { detail: { url: response.config?.url } }));
+                }
+            }
+
             const fromCache = response._fromCache === true;
             const serverAlreadyTranslated = String(
                 response.headers?.['x-response-translated']

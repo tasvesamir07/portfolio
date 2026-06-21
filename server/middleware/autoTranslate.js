@@ -239,7 +239,7 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
     const cacheKey = buildResponseTranslationCacheKey(req, normalizedLanguage);
     if (responseTranslationCache.has(cacheKey)) {
         res.setHeader(RESPONSE_TRANSLATED_HEADER, '1');
-        res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+        res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Vary', 'Accept-Encoding, x-translate-language');
         return responseTranslationCache.get(cacheKey);
     }
@@ -257,7 +257,7 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
         responseTranslationCache.set(cacheKey, translated);
         trimResponseTranslationCache();
         res.setHeader(RESPONSE_TRANSLATED_HEADER, '1');
-        res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+        res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Vary', 'Accept-Encoding, x-translate-language');
         return translated;
     } catch (err) {
@@ -336,8 +336,9 @@ const clearResponseCache = (resourcePrefix) => {
     }
 
     const prefixToMatch = `/api/v1/${resourcePrefix}`;
+    const pageDataPrefix = `/api/v1/page-data`;
     for (const key of responseTranslationCache.keys()) {
-        if (key.includes(prefixToMatch)) {
+        if (key.includes(prefixToMatch) || key.includes(pageDataPrefix)) {
             responseTranslationCache.delete(key);
         }
     }

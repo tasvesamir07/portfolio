@@ -19,6 +19,12 @@ const queryClient = new QueryClient({
   },
 })
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('portfolio:mutation', () => {
+    queryClient.invalidateQueries();
+  });
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <SiteAlertProvider>
