@@ -3,6 +3,7 @@ import { Edit3, Save, AlertCircle, ArrowLeft } from 'lucide-react';
 import api, { clearResponseCache } from '../../../api';
 import { clearTranslationCache } from '../../../i18n/translator';
 import StickySaveBar from '../components/StickySaveBar';
+import { RenderInlineHtml } from '../../../utils/htmlRenderer';
 import {
     Field,
     RichTextEditor,
@@ -189,10 +190,10 @@ const AdminAbout = () => {
                                     <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
                                         <td className="py-4 px-6">
                                             <div className="font-bold text-gray-900 text-base leading-tight">
-                                                {content.name || 'Biography'}
+                                                <RenderInlineHtml html={content.name || 'Biography'} />
                                             </div>
                                             <div className="text-[10px] font-mono text-gray-400 mt-0.5 uppercase">
-                                                {content.title || 'No Title'}
+                                                <RenderInlineHtml html={content.title || 'No Title'} />
                                             </div>
                                         </td>
                                         <td className="py-4 px-6 text-gray-600 font-medium max-w-md">

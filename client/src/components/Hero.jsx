@@ -37,7 +37,7 @@ const Hero = ({ data, socialLinks = [] }) => {
                     {/* Name in Gold */}
                     <h1 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight sm:tracking-wide drop-shadow-lg uppercase text-brand-gold px-2 sm:px-4 leading-tight">
                         {name ? (
-                            name
+                            <RenderInlineHtml html={name} />
                         ) : title ? (
                             <RenderInlineHtml html={title} />
                         ) : (

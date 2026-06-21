@@ -1,21 +1,21 @@
 import React from 'react';
-import { usePublicPageData } from '../hooks/useSiteName';
+import { useSiteIdentity, usePublicPageData } from '../hooks/useSiteName';
 
 const StructuredData = () => {
+    const { name, siteName, logoUrl, description } = useSiteIdentity();
     const { data: publicData } = usePublicPageData();
-    const about = publicData?.about;
     const social = publicData?.socialLinks || publicData?.['social-links'] || [];
 
-    if (!about) return null;
+    if (!publicData?.about) return null;
 
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "Person",
-        "name": about.name || "Portfolio",
+        "name": name,
         "url": window.location.origin,
-        "image": about.logo_url || "",
-        "jobTitle": about.site_name || "Academic & Researcher",
-        "description": about.bio_short || "Professional portfolio showing academics, experience, and research.",
+        "image": logoUrl,
+        "jobTitle": siteName,
+        "description": description || "Professional portfolio showing academics, experience, and research.",
         "sameAs": social.map(link => link.url).filter(Boolean)
     };
 

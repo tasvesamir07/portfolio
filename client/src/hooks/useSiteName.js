@@ -16,21 +16,26 @@ export const usePublicPageData = () => {
     });
 };
 
+const stripHtml = (str) => {
+    if (!str) return '';
+    return str.replace(/<[^>]*>/g, '').replace(/&nbsp;|\u00A0/g, ' ').trim();
+};
+
 export const useSiteName = () => {
     const { data } = usePublicPageData();
     const about = data?.about;
-    return about?.name || about?.site_name || 'Portfolio';
+    return stripHtml(about?.name || about?.site_name || 'Portfolio');
 };
 
 export const useSiteIdentity = () => {
     const { data, isLoading } = usePublicPageData();
     const about = data?.about || {};
     return {
-        name: about.name || 'Portfolio',
-        siteName: about.site_name || about.name || 'Portfolio',
-        description: about.bio_short || '',
+        name: stripHtml(about.name || 'Portfolio'),
+        siteName: stripHtml(about.site_name || about.name || 'Portfolio'),
+        description: stripHtml(about.bio_short || ''),
         logoUrl: about.logo_url || '',
-        authorNames: about.author_names || about.name || 'Portfolio',
+        authorNames: stripHtml(about.author_names || about.name || 'Portfolio'),
         isLoading
     };
 };
