@@ -638,4 +638,14 @@ describe('Server Routes Tests', () => {
             expect(res.body.message).toBe('Pre-warm complete');
         });
     });
+
+    describe('root route', () => {
+        it('GET / should return api status and website url', async () => {
+            const res = await request(app)
+                .get('/')
+                .expect(200);
+            expect(res.body.status).toBe('healthy');
+            expect(res.body.website).toBe('https://azizulhaque.vercel.app');
+        });
+    });
 });

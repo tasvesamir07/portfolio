@@ -285,6 +285,14 @@ const deprecationMiddleware = (req, res, next) => {
 
 app.use('/api', deprecationMiddleware, v1Router);
 
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Azizul Haque Portfolio API is running.',
+        status: 'healthy',
+        website: 'https://azizulhaque.vercel.app'
+    });
+});
+
 app.get('/health', (req, res) => res.json({ status: 'ok', source: 'root' }));
 
 app.get('/sitemap.xml', async (req, res) => {
