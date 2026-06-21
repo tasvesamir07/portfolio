@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { shouldRunLiveClientTranslation, translateText } from '../i18n/translator';
+import { shouldRunLiveClientTranslation, translateText, translateHtml } from '../i18n/translator';
 
 const createId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -93,13 +93,22 @@ export const sanitizeStructuredInlineHtml = (html = '') => {
 
         const children = Array.from(node.childNodes).map(serializeNode).join('');
         const tag = node.tagName.toLowerCase();
+        
+        const style = node.getAttribute('style');
+        const styleAttr = style ? ` style="${escapeStructuredHtml(style)}"` : '';
 
-        if (tag === 'strong' || tag === 'b') return `<strong>${children}</strong>`;
-        if (tag === 'em' || tag === 'i') return `<em>${children}</em>`;
+        if (tag === 'span') {
+            if (style) {
+                return `<span${styleAttr}>${children}</span>`;
+            }
+            return children;
+        }
+        if (tag === 'strong' || tag === 'b') return `<strong${styleAttr}>${children}</strong>`;
+        if (tag === 'em' || tag === 'i') return `<em${styleAttr}>${children}</em>`;
         if (tag === 'br') return '<br>';
         if (tag === 'a') {
             const href = normalizeHref(node.getAttribute('href') || node.textContent || '');
-            return href ? `<a href="${escapeStructuredHtml(href)}" target="_blank" rel="noopener noreferrer">${children || escapeStructuredHtml(node.textContent || href)}</a>` : children;
+            return href ? `<a href="${escapeStructuredHtml(href)}" target="_blank" rel="noopener noreferrer"${styleAttr}>${children || escapeStructuredHtml(node.textContent || href)}</a>` : children;
         }
 
         return children;
@@ -309,12 +318,11 @@ export const useTranslatedStructuredItems = (items, language, options = {}) => {
         // Build a flat list of every string that needs translating with its location
         const jobs = [];
         items.forEach((item, i) => {
-            if (item.title) jobs.push({ i, field: 'title', text: extractStructuredPlainText(item.title) });
-            if (item.text) jobs.push({ i, field: 'text', text: extractStructuredPlainText(item.text) });
+            if (item.title) jobs.push({ i, field: 'title', text: item.title });
+            if (item.text) jobs.push({ i, field: 'text', text: item.text });
             if (Array.isArray(item.values)) {
                 item.values.forEach((v, vi) => {
-                    const plain = extractStructuredPlainText(v);
-                    if (plain) jobs.push({ i, field: 'values', vi, text: plain });
+                    if (v) jobs.push({ i, field: 'values', vi, text: v });
                 });
             }
         });
@@ -325,7 +333,7 @@ export const useTranslatedStructuredItems = (items, language, options = {}) => {
 
         setTranslated(items); // show originals while loading
 
-        Promise.all(jobs.map(j => translateText(j.text, language))).then(results => {
+        Promise.all(jobs.map(j => translateHtml(j.text, language))).then(results => {
             // Deep-clone items and patch translated strings back in
             const next = items.map(item => ({ ...item, values: item.values ? [...item.values] : [] }));
             results.forEach((result, idx) => {

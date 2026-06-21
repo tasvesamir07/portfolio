@@ -241,15 +241,24 @@ export const normalizeInlineRichText = (html = '') => {
         const children = Array.from(node.childNodes).map(serializeNode).join('');
         const tag = node.tagName.toLowerCase();
 
-        if (tag === 'strong' || tag === 'b') return `<strong>${children}</strong>`;
-        if (tag === 'em' || tag === 'i') return `<em>${children}</em>`;
+        const style = node.getAttribute('style');
+        const styleAttr = style ? ` style="${escapeHtml(style)}"` : '';
+
+        if (tag === 'span') {
+            if (style) {
+                return `<span${styleAttr}>${children}</span>`;
+            }
+            return children;
+        }
+        if (tag === 'strong' || tag === 'b') return `<strong${styleAttr}>${children}</strong>`;
+        if (tag === 'em' || tag === 'i') return `<em${styleAttr}>${children}</em>`;
         if (tag === 'br') return '<br>';
         if (tag === 'div' || tag === 'p' || tag === 'li') {
             return children ? `${children}<br>` : '<br>';
         }
         if (tag === 'a') {
             const href = normalizeHref(node.getAttribute('href') || node.textContent || '');
-            return href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${children || escapeHtml(node.textContent || href)}</a>` : children;
+            return href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"${styleAttr}>${children || escapeHtml(node.textContent || href)}</a>` : children;
         }
 
         return children;

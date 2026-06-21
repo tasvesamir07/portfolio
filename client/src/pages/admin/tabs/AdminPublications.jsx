@@ -12,6 +12,7 @@ import {
     buildStructuredPreview
 } from '../../../utils/structuredItems';
 import AdminCrudLayout from '../components/AdminCrudLayout';
+import { RenderInlineHtml } from '../../../utils/htmlRenderer';
 
 const AdminPublications = () => {
     const buildLegacyStructuredItems = (record = {}) => {
@@ -126,7 +127,7 @@ const AdminPublications = () => {
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
-                    {item.title || 'Publication Record'}
+                    {item.title ? <RenderInlineHtml html={item.title} /> : 'Publication Record'}
                 </div>
                 <div className="text-[10px] font-mono text-gray-400 mt-0.5 uppercase">
                     {item.journal_name} ({item.pub_year || 'No year'})

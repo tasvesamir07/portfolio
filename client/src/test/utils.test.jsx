@@ -24,7 +24,8 @@ import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 // Mock translator
 vi.mock('../i18n/translator', () => ({
     shouldRunLiveClientTranslation: vi.fn().mockReturnValue(true),
-    translateText: vi.fn().mockImplementation((text) => Promise.resolve(`${text}_translated`))
+    translateText: vi.fn().mockImplementation((text) => Promise.resolve(`${text}_translated`)),
+    translateHtml: vi.fn().mockImplementation((text) => Promise.resolve(`${text}_translated`))
 }));
 
 describe('Client Utility Modules Tests', () => {

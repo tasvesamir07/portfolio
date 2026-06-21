@@ -6,6 +6,7 @@ import {
     InlineFormatEditor
 } from '../components/AdminSharedComponents';
 import AdminCrudLayout from '../components/AdminCrudLayout';
+import { RenderInlineHtml } from '../../../utils/htmlRenderer';
 
 const AdminNewspaper = () => {
     const prepareFormData = (record = {}) => ({
@@ -49,7 +50,7 @@ const AdminNewspaper = () => {
                 {item.image_url ? (
                     <img 
                         src={item.image_url} 
-                        alt={item.title} 
+                        alt={decodeHtmlPreview(item.title)} 
                         className="w-12 h-12 object-cover rounded-md border border-gray-100" 
                     />
                 ) : (
@@ -58,7 +59,7 @@ const AdminNewspaper = () => {
             </td>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
-                    {item.title || 'Untitled Article'}
+                    {item.title ? <RenderInlineHtml html={item.title} /> : 'Untitled Article'}
                 </div>
                 {item.link_url && (
                     <a 

@@ -80,6 +80,13 @@ const AdminLayout = () => {
     const [tabs, setTabs] = useState(SIDEBAR_TABS);
     const [draggedIndex, setDraggedIndex] = useState(null);
 
+    const draggedIndexRef = useRef(null);
+    const tabsRef = useRef(tabs);
+
+    useEffect(() => {
+        tabsRef.current = tabs;
+    }, [tabs]);
+
     // Fetch about data to load custom_sidebar_order
     useEffect(() => {
         if (token) {
@@ -112,6 +119,7 @@ const AdminLayout = () => {
     }, [aboutData]);
 
     const handleDragStart = (e, index) => {
+        draggedIndexRef.current = index;
         setDraggedIndex(index);
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', index);
@@ -119,12 +127,16 @@ const AdminLayout = () => {
 
     const handleDragOver = (e, index) => {
         e.preventDefault();
-        if (draggedIndex === null || draggedIndex === index) return;
+        const currentDragIdx = draggedIndexRef.current;
+        if (currentDragIdx === null || currentDragIdx === index) return;
 
-        const newTabs = [...tabs];
-        const draggedItem = newTabs[draggedIndex];
-        newTabs.splice(draggedIndex, 1);
+        const newTabs = [...tabsRef.current];
+        const draggedItem = newTabs[currentDragIdx];
+        newTabs.splice(currentDragIdx, 1);
         newTabs.splice(index, 0, draggedItem);
+        
+        draggedIndexRef.current = index;
+        tabsRef.current = newTabs;
         setDraggedIndex(index);
         setTabs(newTabs);
     };
@@ -189,13 +201,14 @@ const AdminLayout = () => {
     };
 
     const handleDragEnd = async () => {
+        draggedIndexRef.current = null;
         setDraggedIndex(null);
-        const newOrder = tabs.map(t => t.id);
+        const finalTabs = tabsRef.current;
+        const newOrder = finalTabs.map(t => t.id);
         const newCustomNav = buildCustomNav(newOrder);
 
         try {
             const payload = {
-                ...aboutData,
                 custom_sidebar_order: newOrder,
                 custom_nav: newCustomNav
             };

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { shouldRunLiveClientTranslation, translateText } from '../i18n/translator';
+import { shouldRunLiveClientTranslation, translateText, translateHtml } from '../i18n/translator';
 
 /**
  * useTranslatedDataRows
@@ -45,7 +45,7 @@ export const useTranslatedDataRows = (rows, fields, language, options = {}) => {
 
         setTranslatedRows(rows); // Show originals while translating
 
-        Promise.all(jobs.map(j => translateText(j.text, language)))
+        Promise.all(jobs.map(j => translateHtml(j.text, language)))
             .then(results => {
                 const next = rows.map(r => ({ ...r }));
                 results.forEach((result, idx) => {
