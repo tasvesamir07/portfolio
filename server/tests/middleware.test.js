@@ -278,7 +278,7 @@ describe('Server Middleware Tests', () => {
             expect(originalJsonMock).toHaveBeenCalledWith({ title: 'Hello' });
         });
 
-        it('should bypass English requests even if response contains non-English text', () => {
+        it('should not bypass English requests if response contains non-English text', async () => {
             const originalJsonMock = jest.fn();
             const req = {
                 headers: { 'x-translate-language': 'en' },
@@ -297,9 +297,11 @@ describe('Server Middleware Tests', () => {
             expect(next).toHaveBeenCalled();
 
             const banglaPayload = { title: 'ওমিক্স ডেটা' };
-            const result = res.json(banglaPayload);
-            expect(result).toBeUndefined();
-            expect(originalJsonMock).toHaveBeenCalledWith(banglaPayload);
+            const promise = res.json(banglaPayload);
+            expect(promise).toBeInstanceOf(Promise);
+
+            await promise;
+            expect(originalJsonMock).toHaveBeenCalled();
         });
 
         it('should localize data using localizeDataObject helper', () => {

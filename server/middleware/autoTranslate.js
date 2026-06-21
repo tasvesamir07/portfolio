@@ -157,77 +157,211 @@ const shouldServerTranslateResponse = (req, language = 'en') => {
     return true;
 };
 
-const translateResponseData = async (value, language = 'en', key = '', options = {}) => {
-    if (value == null || SKIP_TRANSLATION_KEYS.has(key)) {
+const collectTranslatableStrings = (value, language = 'en', key = '', collected = new Set()) => {
+    if (value == null || SKIP_TRANSLATION_KEYS.has(key) || (typeof key === 'string' && key.endsWith('_url'))) {
+        return;
+    }
+
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed && !shouldSkipStringTranslation(key, trimmed, language)) {
+            if (looksLikeStructuredJson(trimmed, key)) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach((item) => {
+                            if (!item || typeof item !== 'object') return;
+                            if (typeof item.title === 'string' && item.title.trim() && !shouldSkipStringTranslation(key, item.title.trim(), language)) {
+                                collected.add(item.title.trim());
+                            }
+                            if (typeof item.text === 'string' && item.text.trim()) {
+                                if (HTML_REGEX.test(item.text)) {
+                                    const segments = item.text.split(/(<[^>]+>)/g);
+                                    segments.forEach(segment => {
+                                        if (segment && !segment.startsWith('<') && segment.trim() && !shouldSkipStringTranslation(key, segment.trim(), language)) {
+                                            collected.add(segment.trim());
+                                        }
+                                    });
+                                } else if (!shouldSkipStringTranslation(key, item.text.trim(), language)) {
+                                    collected.add(item.text.trim());
+                                }
+                            }
+                            if (typeof item.value === 'string' && item.value.trim()) {
+                                if (HTML_REGEX.test(item.value)) {
+                                    const segments = item.value.split(/(<[^>]+>)/g);
+                                    segments.forEach(segment => {
+                                        if (segment && !segment.startsWith('<') && segment.trim() && !shouldSkipStringTranslation(key, segment.trim(), language)) {
+                                            collected.add(segment.trim());
+                                        }
+                                    });
+                                } else if (!shouldSkipStringTranslation(key, item.value.trim(), language)) {
+                                    collected.add(item.value.trim());
+                                }
+                            }
+                            if (Array.isArray(item.values)) {
+                                item.values.forEach(v => {
+                                    if (typeof v === 'string' && v.trim()) {
+                                        if (HTML_REGEX.test(v)) {
+                                            const segments = v.split(/(<[^>]+>)/g);
+                                            segments.forEach(segment => {
+                                                if (segment && !segment.startsWith('<') && segment.trim() && !shouldSkipStringTranslation(key, segment.trim(), language)) {
+                                                    collected.add(segment.trim());
+                                                }
+                                            });
+                                        } else if (!shouldSkipStringTranslation(key, v.trim(), language)) {
+                                            collected.add(v.trim());
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    }
+                } catch (e) {
+                    // Ignore JSON parsing errors
+                }
+            } else if (HTML_REGEX.test(trimmed)) {
+                const segments = trimmed.split(/(<[^>]+>)/g);
+                segments.forEach(segment => {
+                    if (segment && !segment.startsWith('<') && segment.trim() && !shouldSkipStringTranslation(key, segment.trim(), language)) {
+                        collected.add(segment.trim());
+                    }
+                });
+            } else {
+                collected.add(trimmed);
+            }
+        }
+        return;
+    }
+
+    if (Array.isArray(value)) {
+        value.forEach((entry) => collectTranslatableStrings(entry, language, key, collected));
+        return;
+    }
+
+    if (typeof value === 'object') {
+        Object.entries(value).forEach(([entryKey, entryValue]) => {
+            collectTranslatableStrings(entryValue, language, entryKey, collected);
+        });
+    }
+};
+
+const applyTranslations = (value, translationMap, language = 'en', key = '') => {
+    if (value == null || SKIP_TRANSLATION_KEYS.has(key) || (typeof key === 'string' && key.endsWith('_url'))) {
         return value;
     }
 
     if (typeof value === 'string') {
-        if (options.hasLocalizedSibling || shouldSkipStringTranslation(key, value, language)) return value;
-        if (looksLikeStructuredJson(value, key)) {
+        const trimmed = value.trim();
+        if (!trimmed || shouldSkipStringTranslation(key, trimmed, language)) {
+            return value;
+        }
+
+        if (looksLikeStructuredJson(trimmed, key)) {
             try {
-                const parsed = JSON.parse(value);
-                const translated = await Promise.all(parsed.map(async (item) => {
+                const parsed = JSON.parse(trimmed);
+                const translated = parsed.map((item) => {
                     if (!item || typeof item !== 'object') return item;
-
                     const result = { ...item };
-
-                    if (typeof result.title === 'string' && result.title.trim()) {
-                        result.title = await translatePlainText(result.title, language);
+                    
+                    if (typeof result.title === 'string' && result.title.trim() && !shouldSkipStringTranslation(key, result.title.trim(), language)) {
+                        result.title = translationMap.get(result.title.trim()) || result.title;
                     }
-
                     if (typeof result.text === 'string' && result.text.trim()) {
-                        result.text = HTML_REGEX.test(result.text)
-                            ? await translateHtmlContent(result.text, language)
-                            : await translatePlainText(result.text, language);
+                        if (HTML_REGEX.test(result.text)) {
+                            result.text = applyHtmlTranslations(result.text, translationMap, language, key);
+                        } else if (!shouldSkipStringTranslation(key, result.text.trim(), language)) {
+                            result.text = translationMap.get(result.text.trim()) || result.text;
+                        }
                     }
-
                     if (typeof result.value === 'string' && result.value.trim()) {
-                        result.value = HTML_REGEX.test(result.value)
-                            ? await translateHtmlContent(result.value, language)
-                            : await translatePlainText(result.value, language);
+                        if (HTML_REGEX.test(result.value)) {
+                            result.value = applyHtmlTranslations(result.value, translationMap, language, key);
+                        } else if (!shouldSkipStringTranslation(key, result.value.trim(), language)) {
+                            result.value = translationMap.get(result.value.trim()) || result.value;
+                        }
                     }
-
                     if (Array.isArray(result.values)) {
-                        result.values = await Promise.all(result.values.map(async (entry) => {
-                            if (typeof entry !== 'string' || !entry.trim()) return entry;
-                            return HTML_REGEX.test(entry)
-                                ? translateHtmlContent(entry, language)
-                                : translatePlainText(entry, language);
-                        }));
+                        result.values = result.values.map(v => {
+                            if (typeof v !== 'string' || !v.trim()) return v;
+                            if (HTML_REGEX.test(v)) {
+                                return applyHtmlTranslations(v, translationMap, language, key);
+                            }
+                            if (!shouldSkipStringTranslation(key, v.trim(), language)) {
+                                return translationMap.get(v.trim()) || v;
+                            }
+                            return v;
+                        });
                     }
-
                     return result;
-                }));
-
+                });
                 return JSON.stringify(translated);
-            } catch {
+            } catch (e) {
                 return value;
             }
         }
 
         if (HTML_REGEX.test(value)) {
-            return translateHtmlContent(value, language);
+            return applyHtmlTranslations(value, translationMap, language, key);
         }
 
-        return translatePlainText(value, language);
+        const translatedVal = translationMap.get(trimmed);
+        if (translatedVal) {
+            const leadingWhitespace = value.match(/^\s*/)?.[0] || '';
+            const trailingWhitespace = value.match(/\s*$/)?.[0] || '';
+            return `${leadingWhitespace}${translatedVal}${trailingWhitespace}`;
+        }
+        return value;
     }
 
     if (Array.isArray(value)) {
-        return Promise.all(value.map((entry) => translateResponseData(entry, language, key, options)));
+        return value.map((entry) => applyTranslations(entry, translationMap, language, key));
     }
 
     if (typeof value === 'object') {
-        const translatedEntries = await Promise.all(
-            Object.entries(value).map(async ([entryKey, entryValue]) => [
-                entryKey,
-                await translateResponseData(entryValue, language, entryKey)
-            ])
-        );
-
-        return Object.fromEntries(translatedEntries);
+        const result = {};
+        Object.entries(value).forEach(([entryKey, entryValue]) => {
+            result[entryKey] = applyTranslations(entryValue, translationMap, language, entryKey);
+        });
+        return result;
     }
+
     return value;
+};
+
+const applyHtmlTranslations = (html, translationMap, language = 'en', key = '') => {
+    if (!html || !HTML_REGEX.test(html)) return html;
+    const segments = html.split(/(<[^>]+>)/g);
+    return segments.map((segment) => {
+        if (!segment || segment.startsWith('<') || !segment.trim()) {
+            return segment;
+        }
+        const trimmed = segment.trim();
+        if (shouldSkipStringTranslation(key, trimmed, language)) {
+            return segment;
+        }
+        const translated = translationMap.get(trimmed);
+        if (translated) {
+            const leadingWhitespace = segment.match(/^\s*/)?.[0] || '';
+            const trailingWhitespace = segment.match(/\s*$/)?.[0] || '';
+            return `${leadingWhitespace}${translated}${trailingWhitespace}`;
+        }
+        return segment;
+    }).join('');
+};
+
+const translateResponseData = async (payload, language = 'en') => {
+    const collected = new Set();
+    collectTranslatableStrings(payload, language, '', collected);
+    
+    if (collected.size === 0) {
+        return payload;
+    }
+    
+    const uniqueStrings = Array.from(collected);
+    const translatedStrings = await translateTexts(uniqueStrings, language);
+    const translationMap = new Map(uniqueStrings.map((str, idx) => [str, translatedStrings[idx] || str]));
+    
+    return applyTranslations(payload, translationMap, language);
 };
 
 const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
@@ -340,7 +474,7 @@ const middleware = (req, res, next) => {
 
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         const targetLang = normalizeTargetLanguage(language);
-        if (targetLang === 'en') {
+        if (targetLang === 'en' && !hasNonEnglishText(payload)) {
             return originalJson(payload);
         }
 
