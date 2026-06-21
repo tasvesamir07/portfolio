@@ -85,8 +85,12 @@ const Publications = () => {
         <section id="publications" className="py-16 md:py-24 bg-white">
             <div className="max-w-7xl mx-auto px-6">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-xs sm:text-sm">{t('publications.kicker')}</span>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-center mb-6 text-[#8c2626] tracking-tight">
-                    {language === 'en' ? 'Recent Publications' : t('publications.titleMain')}
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-center mb-6 text-[#8c2626] tracking-tight animate-none">
+                    {language === 'en' ? (
+                        <>Recent <span className="text-brand-blue font-sans font-black">Publications</span></>
+                    ) : (
+                        <>{t('publications.titleMain')} <span className="text-brand-blue font-sans font-black">{t('publications.titleAccent')}</span></>
+                    )}
                 </h2>
                 <div className="w-32 h-[1px] bg-gray-200 mx-auto mb-16" />
                 
@@ -192,6 +196,32 @@ const Publications = () => {
                                                         <RenderInlineHtml html={item.pub_year || t('common.notAvailable')} />
                                                     </span>
                                                 </p>
+                                                {(item.doi || item.doi_url) && (
+                                                    <p className="leading-relaxed">
+                                                        <span className="font-bold text-gray-900">DOI:</span>{' '}
+                                                        {(() => {
+                                                            const doiUrl = item.doi_url || (item.doi ? `https://doi.org/${item.doi.trim()}` : '');
+                                                            const doiText = item.doi || (item.doi_url ? (() => {
+                                                                const match = item.doi_url.match(/(10\.\d{4,9}\/[^\s]+)/i);
+                                                                return match ? match[1] : item.doi_url;
+                                                            })() : '');
+                                                            return doiUrl ? (
+                                                                <a 
+                                                                    href={doiUrl} 
+                                                                    target="_blank" 
+                                                                    rel="noopener noreferrer" 
+                                                                    className="text-[#3a96b7] hover:underline font-semibold break-all"
+                                                                >
+                                                                    {doiText}
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-gray-600 font-medium break-all">
+                                                                    {doiText}
+                                                                </span>
+                                                            );
+                                                        })()}
+                                                    </p>
+                                                )}
                                                 <p className="leading-relaxed">
                                                     <span className="font-bold text-gray-900">{t('publications.authors')}:</span>{' '}
                                                     <span className="text-gray-600 font-medium">

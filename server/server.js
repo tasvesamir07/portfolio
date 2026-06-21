@@ -69,6 +69,14 @@ app.use((req, res, next) => {
     next();
 });
 
+// Map lang query parameter to x-translate-language header for unified handling
+app.use((req, res, next) => {
+    if (req.query && req.query.lang) {
+        req.headers['x-translate-language'] = req.query.lang;
+    }
+    next();
+});
+
 // Strict CORS validation configuration
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5000')
     .split(',')
@@ -110,12 +118,13 @@ app.use((req, res, next) => {
     next();
 });
 
-// Mount the global auto-translate response modifier middleware
-app.use(autoTranslate.middleware);
-
 // Mount the query cache middleware for caching GET responses and handling ETags
 const queryCacheMiddleware = require('./middleware/queryCache');
 app.use(queryCacheMiddleware);
+
+// Mount the global auto-translate response modifier middleware
+app.use(autoTranslate.middleware);
+
 
 // Static uploads folder for local dev fallback
 if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
@@ -237,7 +246,6 @@ v1Router.get('/page', async (req, res) => {
 
         if (result.rows.length === 0) return res.status(404).json({ message: 'Page not found' });
         const language = req.headers[LANGUAGE_HEADER] || 'en';
-        res.locals.dataLocalized = true;
         res.json(localizeDataObject(result.rows[0], language));
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

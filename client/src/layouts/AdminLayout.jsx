@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, FileText, Briefcase, GraduationCap, Image as ImageIcon, User, ExternalLink, Share2, Mail, Menu, X, Languages } from 'lucide-react';
+import { LogOut, FileText, Briefcase, GraduationCap, Image as ImageIcon, User, ExternalLink, Share2, Mail, Menu, X, Languages, GripVertical } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { clearSessionToken, expireSessionAndRedirect, getStoredToken, getTokenExpiryTime, isTokenExpired, SESSION_CHANGED_EVENT } from '../utils/authSession';
 import api from '../api';
 import BackToTop from '../components/BackToTop';
@@ -17,30 +18,47 @@ const SIDEBAR_TABS = [
     { id: 'research-interests', label: 'Interests', icon: FileText },
     { id: 'research', label: 'Research', icon: Briefcase },
     { id: 'publications', label: 'Publications', icon: ExternalLink },
+    { id: 'newspaper', label: 'Newspaper', icon: FileText },
     { id: 'blog', label: 'Blog Pages', icon: FileText },
     { id: 'gallery', label: 'Gallery', icon: ImageIcon },
     { id: 'messages', label: 'Messages', icon: Mail },
     { id: 'anonymous-messages', label: 'Anon. Messages', icon: Mail },
     { id: 'social', label: 'Social Links', icon: Share2 },
-    { id: 'newspaper', label: 'Newspaper', icon: FileText },
     { id: 'translations', label: 'Translations', icon: Languages }
 ];
 
-const SidebarLinks = ({ activeTab, onClickLink }) => {
+const SidebarLinks = ({ activeTab, onClickLink, tabs, draggedIndex, onDragStart, onDragOver, onDragEnd }) => {
     return (
         <>
-            {SIDEBAR_TABS.map(tab => {
+            {tabs.map((tab, index) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id || (!activeTab && tab.id === 'about');
                 return (
-                    <Link 
+                    <div
                         key={tab.id}
-                        to={`/admin/dashboard?tab=${tab.id}`} 
-                        onClick={onClickLink}
-                        className={`flex items-center gap-3 p-3 rounded-xl transition-all font-bold text-sm ${isActive ? 'bg-[#0b3b75]/5 text-[#0b3b75]' : 'hover:bg-gray-50 text-gray-400'}`}
+                        draggable
+                        onDragStart={(e) => onDragStart(e, index)}
+                        onDragOver={(e) => onDragOver(e, index)}
+                        onDragEnd={onDragEnd}
+                        className={`flex items-center gap-1 rounded-xl transition-all cursor-grab active:cursor-grabbing group ${
+                            isActive ? 'bg-[#0b3b75]/5 text-[#0b3b75]' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700'
+                        } ${
+                            draggedIndex === index 
+                                ? 'opacity-40 border-dashed border border-brand-blue/30 bg-gray-50' 
+                                : ''
+                        }`}
                     >
-                        <Icon size={18} /> {tab.label}
-                    </Link>
+                        <div className="pl-3 text-gray-300 group-hover:text-gray-400 cursor-grab shrink-0">
+                            <GripVertical size={14} />
+                        </div>
+                        <Link 
+                            to={`/admin/dashboard?tab=${tab.id}`} 
+                            onClick={onClickLink}
+                            className="flex-grow flex items-center gap-2.5 py-3 pr-3 font-bold text-sm decoration-transparent"
+                        >
+                            <Icon size={16} className="shrink-0" /> <span className="truncate">{tab.label}</span>
+                        </Link>
+                    </div>
                 );
             })}
         </>
@@ -50,12 +68,150 @@ const SidebarLinks = ({ activeTab, onClickLink }) => {
 const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const queryClient = useQueryClient();
     const [token, setToken] = useState(() => getStoredToken());
     const [authReady, setAuthReady] = useState(() => location.pathname === '/admin');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const lastSessionCheckRef = useRef(0);
 
     const activeTab = new URLSearchParams(location.search).get('tab');
+
+    const [aboutData, setAboutData] = useState(null);
+    const [tabs, setTabs] = useState(SIDEBAR_TABS);
+    const [draggedIndex, setDraggedIndex] = useState(null);
+
+    // Fetch about data to load custom_sidebar_order
+    useEffect(() => {
+        if (token) {
+            api.get('/about')
+                .then(res => {
+                    setAboutData(res.data);
+                })
+                .catch(err => console.error('Failed to load about data:', err));
+        }
+    }, [token]);
+
+    // Re-sort tabs whenever aboutData changes
+    useEffect(() => {
+        if (aboutData?.custom_sidebar_order && Array.isArray(aboutData.custom_sidebar_order)) {
+            const sorted = [];
+            aboutData.custom_sidebar_order.forEach(id => {
+                const found = SIDEBAR_TABS.find(t => t.id === id);
+                if (found) sorted.push(found);
+            });
+            // Append missing tabs
+            SIDEBAR_TABS.forEach(tab => {
+                if (!sorted.find(t => t.id === tab.id)) {
+                    sorted.push(tab);
+                }
+            });
+            setTabs(sorted);
+        } else {
+            setTabs(SIDEBAR_TABS);
+        }
+    }, [aboutData]);
+
+    const handleDragStart = (e, index) => {
+        setDraggedIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', index);
+    };
+
+    const handleDragOver = (e, index) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === index) return;
+
+        const newTabs = [...tabs];
+        const draggedItem = newTabs[draggedIndex];
+        newTabs.splice(draggedIndex, 1);
+        newTabs.splice(index, 0, draggedItem);
+        setDraggedIndex(index);
+        setTabs(newTabs);
+    };
+
+    const buildCustomNav = (sortedSidebarIds) => {
+        const customNav = [{ name: 'Home', path: '/' }];
+        const addedNodes = new Set(['home']);
+
+        sortedSidebarIds.forEach(id => {
+            if (id === 'academics' || id === 'experiences' || id === 'research-interests') {
+                if (!addedNodes.has('personal-profile')) {
+                    addedNodes.add('personal-profile');
+                    const dropdownItems = [];
+                    sortedSidebarIds.forEach(subId => {
+                        if (subId === 'academics') {
+                            dropdownItems.push({ name: 'Education', path: '/academics' });
+                        } else if (subId === 'experiences') {
+                            dropdownItems.push({ name: 'Experiences', path: '/experiences' });
+                        } else if (subId === 'research-interests') {
+                            dropdownItems.push({ name: 'Research Interests', path: '/research-interests' });
+                        }
+                    });
+                    customNav.push({
+                        name: 'Personal Profile',
+                        dropdown: dropdownItems
+                    });
+                }
+            } else if (id === 'research') {
+                if (!addedNodes.has('research')) {
+                    addedNodes.add('research');
+                    customNav.push({ name: 'Research', path: '/research' });
+                }
+            } else if (id === 'publications') {
+                if (!addedNodes.has('publications')) {
+                    addedNodes.add('publications');
+                    customNav.push({ name: 'Publications', path: '/publications' });
+                }
+            } else if (id === 'newspaper') {
+                if (!addedNodes.has('newspaper')) {
+                    addedNodes.add('newspaper');
+                    customNav.push({ name: 'Newspaper', path: '/newspaper' });
+                }
+            } else if (id === 'gallery') {
+                if (!addedNodes.has('gallery')) {
+                    addedNodes.add('gallery');
+                    customNav.push({ name: 'Gallery', path: '/gallery' });
+                }
+            } else if (id === 'messages') {
+                if (!addedNodes.has('contact')) {
+                    addedNodes.add('contact');
+                    customNav.push({ name: 'Contact', path: '/contact' });
+                }
+            } else if (id === 'anonymous-messages') {
+                if (!addedNodes.has('anonymous-message')) {
+                    addedNodes.add('anonymous-message');
+                    customNav.push({ name: 'Anon. Message', path: '/anonymous-message' });
+                }
+            }
+        });
+
+        return customNav;
+    };
+
+    const handleDragEnd = async () => {
+        setDraggedIndex(null);
+        const newOrder = tabs.map(t => t.id);
+        const newCustomNav = buildCustomNav(newOrder);
+
+        try {
+            const payload = {
+                ...aboutData,
+                custom_sidebar_order: newOrder,
+                custom_nav: newCustomNav
+            };
+            const res = await api.put('/about', payload);
+            setAboutData(res.data);
+            
+            // Clear local cache for translation
+            window.dispatchEvent(new CustomEvent('portfolio:languageChange'));
+            
+            // Invalidate React Query public cache to trigger re-fetch of custom navigation
+            queryClient.invalidateQueries({ queryKey: ['public-page-data'] });
+        } catch (err) {
+            console.error('Failed to save tab reorder:', err);
+        }
+    };
+
 
     useEffect(() => {
         const syncToken = () => {
@@ -232,7 +388,15 @@ const AdminLayout = () => {
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Content Management</p>
                             </div>
 
-                            <SidebarLinks activeTab={activeTab} onClickLink={() => setIsMobileMenuOpen(false)} />
+                            <SidebarLinks 
+                                activeTab={activeTab} 
+                                onClickLink={() => setIsMobileMenuOpen(false)} 
+                                tabs={tabs}
+                                draggedIndex={draggedIndex}
+                                onDragStart={handleDragStart}
+                                onDragOver={handleDragOver}
+                                onDragEnd={handleDragEnd}
+                            />
                         </nav>
 
                         <div className="p-6 border-t border-gray-100 flex-shrink-0 mt-auto bg-gray-50/30">
@@ -258,7 +422,14 @@ const AdminLayout = () => {
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Content Management</p>
                     </div>
 
-                    <SidebarLinks activeTab={activeTab} />
+                    <SidebarLinks 
+                        activeTab={activeTab} 
+                        tabs={tabs}
+                        draggedIndex={draggedIndex}
+                        onDragStart={handleDragStart}
+                        onDragOver={handleDragOver}
+                        onDragEnd={handleDragEnd}
+                    />
                 </nav>
 
                 <div className="p-6 border-t border-gray-100 flex-shrink-0 mt-auto bg-gray-50/30">

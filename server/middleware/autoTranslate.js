@@ -345,5 +345,8 @@ const clearResponseCache = (resourcePrefix) => {
 module.exports = {
     middleware,
     localizeDataObject,
-    clearResponseCache
+    clearResponseCache,
+    translateResponseData,
+    normalizeTargetLanguage,
+    shouldServerTranslateResponse
 };

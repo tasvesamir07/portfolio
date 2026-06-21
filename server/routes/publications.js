@@ -25,7 +25,13 @@ router.get('/', async (req, res) => {
         }
         const result = await db.query(query, params);
         const language = req.headers[LANGUAGE_HEADER] || 'en';
-        const data = localizeDataObject(result.rows, language);
+        let data = localizeDataObject(result.rows, language);
+
+        const { normalizeTargetLanguage, shouldServerTranslateResponse, translateResponseData } = require('../middleware/autoTranslate');
+        const targetLang = normalizeTargetLanguage(language);
+        if (targetLang !== 'en' && shouldServerTranslateResponse(req, targetLang)) {
+            data = await translateResponseData(data, targetLang);
+        }
 
         res.setHeader('X-Total-Count', total);
 
@@ -59,11 +65,11 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', authenticateToken, validate(publicationsSchema), async (req, res) => {
-    const { title, thumbnail_url, journal_name, pub_year, authors, introduction, methods, link_url, file_url, details_json, doi_url, journal_url } = req.body;
+    const { title, thumbnail_url, journal_name, pub_year, authors, introduction, methods, link_url, file_url, details_json, doi_url, journal_url, doi } = req.body;
     try {
         const result = await db.query(
-            'INSERT INTO publications (title, thumbnail_url, journal_name, pub_year, authors, introduction, methods, link_url, file_url, details_json, doi_url, journal_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *',
-            [title || '', thumbnail_url || '', journal_name || '', pub_year || '', authors || '', introduction || '', methods || '', link_url || '', file_url || '', details_json || '', doi_url || '', journal_url || '']
+            'INSERT INTO publications (title, thumbnail_url, journal_name, pub_year, authors, introduction, methods, link_url, file_url, details_json, doi_url, journal_url, doi) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *',
+            [title || '', thumbnail_url || '', journal_name || '', pub_year || '', authors || '', introduction || '', methods || '', link_url || '', file_url || '', details_json || '', doi_url || '', journal_url || '', doi || '']
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -72,11 +78,11 @@ router.post('/', authenticateToken, validate(publicationsSchema), async (req, re
 });
 
 router.put('/:id', authenticateToken, validate(publicationsSchema), async (req, res) => {
-    const { title, thumbnail_url, journal_name, pub_year, authors, introduction, methods, link_url, file_url, details_json, doi_url, journal_url } = req.body;
+    const { title, thumbnail_url, journal_name, pub_year, authors, introduction, methods, link_url, file_url, details_json, doi_url, journal_url, doi } = req.body;
     try {
         const result = await db.query(
-            'UPDATE publications SET title = $1, thumbnail_url = $2, journal_name = $3, pub_year = $4, authors = $5, introduction = $6, methods = $7, link_url = $8, file_url = $9, details_json = $10, doi_url = $11, journal_url = $12 WHERE id = $13 RETURNING *, (SELECT thumbnail_url FROM publications WHERE id = $13) AS old_thumbnail_url, (SELECT file_url FROM publications WHERE id = $13) AS old_file_url',
-            [title || '', thumbnail_url || '', journal_name || '', pub_year || '', authors || '', introduction || '', methods || '', link_url || '', file_url || '', details_json || '', doi_url || '', journal_url || '', req.params.id]
+            'UPDATE publications SET title = $1, thumbnail_url = $2, journal_name = $3, pub_year = $4, authors = $5, introduction = $6, methods = $7, link_url = $8, file_url = $9, details_json = $10, doi_url = $11, journal_url = $12, doi = $13 WHERE id = $14 RETURNING *, (SELECT thumbnail_url FROM publications WHERE id = $14) AS old_thumbnail_url, (SELECT file_url FROM publications WHERE id = $14) AS old_file_url',
+            [title || '', thumbnail_url || '', journal_name || '', pub_year || '', authors || '', introduction || '', methods || '', link_url || '', file_url || '', details_json || '', doi_url || '', journal_url || '', doi || '', req.params.id]
         );
         if (result.rows.length > 0) {
             const oldRow = result.rows[0];

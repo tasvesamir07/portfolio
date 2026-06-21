@@ -59,7 +59,8 @@ const aboutSchema = z.object({
     sub_bio: optString,
     logo_url: optString,
     site_name: optString,
-    custom_nav: z.union([z.array(z.any()), z.object(z.any()), z.string()]).optional().nullable()
+    custom_nav: z.union([z.array(z.any()), z.object(z.any()), z.string()]).optional().nullable(),
+    custom_sidebar_order: z.union([z.array(z.any()), z.object(z.any()), z.string()]).optional().nullable()
 });
 
 const academicsSchema = z.object({
@@ -120,7 +121,8 @@ const publicationsSchema = z.object({
     file_url: optString,
     details_json: optString,
     doi_url: optString,
-    journal_url: optString
+    journal_url: optString,
+    doi: optString
 });
 
 const researchSchema = z.object({

@@ -137,6 +137,10 @@ api.interceptors.request.use(
             && !isAdminRoute
             && !String(config.url || '').includes('/translate');
 
+        if (isCacheableGet) {
+            config.params = { ...config.params, lang: requestLanguage };
+        }
+
         if (!isCacheableGet) {
             if (method !== 'get') {
                 getResponseCache.clear();

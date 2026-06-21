@@ -30,7 +30,8 @@ router.put('/', authenticateToken, validate(aboutSchema), async (req, res) => {
         sub_bio,
         logo_url,
         site_name,
-        custom_nav
+        custom_nav,
+        custom_sidebar_order
     } = req.body;
     try {
         const checkResult = await db.query('SELECT id, resume_url, hero_image_url, logo_url FROM about LIMIT 1');
@@ -50,8 +51,9 @@ router.put('/', authenticateToken, validate(aboutSchema), async (req, res) => {
                     logo_url = $8,
                     site_name = $9,
                     custom_nav = COALESCE($10::jsonb, custom_nav),
+                    custom_sidebar_order = COALESCE($11::jsonb, custom_sidebar_order),
                     updated_at = CURRENT_TIMESTAMP
-                 WHERE id = $11
+                 WHERE id = $12
                  RETURNING *`,
                 [
                     bio_text || '',
@@ -64,6 +66,7 @@ router.put('/', authenticateToken, validate(aboutSchema), async (req, res) => {
                     logo_url || '',
                     site_name || '',
                     custom_nav ? JSON.stringify(custom_nav) : null,
+                    custom_sidebar_order ? JSON.stringify(custom_sidebar_order) : null,
                     existing.id
                 ]
             );
@@ -73,8 +76,8 @@ router.put('/', authenticateToken, validate(aboutSchema), async (req, res) => {
             ));
         } else {
             result = await db.query(
-                `INSERT INTO about (bio_text, resume_url, name, location, title, hero_image_url, sub_bio, logo_url, site_name, custom_nav)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10::jsonb, '[]'::jsonb))
+                `INSERT INTO about (bio_text, resume_url, name, location, title, hero_image_url, sub_bio, logo_url, site_name, custom_nav, custom_sidebar_order)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10::jsonb, '[]'::jsonb), COALESCE($11::jsonb, '[]'::jsonb))
                  RETURNING *`,
                 [
                     bio_text || '',
@@ -86,7 +89,8 @@ router.put('/', authenticateToken, validate(aboutSchema), async (req, res) => {
                     sub_bio || '',
                     logo_url || '',
                     site_name || '',
-                    custom_nav ? JSON.stringify(custom_nav) : null
+                    custom_nav ? JSON.stringify(custom_nav) : null,
+                    custom_sidebar_order ? JSON.stringify(custom_sidebar_order) : null
                 ]
             );
         }

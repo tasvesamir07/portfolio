@@ -17,7 +17,14 @@ export const clearTranslationCache = () => {
 const isAdminRoute = () =>
     typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
 
-export const shouldRunLiveClientTranslation = () => isAdminRoute();
+export const shouldRunLiveClientTranslation = () => {
+    if (isAdminRoute()) return true;
+    if (typeof window !== 'undefined') {
+        const currentLang = window.localStorage.getItem(STORAGE_KEY) || 'en';
+        if (currentLang !== 'en') return true;
+    }
+    return false;
+};
 
 export const translateText = async (text = '', language = 'en') => {
     const engine = await import('./translator-engine');

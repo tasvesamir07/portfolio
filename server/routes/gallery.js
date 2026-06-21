@@ -21,7 +21,14 @@ router.get('/', async (req, res) => {
             params.push(limit, offset);
         }
         const result = await db.query(query, params);
-        const data = result.rows;
+        const language = req.headers['x-translate-language'] || 'en';
+
+        const { localizeDataObject, normalizeTargetLanguage, shouldServerTranslateResponse, translateResponseData } = require('../middleware/autoTranslate');
+        let data = localizeDataObject(result.rows, language);
+        const targetLang = normalizeTargetLanguage(language);
+        if (targetLang !== 'en' && shouldServerTranslateResponse(req, targetLang)) {
+            data = await translateResponseData(data, targetLang);
+        }
 
         res.setHeader('X-Total-Count', total);
 

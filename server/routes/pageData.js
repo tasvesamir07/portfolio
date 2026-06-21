@@ -52,7 +52,6 @@ router.get('/', async (req, res) => {
             responseData[keys[i]] = localizeDataObject(resolvedDataArray[i], language);
         }
 
-        res.locals.dataLocalized = true;
         res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=86400');
         res.setHeader('Vary', 'Accept-Encoding, X-Translate-Language, x-translate-language');
         res.json(responseData);

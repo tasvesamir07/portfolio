@@ -105,7 +105,8 @@ const AdminPublications = () => {
             introduction: formData.introduction || '',
             methods: formData.methods || '',
             doi_url: formData.doi_url || '',
-            journal_url: formData.journal_url || ''
+            journal_url: formData.journal_url || '',
+            doi: formData.doi || ''
         };
         delete payload.structured_items;
         return payload;
@@ -208,7 +209,10 @@ const AdminPublications = () => {
                  />
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <Field label="DOI Number (Optional)">
+                     <input type="text" className="input" value={formData.doi || ''} onChange={e => setFormData({...formData, doi: e.target.value})} placeholder="e.g. 10.xxxx/xxxxx" />
+                 </Field>
                  <Field label="DOI URL (Optional)">
                      <input type="url" className="input" value={formData.doi_url || ''} onChange={e => setFormData({...formData, doi_url: e.target.value})} placeholder="e.g. https://doi.org/10.xxxx/xxxxx" />
                  </Field>
