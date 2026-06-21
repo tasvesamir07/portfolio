@@ -149,22 +149,22 @@ export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography..
         <div className="flex items-center gap-1.5 px-1.5" title="Text Color">
           <Palette size={16} className="text-gray-600 animate-none" />
           <div className="relative flex items-center justify-center w-5 h-5 rounded border border-gray-300 overflow-hidden bg-gray-100 shadow-inner">
+            {editor.getAttributes('textStyle').color ? (
+              <div 
+                className="w-full h-full pointer-events-none" 
+                style={{ backgroundColor: editor.getAttributes('textStyle').color }} 
+              />
+            ) : (
+              <div className="w-full h-full relative bg-white flex items-center justify-center overflow-hidden pointer-events-none" title="Default / Clear Color">
+                <div className="absolute w-[1px] h-[140%] bg-red-500 rotate-45" />
+              </div>
+            )}
             <input
               type="color"
               value={editor.getAttributes('textStyle').color || '#000000'}
               onInput={e => editor.chain().focus().setColor(e.target.value).run()}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0 m-0 border-0"
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0 m-0 border-0 z-10"
             />
-            {editor.getAttributes('textStyle').color ? (
-              <div 
-                className="w-full h-full" 
-                style={{ backgroundColor: editor.getAttributes('textStyle').color }} 
-              />
-            ) : (
-              <div className="w-full h-full relative bg-white flex items-center justify-center overflow-hidden" title="Default / Clear Color">
-                <div className="absolute w-[1px] h-[140%] bg-red-500 rotate-45" />
-              </div>
-            )}
           </div>
           {editor.getAttributes('textStyle').color && (
             <button
@@ -303,22 +303,22 @@ export const TipTapMinimal = ({ value, onChange, placeholder = 'Enter details...
         <div className="flex items-center gap-1 px-1" title="Text Color">
           <Palette size={14} className="text-gray-600" />
           <div className="relative flex items-center justify-center w-4 h-4 rounded border border-gray-300 overflow-hidden bg-gray-100 shadow-inner">
+            {editor.getAttributes('textStyle').color ? (
+              <div 
+                className="w-full h-full pointer-events-none" 
+                style={{ backgroundColor: editor.getAttributes('textStyle').color }} 
+              />
+            ) : (
+              <div className="w-full h-full relative bg-white flex items-center justify-center overflow-hidden pointer-events-none" title="Default / Clear Color">
+                <div className="absolute w-[1px] h-[140%] bg-red-500 rotate-45" />
+              </div>
+            )}
             <input
               type="color"
               value={editor.getAttributes('textStyle').color || '#000000'}
               onInput={e => editor.chain().focus().setColor(e.target.value).run()}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0 m-0 border-0"
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0 m-0 border-0 z-10"
             />
-            {editor.getAttributes('textStyle').color ? (
-              <div 
-                className="w-full h-full" 
-                style={{ backgroundColor: editor.getAttributes('textStyle').color }} 
-              />
-            ) : (
-              <div className="w-full h-full relative bg-white flex items-center justify-center overflow-hidden" title="Default / Clear Color">
-                <div className="absolute w-[1px] h-[140%] bg-red-500 rotate-45" />
-              </div>
-            )}
           </div>
           {editor.getAttributes('textStyle').color && (
             <button
