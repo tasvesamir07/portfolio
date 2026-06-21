@@ -244,15 +244,17 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
         return responseTranslationCache.get(cacheKey);
     }
 
+    let timeoutId;
     try {
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Server translation timeout')), 5000)
-        );
+        const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error('Server translation timeout')), 5000);
+        });
 
         const translated = await Promise.race([
             translateResponseData(payload, normalizedLanguage),
             timeoutPromise
         ]);
+        clearTimeout(timeoutId);
 
         responseTranslationCache.set(cacheKey, translated);
         trimResponseTranslationCache();
@@ -261,6 +263,7 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
         res.setHeader('Vary', 'Accept-Encoding, x-translate-language');
         return translated;
     } catch (err) {
+        if (timeoutId) clearTimeout(timeoutId);
         console.warn(`[Auto-Translate] Falling back to original data for ${req.originalUrl || req.path} (${normalizedLanguage}) due to: ${err.message}`);
         return payload;
     }
@@ -296,15 +299,31 @@ const localizeDataObject = (data, language = 'en') => {
     return data;
 };
 
+const hasNonEnglishText = (value) => {
+    if (value == null) return false;
+    if (typeof value === 'string') {
+        return BANGLA_REGEX.test(value) || HANGUL_REGEX.test(value);
+    }
+    if (Array.isArray(value)) {
+        for (let i = 0; i < value.length; i++) {
+            if (hasNonEnglishText(value[i])) return true;
+        }
+        return false;
+    }
+    if (typeof value === 'object') {
+        const values = Object.values(value);
+        for (let i = 0; i < values.length; i++) {
+            if (hasNonEnglishText(values[i])) return true;
+        }
+        return false;
+    }
+    return false;
+};
+
 const middleware = (req, res, next) => {
     const originalJson = res.json.bind(res);
 
     res.json = (payload) => {
-        const language = req.headers[LANGUAGE_HEADER] || 'en';
-        if (normalizeTargetLanguage(language) === 'en') {
-            return originalJson(payload);
-        }
-
         const method = String(req.method || 'GET').toUpperCase();
         const fullPath = (req.originalUrl || '').split('?')[0];
         const isApiPath = fullPath.startsWith('/api/');
@@ -319,6 +338,12 @@ const middleware = (req, res, next) => {
             return originalJson(payload);
         }
 
+        const language = req.headers[LANGUAGE_HEADER] || 'en';
+        const targetLang = normalizeTargetLanguage(language);
+        if (targetLang === 'en' && !hasNonEnglishText(payload)) {
+            return originalJson(payload);
+        }
+
         return Promise.resolve(maybeTranslateApiPayload(req, res, payload, language))
             .then((translatedPayload) => originalJson(translatedPayload))
             .catch((err) => {
@@ -328,6 +353,7 @@ const middleware = (req, res, next) => {
     };
     next();
 };
+
 
 const clearResponseCache = (resourcePrefix) => {
     if (!resourcePrefix) {

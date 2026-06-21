@@ -26,6 +26,14 @@ jest.mock('../utils/logger', () => ({
     warn: jest.fn()
 }));
 
+jest.mock('../translate', () => ({
+    translateTexts: jest.fn().mockResolvedValue(['translated text']),
+    getAllCachedTranslations: jest.fn().mockResolvedValue({ 'key': 'val' }),
+    updateCachedTranslation: jest.fn().mockResolvedValue(true),
+    deleteCachedTranslation: jest.fn().mockResolvedValue(true),
+    getCacheStats: jest.fn().mockReturnValue({ l1Size: 10, maxEntries: 2000, redisConnected: false })
+}));
+
 describe('Server Middleware Tests', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -268,6 +276,32 @@ describe('Server Middleware Tests', () => {
             
             res.json({ title: 'Hello' });
             expect(originalJsonMock).toHaveBeenCalledWith({ title: 'Hello' });
+        });
+
+        it('should not bypass English requests if response contains non-English text', async () => {
+            const originalJsonMock = jest.fn();
+            const req = {
+                headers: { 'x-translate-language': 'en' },
+                method: 'GET',
+                originalUrl: '/api/v1/academics'
+            };
+            const res = {
+                json: originalJsonMock,
+                locals: {},
+                setHeader: jest.fn()
+            };
+            const next = jest.fn();
+
+            autoTranslate.middleware(req, res, next);
+
+            expect(next).toHaveBeenCalled();
+
+            const banglaPayload = { title: 'ওমিক্স ডেটা' };
+            const promise = res.json(banglaPayload);
+            expect(promise).toBeInstanceOf(Promise);
+
+            await promise;
+            expect(originalJsonMock).toHaveBeenCalled();
         });
 
         it('should localize data using localizeDataObject helper', () => {
