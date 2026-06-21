@@ -9,7 +9,7 @@ const ExperiencesPage = () => {
     const siteName = useSiteName();
 
     return (
-        <div className="pt-20">
+        <div className="pt-16 xl:pt-20">
             <SEO 
                 title={`${t('nav.experiences')} | ${siteName}`}
                 description={`Professional work experiences, training workshops, and technical skills of ${siteName}.`}

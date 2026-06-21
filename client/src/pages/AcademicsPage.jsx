@@ -9,7 +9,7 @@ const AcademicsPage = () => {
     const siteName = useSiteName();
 
     return (
-        <div className="pt-20 bg-[#fcfaf7] min-h-screen">
+        <div className="pt-16 xl:pt-20 bg-[#fcfaf7] min-h-screen">
             <SEO 
                 title={`${t('nav.education')} | ${siteName}`}
                 description={`Academic background, passing years, educational qualifications, and degrees of ${siteName}.`}

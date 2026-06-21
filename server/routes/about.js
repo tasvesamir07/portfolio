@@ -72,7 +72,11 @@ router.put('/', authenticateToken, validate(aboutSchema), async (req, res) => {
             );
             await cleanMediaUrls(diffRemovedMediaUrls(
                 [existing.resume_url, existing.hero_image_url, existing.logo_url],
-                [resume_url || '', hero_image_url || '', logo_url || '']
+                [
+                    resume_url !== undefined ? (resume_url || '') : (existing.resume_url || ''),
+                    hero_image_url !== undefined ? (hero_image_url || '') : (existing.hero_image_url || ''),
+                    logo_url !== undefined ? (logo_url || '') : (existing.logo_url || '')
+                ]
             ));
         } else {
             result = await db.query(

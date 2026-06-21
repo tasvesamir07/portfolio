@@ -9,7 +9,7 @@ const ContactPage = () => {
     const siteName = useSiteName();
 
     return (
-        <div className="pt-20 bg-[#fcfaf7] min-h-screen">
+        <div className="pt-16 xl:pt-20 bg-[#fcfaf7] min-h-screen">
             <SEO 
                 title={`${t('nav.contact')} | ${siteName}`}
                 description={`Get in touch with ${siteName}. Submit questions, project inquiries, or collaborative opportunities.`}

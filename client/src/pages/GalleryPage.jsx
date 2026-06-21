@@ -9,7 +9,7 @@ const GalleryPage = () => {
     const siteName = useSiteName();
 
     return (
-        <div className="pt-20 bg-[#fcfaf7] min-h-screen">
+        <div className="pt-16 xl:pt-20 bg-[#fcfaf7] min-h-screen">
             <SEO 
                 title={`${t('nav.gallery')} | ${siteName}`}
                 description={`Visual gallery of memorable moments, workshops, presentations, academic events, and professional photography of ${siteName}.`}

@@ -9,7 +9,7 @@ const ResearchInterestsPage = () => {
     const siteName = useSiteName();
 
     return (
-        <div className="pt-20 bg-[#fcfaf7] min-h-screen">
+        <div className="pt-16 xl:pt-20 bg-[#fcfaf7] min-h-screen">
             <SEO 
                 title={`${t('nav.researchInterests')} | ${siteName}`}
                 description={`Research interests, areas of specialization, and academic focus of ${siteName}.`}

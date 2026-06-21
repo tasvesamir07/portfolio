@@ -63,14 +63,14 @@ const DynamicPage = () => {
     const pageTitleRaw = getLocalizedField(page, 'title', language, page?.title || '');
 
     if (isLoading) return (
-        <div className="min-h-screen flex items-center justify-center pt-20">
+        <div className="min-h-screen flex items-center justify-center pt-16 xl:pt-20">
             <SEO title={`${siteName} | Loading...`} description={`${siteName} - Loading`} />
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-accent-primary"></div>
         </div>
     );
 
     if (error) return (
-        <div className="min-h-screen flex flex-col items-center justify-center pt-20 px-4 text-center">
+        <div className="min-h-screen flex flex-col items-center justify-center pt-16 xl:pt-20 px-4 text-center">
             <SEO title={`Page Not Found | ${siteName}`} description={`${siteName} | Page Not Found`} />
             <h2 className="text-4xl font-bold mb-4">404</h2>
             <p className="text-gray-400 mb-8">{t('dynamicPage.notFoundDescription')}</p>

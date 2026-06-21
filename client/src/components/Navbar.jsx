@@ -167,8 +167,8 @@ const Navbar = () => {
 
     return (
         <>
-            <nav className="fixed top-0 left-0 right-0 w-full z-[1000] py-3 bg-brand-blue border-b border-white/10 shadow-lg">
-                <div className="max-w-7xl mx-auto px-6">
+            <nav className="fixed top-0 left-0 right-0 w-full z-[1000] h-16 xl:h-20 bg-brand-blue border-b border-white/10 shadow-lg flex items-center">
+                <div className="max-w-7xl mx-auto px-6 w-full">
                     <div className="flex items-center justify-between gap-4">
                         <Link to="/" className="flex items-center gap-3 group min-w-0 flex-shrink-0" onClick={() => setIsOpen(false)}>
                             {about?.logo_url && !logoBroken ? (

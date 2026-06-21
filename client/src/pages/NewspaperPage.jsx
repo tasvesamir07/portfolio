@@ -9,7 +9,7 @@ const NewspaperPage = () => {
     const siteName = useSiteName();
 
     return (
-        <div className="pt-20 bg-[#fcfaf7] min-h-screen">
+        <div className="pt-16 xl:pt-20 bg-[#fcfaf7] min-h-screen">
             <SEO
                 title={`${t('nav.newspaper')} | ${siteName}`}
                 description={`Newspaper coverage, press releases, media mentions, and news articles featuring ${siteName}.`}
