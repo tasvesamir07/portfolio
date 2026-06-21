@@ -211,7 +211,7 @@ const AdminAbout = () => {
                             </div>
                             <div className="md:col-span-2">
                                  <Field label="Portfolio Site Name">
-                                    <InlineFormatEditor value={formData.site_name || ''} onChange={val => setFormData({...formData, site_name: val})} placeholder="Samir's Portfolio" />
+                                    <InlineFormatEditor value={formData.site_name || ''} onChange={val => setFormData({...formData, site_name: val})} placeholder="e.g. My Portfolio" />
                                 </Field>
                             </div>
                             <div className="md:col-span-2">

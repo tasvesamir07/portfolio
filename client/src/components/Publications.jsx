@@ -10,10 +10,12 @@ import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
+import { useSiteIdentity } from '../hooks/useSiteName';
 
 const Publications = () => {
     const [brokenThumbnails, setBrokenThumbnails] = useState([]);
     const { language, t } = useI18n();
+    const { authorNames } = useSiteIdentity();
     const noDataLabel = getNoDataLabel(language);
 
     const { data: publications = [], isLoading } = useQuery({
@@ -43,16 +45,23 @@ const Publications = () => {
          </section>
     );
 
+    const getAuthorPattern = () => {
+        if (!authorNames || authorNames === 'Portfolio') return /(?!)/; // no match until identity is known
+        const parts = authorNames.split(/\s+/).filter(Boolean).map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        return new RegExp(parts.join('|'), 'i');
+    };
+
     const renderAuthors = (authorsStr) => {
         if (!authorsStr) return t('common.notAvailable');
 
         const authorArray = authorsStr.split(',');
+        const authorPattern = getAuthorPattern();
         return (
             <>
                 {authorArray.map((name, idx) => {
                     const trimmed = name.trim();
                     if (!trimmed) return null;
-                    const isMainAuthor = /Samir|Hossain|Alomgir/i.test(trimmed);
+                    const isMainAuthor = authorPattern.test(trimmed);
                     const searchUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent(trimmed)}`;
 
                     return (

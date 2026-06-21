@@ -8,6 +8,7 @@ import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { useSeo } from '../hooks/useSeo';
+import { useSiteName } from '../hooks/useSiteName';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 
 const normalizePageContent = (html = '') => {
@@ -28,6 +29,7 @@ const normalizePageContent = (html = '') => {
 const DynamicPage = () => {
     const { slug } = useParams();
     const { language, t } = useI18n();
+    const siteName = useSiteName();
 
     const { data: page, isLoading, error } = useQuery({
         queryKey: ['blog', slug, language],
@@ -61,8 +63,8 @@ const DynamicPage = () => {
     const pageTitleRaw = getLocalizedField(page, 'title', language, page?.title || '');
 
     useSeo({
-        title: page ? `${pageTitleRaw} | Samir Hossain` : 'Samir Hossain | Portfolio',
-        description: page ? `Detail page of ${pageTitleRaw}` : 'Samir Hossain | Portfolio'
+        title: page ? `${pageTitleRaw} | ${siteName}` : `${siteName} | Portfolio`,
+        description: page ? `Detail page of ${pageTitleRaw}` : `${siteName} | Portfolio`
     });
 
     if (isLoading) return (

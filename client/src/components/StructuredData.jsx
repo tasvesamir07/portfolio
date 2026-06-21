@@ -26,7 +26,7 @@ const StructuredData = () => {
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "Person",
-        "name": about.name || "Md. Tavse Al Samir",
+        "name": about.name || "Portfolio",
         "url": window.location.origin,
         "image": about.logo_url || "",
         "jobTitle": about.site_name || "Academic & Researcher",
