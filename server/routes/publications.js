@@ -29,6 +29,10 @@ router.get('/', async (req, res) => {
 
         res.setHeader('X-Total-Count', total);
 
+        if (data.length < 50) {
+            return res.json(data);
+        }
+
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Transfer-Encoding', 'chunked');
         res.flushHeaders();
@@ -70,16 +74,17 @@ router.post('/', authenticateToken, validate(publicationsSchema), async (req, re
 router.put('/:id', authenticateToken, validate(publicationsSchema), async (req, res) => {
     const { title, thumbnail_url, journal_name, pub_year, authors, introduction, methods, link_url, file_url, details_json, doi_url, journal_url } = req.body;
     try {
-        const previousResult = await db.query('SELECT thumbnail_url, file_url FROM publications WHERE id = $1', [req.params.id]);
-        const previousRow = previousResult.rows[0] || {};
         const result = await db.query(
-            'UPDATE publications SET title = $1, thumbnail_url = $2, journal_name = $3, pub_year = $4, authors = $5, introduction = $6, methods = $7, link_url = $8, file_url = $9, details_json = $10, doi_url = $11, journal_url = $12 WHERE id = $13 RETURNING *',
+            'UPDATE publications SET title = $1, thumbnail_url = $2, journal_name = $3, pub_year = $4, authors = $5, introduction = $6, methods = $7, link_url = $8, file_url = $9, details_json = $10, doi_url = $11, journal_url = $12 WHERE id = $13 RETURNING *, (SELECT thumbnail_url FROM publications WHERE id = $13) AS old_thumbnail_url, (SELECT file_url FROM publications WHERE id = $13) AS old_file_url',
             [title || '', thumbnail_url || '', journal_name || '', pub_year || '', authors || '', introduction || '', methods || '', link_url || '', file_url || '', details_json || '', doi_url || '', journal_url || '', req.params.id]
         );
-        await cleanMediaUrls(diffRemovedMediaUrls(
-            [previousRow.thumbnail_url, previousRow.file_url],
-            [thumbnail_url || '', file_url || '']
-        ));
+        if (result.rows.length > 0) {
+            const oldRow = result.rows[0];
+            await cleanMediaUrls(diffRemovedMediaUrls(
+                [oldRow.old_thumbnail_url, oldRow.old_file_url],
+                [thumbnail_url || '', file_url || '']
+            ));
+        }
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -88,9 +93,10 @@ router.put('/:id', authenticateToken, validate(publicationsSchema), async (req, 
 
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
-        const previousResult = await db.query('SELECT thumbnail_url, file_url FROM publications WHERE id = $1', [req.params.id]);
-        await db.query('DELETE FROM publications WHERE id = $1', [req.params.id]);
-        await cleanMediaUrls(previousResult.rows.flatMap((row) => [row.thumbnail_url, row.file_url]));
+        const result = await db.query('DELETE FROM publications WHERE id = $1 RETURNING thumbnail_url, file_url', [req.params.id]);
+        if (result.rows.length > 0) {
+            await cleanMediaUrls(result.rows.flatMap((row) => [row.thumbnail_url, row.file_url]));
+        }
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

@@ -1,13 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
-import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedNavName, normalizeLabel } from '../i18n/localize';
 import LanguageSwitcher from './LanguageSwitcher';
 import ThemeToggle from './ThemeToggle';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { getTransformedUrl } from '../utils/imageUrl';
+import { usePublicPageData } from '../hooks/useSiteName';
 
 const isBlogMenuLink = (link = {}, t) => {
     const label = normalizeLabel(link.name);
@@ -42,10 +42,26 @@ const localizeLinkTree = (links, language, t) =>
         };
     });
 
+const DEFAULT_NAV_LINKS = [
+    { name: 'Home', path: '/' },
+    {
+        name: 'Personal Profile',
+        dropdown: [
+            { name: 'Education', path: '/academics' },
+            { name: 'Experiences', path: '/experiences' },
+            { name: 'Research Interests', path: '/research-interests' }
+        ]
+    },
+    { name: 'Research', path: '/research' },
+    { name: 'Publications', path: '/publications' },
+    { name: 'Newspaper', path: '/newspaper' },
+    { name: 'Gallery', path: '/gallery' },
+    { name: 'Contact', path: '/contact' },
+    { name: 'Anon. Message', path: '/anonymous-message' }
+];
+
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [about, setAbout] = useState(null);
-    const [blogPages, setBlogPages] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(null);
     const [logoBroken, setLogoBroken] = useState(false);
     const location = useLocation();
@@ -53,6 +69,13 @@ const Navbar = () => {
 
     const triggerRef = useRef(null);
     const menuContainerRef = useFocusTrap(isOpen, triggerRef);
+
+    const { data: publicData } = usePublicPageData();
+    const about = publicData?.about || null;
+    const blogPages = useMemo(() => 
+        (publicData?.pages || []).filter((page) => page.show_in_nav),
+        [publicData?.pages]
+    );
 
     useEffect(() => {
         setIsOpen(false);
@@ -81,37 +104,8 @@ const Navbar = () => {
         return location.pathname === path;
     };
 
-    useEffect(() => {
-        const fetchNavbarData = async () => {
-            try {
-                const res = await api.get('/page-data?resources=about,pages');
-                setAbout(res.data.about);
-                setBlogPages((res.data.pages || []).filter((page) => page.show_in_nav));
-            } catch (err) {
-                console.error('Error fetching navbar data:', err);
-            }
-        };
+    const baseNavLinks = about?.custom_nav?.length > 0 ? about.custom_nav : DEFAULT_NAV_LINKS;
 
-        fetchNavbarData();
-    }, [language]);
-
-    const baseNavLinks = about?.custom_nav?.length > 0 ? about.custom_nav : [
-        { name: 'Home', path: '/' },
-        {
-            name: 'Personal Profile',
-            dropdown: [
-                { name: 'Education', path: '/academics' },
-                { name: 'Experiences', path: '/experiences' },
-                { name: 'Research Interests', path: '/research-interests' }
-            ]
-        },
-        { name: 'Research', path: '/research' },
-        { name: 'Publications', path: '/publications' },
-        { name: 'Newspaper', path: '/newspaper' },
-        { name: 'Gallery', path: '/gallery' },
-        { name: 'Contact', path: '/contact' },
-        { name: 'Anon. Message', path: '/anonymous-message' }
-    ];
     const stripHtml = (str) => {
         if (!str) return '';
         return str.replace(/<[^>]*>/g, '').replace(/&nbsp;|\u00A0/g, ' ').trim();
@@ -120,7 +114,7 @@ const Navbar = () => {
     const localizedOwnerName = stripHtml(getLocalizedField(about, 'name', language, about?.name || ''));
     const brandLabel = localizedSiteName || localizedOwnerName || 'Portfolio';
 
-    const activeNavLinks = (() => {
+    const activeNavLinks = useMemo(() => {
         const normalizedLinks = baseNavLinks.map((link) => ({ ...link }));
 
         const blogLink = {
@@ -155,18 +149,21 @@ const Navbar = () => {
         }
 
         return localizeLinkTree(normalizedLinks, language, t);
-    })();
+    }, [baseNavLinks, blogPages, language, t]);
 
-    const flatMobileLinks = [];
-    activeNavLinks.forEach((link) => {
-        if (link.dropdown) {
-            link.dropdown.forEach((subLink) => {
-                flatMobileLinks.push(subLink);
-            });
-        } else {
-            flatMobileLinks.push(link);
-        }
-    });
+    const flatMobileLinks = useMemo(() => {
+        const flat = [];
+        activeNavLinks.forEach((link) => {
+            if (link.dropdown) {
+                link.dropdown.forEach((subLink) => {
+                    flat.push(subLink);
+                });
+            } else {
+                flat.push(link);
+            }
+        });
+        return flat;
+    }, [activeNavLinks]);
 
     return (
         <>
@@ -276,31 +273,10 @@ const Navbar = () => {
                     role="dialog"
                     aria-modal="true"
                     aria-label="Mobile Navigation Menu"
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        zIndex: 999,
-                        backgroundColor: '#0b3b75',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        overflowY: 'auto'
-                    }}
+                    className="fixed inset-0 z-[999] bg-[#0b3b75] flex flex-col overflow-y-auto"
                 >
-                    <div
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '16px 24px',
-                            borderBottom: '1px solid rgba(255,255,255,0.1)',
-                            flexShrink: 0,
-                            minHeight: '72px'
-                        }}
-                    >
-                        <Link to="/" onClick={() => setIsOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0 min-h-[72px]">
+                        <Link to="/" onClick={() => setIsOpen(false)} className="flex items-center gap-3 decoration-transparent">
                             {about?.logo_url && !logoBroken ? (
                                 <img
                                     src={getTransformedUrl(about.logo_url, 40, 75)}
@@ -308,53 +284,29 @@ const Navbar = () => {
                                     width="40"
                                     height="40"
                                     fetchpriority="high"
-                                    style={{ width: 40, height: 40, objectFit: 'contain' }}
+                                    className="w-10 h-10 object-contain"
                                     onError={() => setLogoBroken(true)}
                                 />
                             ) : (
-                                <div
-                                    style={{
-                                        width: 40,
-                                        height: 40,
-                                        borderRadius: 12,
-                                        background: 'rgba(255,255,255,0.1)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: '#ceb079',
-                                        fontWeight: 900,
-                                        fontSize: 20,
-                                        border: '1px solid rgba(255,255,255,0.2)'
-                                    }}
-                                >
+                                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-[#ceb079] font-black text-xl border border-white/20">
                                     {brandLabel[0]}
                                 </div>
                             )}
-                            <span
-                                style={{
-                                    color: 'white',
-                                    fontWeight: 700,
-                                    fontSize: 16,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                    maxWidth: '180px'
-                                }}
-                            >
+                            <span className="text-white font-bold text-base truncate max-w-[180px]">
                                 {brandLabel}
                             </span>
                         </Link>
                         <button
                             onClick={() => setIsOpen(false)}
-                            style={{ padding: 8, color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}
+                            className="p-2 text-white bg-transparent border-none cursor-pointer"
                             aria-label={t('nav.toggleMenu')}
                         >
                             <X size={28} />
                         </button>
                     </div>
 
-                    <div style={{ padding: '16px 24px 32px', flex: 1 }}>
-                        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', alignItems: 'center' }}>
+                    <div className="px-6 pt-4 pb-8 flex-1">
+                        <div className="flex gap-3 mb-6 items-center">
                             <LanguageSwitcher className="flex-1" fullWidth />
                             <ThemeToggle />
                         </div>
@@ -364,17 +316,9 @@ const Navbar = () => {
                                 key={idx}
                                 to={link.path || '#'}
                                 onClick={() => setIsOpen(false)}
-                                style={{
-                                    display: 'block',
-                                    padding: '16px 16px',
-                                    fontSize: 20,
-                                    fontWeight: 700,
-                                    color: isActive(link.path) ? '#ceb079' : 'white',
-                                    textDecoration: 'none',
-                                    borderBottom: idx < flatMobileLinks.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                                    borderRadius: 8,
-                                    transition: 'color 0.2s'
-                                }}
+                                className={`block px-4 py-4 text-xl font-bold rounded-lg transition-colors duration-200 decoration-transparent ${
+                                    isActive(link.path) ? 'text-[#ceb079]' : 'text-white'
+                                } ${idx < flatMobileLinks.length - 1 ? 'border-b border-white/10' : ''}`}
                             >
                                 {link.name}
                             </Link>
@@ -386,20 +330,7 @@ const Navbar = () => {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={() => setIsOpen(false)}
-                                style={{
-                                    display: 'block',
-                                    marginTop: 32,
-                                    padding: '16px 32px',
-                                    background: '#ceb079',
-                                    color: '#0b3b75',
-                                    textAlign: 'center',
-                                    fontWeight: 900,
-                                    fontSize: 13,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.15em',
-                                    borderRadius: 12,
-                                    textDecoration: 'none'
-                                }}
+                                className="block mt-8 px-8 py-4 bg-[#ceb079] text-[#0b3b75] text-center font-black text-[13px] uppercase tracking-widest rounded-xl decoration-transparent hover:bg-white transition-all shadow-sm active:scale-95"
                             >
                                 {t('nav.downloadCv')}
                             </a>

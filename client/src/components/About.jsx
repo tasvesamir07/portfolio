@@ -2,250 +2,191 @@ import React, { useMemo } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getTransformedUrl } from '../utils/imageUrl';
+import {
+    normalizeStructuredText as normalizeText,
+    extractStructuredPlainText as extractPlainText,
+    escapeStructuredHtml as escapeHtml,
+    sanitizeStructuredInlineHtml as sanitizeInlineHtml
+} from '../utils/structuredItems';
+
+const isHTML = (str) => /<[a-z][\s\S]*>/i.test(str);
+
+const isContactLabel = (label = '') => {
+    const normalized = label.trim().toLowerCase();
+    return normalized.includes('email')
+        || normalized.includes('website')
+        || normalized.includes('\uC774\uBA54\uC77C')
+        || normalized.includes('\uC6F9\uC0AC\uC774\uD2B8')
+        || normalized.includes('\u0987\u09AE\u09C7\u0987\u09B2')
+        || normalized.includes('\u0993\u09DF\u09C7\u09AC\u09B8\u09BE\u0987\u099F')
+        || normalized.includes('\u0993\u09AF\u09BC\u09C7\u09AC\u09B8\u09BE\u0987\u099F');
+};
+
+const looksLikeContact = (value = '') => /@|(?:https?:\/\/|www\.)/i.test(value);
+
+const toHref = (value) => {
+    if (!value) return '#';
+    if (value.includes('@') && !value.startsWith('mailto:')) {
+        return `mailto:${value}`;
+    }
+    if (!/^https?:\/\//i.test(value)) {
+        return `https://${value}`;
+    }
+    return value;
+};
+
+const splitContactValues = (value = '') =>
+    (() => {
+        const normalizedValue = normalizeText(value)
+            .replace(/([A-Za-z0-9.-]+\.[A-Za-z]{2,})(?=[A-Za-z0-9._%+-]+@)/g, '$1 ')
+            .replace(/((?:https?:\/\/|www\.)[^\s]+)(?=(?:https?:\/\/|www\.))/gi, '$1 ');
+
+        const emails = normalizedValue.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [];
+        const urls = normalizedValue.match(/(?:https?:\/\/|www\.)[^\s]+/gi) || [];
+        const detectedValues = [...emails, ...urls];
+
+        if (detectedValues.length > 0) {
+            return [...new Set(detectedValues)];
+        }
+
+        return normalizedValue
+            .split(/\s*(?:,|;)\s*|\s+(?=\S+@\S+)|\s+(?=https?:\/\/|www\.)/g)
+            .map((item) => item.trim())
+            .filter(Boolean);
+    })();
+
+const extractHighlights = (content = '') => {
+    if (!content) return [];
+
+    const trimmed = content.trim();
+
+    if (trimmed.startsWith('[')) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) {
+                return parsed
+                    .map((item) => {
+                        if (item.type === 'text') {
+                            return {
+                                kind: 'text',
+                                textHtml: sanitizeInlineHtml(item.text || ''),
+                                text: extractPlainText(item.text || ''),
+                                linkedValues: []
+                            };
+                        }
+
+                        const title = normalizeText(item.title || '');
+                        const values = Array.isArray(item.values)
+                            ? item.values.map((value) => ({
+                                html: sanitizeInlineHtml(value),
+                                text: extractPlainText(value)
+                            })).filter((value) => value.text)
+                            : [{ html: sanitizeInlineHtml(item.value || ''), text: extractPlainText(item.value || '') }].filter((value) => value.text);
+                        const value = values.map((itemValue) => itemValue.text).join(' ');
+                        const linkedValues = isContactLabel(title) || looksLikeContact(value)
+                            ? (values.length ? values.map((itemValue) => itemValue.text) : splitContactValues(value))
+                            : [];
+
+                        return {
+                            kind: 'pair',
+                            label: title,
+                            valueHtmls: values.map((itemValue) => itemValue.html),
+                            text: title ? `${title}: ${value}` : value,
+                            linkedValues
+                        };
+                    })
+                    .filter((item) => item.text);
+            }
+        } catch (err) {
+            console.error('Failed to parse highlight JSON:', err);
+        }
+    }
+
+    if (!isHTML(content)) {
+        return content
+            .split(content.includes('\n\n') ? '\n\n' : '\n')
+            .map((point) => ({
+                text: normalizeText(point),
+                linkedValues: []
+            }))
+            .filter((item) => item.text);
+    }
+
+    if (typeof DOMParser === 'undefined') {
+        return [{ text: normalizeText(content), linkedValues: [] }].filter((item) => item.text);
+    }
+
+    const doc = new DOMParser().parseFromString(content, 'text/html');
+    const listItems = Array.from(doc.body.querySelectorAll('li'));
+    const sourceNodes = listItems.length ? listItems : Array.from(doc.body.children);
+
+    return sourceNodes
+        .map((node) => {
+            const text = normalizeText(node.textContent || '');
+            const linkedValues = Array.from(node.querySelectorAll('a'))
+                .map((anchor) => normalizeText(anchor.textContent || anchor.getAttribute('href') || ''))
+                .filter(Boolean);
+
+            return {
+                text,
+                linkedValues: [...new Set(linkedValues)]
+            };
+        })
+        .filter((item) => item.text);
+};
+
+const extractBioBlocks = (content = '') => {
+    if (!content) return [];
+
+    if (!isHTML(content)) {
+        return content
+            .split(/\n\s*\n/)
+            .map((paragraph) => normalizeText(paragraph))
+            .filter(Boolean)
+            .map((text) => ({ type: 'paragraph', text }));
+    }
+
+    if (typeof DOMParser === 'undefined') {
+        return [{ type: 'paragraph', text: normalizeText(content) }].filter((block) => block.text);
+    }
+
+    const doc = new DOMParser().parseFromString(content, 'text/html');
+    const children = Array.from(doc.body.children);
+    const blocks = [];
+
+    children.forEach((element) => {
+        const tag = element.tagName.toLowerCase();
+
+        if (tag === 'ul' || tag === 'ol') {
+            const items = Array.from(element.querySelectorAll(':scope > li'))
+                .map((item) => normalizeText(item.textContent || ''))
+                .filter(Boolean);
+
+            if (items.length) {
+                blocks.push({ type: tag, items });
+            }
+            return;
+        }
+
+        const text = normalizeText(element.textContent || '');
+        if (text) {
+            blocks.push({ type: 'paragraph', text });
+        }
+    });
+
+    if (!blocks.length) {
+        const fallbackText = normalizeText(doc.body.textContent || '');
+        if (fallbackText) {
+            blocks.push({ type: 'paragraph', text: fallbackText });
+        }
+    }
+
+    return blocks;
+};
 
 const About = ({ data }) => {
     const { language, t } = useI18n();
     const { name, hero_image_url, sub_bio, bio_text, resume_url } = data || {};
-
-    const isHTML = (str) => /<[a-z][\s\S]*>/i.test(str);
-    const normalizeText = (value = '') =>
-        value
-            .replace(/\u00a0/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-
-    const extractPlainText = (value = '') => {
-        if (!value) return '';
-        if (!/<[a-z][\s\S]*>/i.test(value) || typeof window === 'undefined') {
-            return normalizeText(value);
-        }
-
-        return normalizeText(new DOMParser().parseFromString(value, 'text/html').body.textContent || '');
-    };
-
-    const escapeHtml = (value = '') =>
-        value
-            .replace(/&(?!(?:[a-z0-9]+|#\d+|#x[a-f0-9]+);)/gi, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-
-    const sanitizeInlineHtml = (html = '') => {
-        if (!html) return '';
-
-        if (!/<[a-z][\s\S]*>/i.test(html) || typeof window === 'undefined') {
-            return escapeHtml(html);
-        }
-
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-
-        const normalizeHref = (value = '') => {
-            const trimmed = value.trim();
-            if (!trimmed) return '';
-            if (/^(https?:|mailto:|tel:|#)/i.test(trimmed)) return trimmed;
-            if (trimmed.includes('@')) return `mailto:${trimmed}`;
-            return `https://${trimmed.replace(/^\/+/, '')}`;
-        };
-
-        const serializeNode = (node) => {
-            if (node.nodeType === Node.TEXT_NODE) {
-                return escapeHtml(node.textContent || '');
-            }
-
-            if (node.nodeType !== Node.ELEMENT_NODE) {
-                return '';
-            }
-
-            const children = Array.from(node.childNodes).map(serializeNode).join('');
-            const tag = node.tagName.toLowerCase();
-
-            if (tag === 'strong' || tag === 'b') return `<strong>${children}</strong>`;
-            if (tag === 'em' || tag === 'i') return `<em>${children}</em>`;
-            if (tag === 'br') return '<br>';
-            if (tag === 'a') {
-                const href = normalizeHref(node.getAttribute('href') || node.textContent || '');
-                return href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${children || escapeHtml(node.textContent || href)}</a>` : children;
-            }
-
-            return children;
-        };
-
-        return Array.from(doc.body.childNodes).map(serializeNode).join('');
-    };
-
-    const isContactLabel = (label = '') => {
-        const normalized = label.trim().toLowerCase();
-        return normalized.includes('email')
-            || normalized.includes('website')
-            || normalized.includes('\uC774\uBA54\uC77C')
-            || normalized.includes('\uC6F9\uC0AC\uC774\uD2B8')
-            || normalized.includes('\u0987\u09AE\u09C7\u0987\u09B2')
-            || normalized.includes('\u0993\u09DF\u09C7\u09AC\u09B8\u09BE\u0987\u099F')
-            || normalized.includes('\u0993\u09AF\u09BC\u09C7\u09AC\u09B8\u09BE\u0987\u099F');
-    };
-
-    const looksLikeContact = (value = '') => /@|(?:https?:\/\/|www\.)/i.test(value);
-
-    const toHref = (value) => {
-        if (!value) return '#';
-        if (value.includes('@') && !value.startsWith('mailto:')) {
-            return `mailto:${value}`;
-        }
-        if (!/^https?:\/\//i.test(value)) {
-            return `https://${value}`;
-        }
-        return value;
-    };
-
-    const splitContactValues = (value = '') =>
-        (() => {
-            const normalizedValue = normalizeText(value)
-                .replace(/([A-Za-z0-9.-]+\.[A-Za-z]{2,})(?=[A-Za-z0-9._%+-]+@)/g, '$1 ')
-                .replace(/((?:https?:\/\/|www\.)[^\s]+)(?=(?:https?:\/\/|www\.))/gi, '$1 ');
-
-            const emails = normalizedValue.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || [];
-            const urls = normalizedValue.match(/(?:https?:\/\/|www\.)[^\s]+/gi) || [];
-            const detectedValues = [...emails, ...urls];
-
-            if (detectedValues.length > 0) {
-                return [...new Set(detectedValues)];
-            }
-
-            return normalizedValue
-                .split(/\s*(?:,|;)\s*|\s+(?=\S+@\S+)|\s+(?=https?:\/\/|www\.)/g)
-                .map((item) => item.trim())
-                .filter(Boolean);
-        })();
-
-    const extractHighlights = (content = '') => {
-        if (!content) return [];
-
-        const trimmed = content.trim();
-
-        if (trimmed.startsWith('[')) {
-            try {
-                const parsed = JSON.parse(trimmed);
-                if (Array.isArray(parsed)) {
-                    return parsed
-                        .map((item) => {
-                            if (item.type === 'text') {
-                                return {
-                                    kind: 'text',
-                                    textHtml: sanitizeInlineHtml(item.text || ''),
-                                    text: extractPlainText(item.text || ''),
-                                    linkedValues: []
-                                };
-                            }
-
-                            const title = normalizeText(item.title || '');
-                            const values = Array.isArray(item.values)
-                                ? item.values.map((value) => ({
-                                    html: sanitizeInlineHtml(value),
-                                    text: extractPlainText(value)
-                                })).filter((value) => value.text)
-                                : [{ html: sanitizeInlineHtml(item.value || ''), text: extractPlainText(item.value || '') }].filter((value) => value.text);
-                            const value = values.map((itemValue) => itemValue.text).join(' ');
-                            const linkedValues = isContactLabel(title) || looksLikeContact(value)
-                                ? (values.length ? values.map((itemValue) => itemValue.text) : splitContactValues(value))
-                                : [];
-
-                            return {
-                                kind: 'pair',
-                                label: title,
-                                valueHtmls: values.map((itemValue) => itemValue.html),
-                                text: title ? `${title}: ${value}` : value,
-                                linkedValues
-                            };
-                        })
-                        .filter((item) => item.text);
-                }
-            } catch (err) {
-                console.error('Failed to parse highlight JSON:', err);
-            }
-        }
-
-        if (!isHTML(content)) {
-            return content
-                .split(content.includes('\n\n') ? '\n\n' : '\n')
-                .map((point) => ({
-                    text: normalizeText(point),
-                    linkedValues: []
-                }))
-                .filter((item) => item.text);
-        }
-
-        if (typeof DOMParser === 'undefined') {
-            return [{ text: normalizeText(content), linkedValues: [] }].filter((item) => item.text);
-        }
-
-        const doc = new DOMParser().parseFromString(content, 'text/html');
-        const listItems = Array.from(doc.body.querySelectorAll('li'));
-        const sourceNodes = listItems.length ? listItems : Array.from(doc.body.children);
-
-        return sourceNodes
-            .map((node) => {
-                const text = normalizeText(node.textContent || '');
-                const linkedValues = Array.from(node.querySelectorAll('a'))
-                    .map((anchor) => normalizeText(anchor.textContent || anchor.getAttribute('href') || ''))
-                    .filter(Boolean);
-
-                return {
-                    text,
-                    linkedValues: [...new Set(linkedValues)]
-                };
-            })
-            .filter((item) => item.text);
-    };
-
-    const extractBioBlocks = (content = '') => {
-        if (!content) return [];
-
-        if (!isHTML(content)) {
-            return content
-                .split(/\n\s*\n/)
-                .map((paragraph) => normalizeText(paragraph))
-                .filter(Boolean)
-                .map((text) => ({ type: 'paragraph', text }));
-        }
-
-        if (typeof DOMParser === 'undefined') {
-            return [{ type: 'paragraph', text: normalizeText(content) }].filter((block) => block.text);
-        }
-
-        const doc = new DOMParser().parseFromString(content, 'text/html');
-        const children = Array.from(doc.body.children);
-        const blocks = [];
-
-        children.forEach((element) => {
-            const tag = element.tagName.toLowerCase();
-
-            if (tag === 'ul' || tag === 'ol') {
-                const items = Array.from(element.querySelectorAll(':scope > li'))
-                    .map((item) => normalizeText(item.textContent || ''))
-                    .filter(Boolean);
-
-                if (items.length) {
-                    blocks.push({ type: tag, items });
-                }
-                return;
-            }
-
-            const text = normalizeText(element.textContent || '');
-            if (text) {
-                blocks.push({ type: 'paragraph', text });
-            }
-        });
-
-        if (!blocks.length) {
-            const fallbackText = normalizeText(doc.body.textContent || '');
-            if (fallbackText) {
-                blocks.push({ type: 'paragraph', text: fallbackText });
-            }
-        }
-
-        return blocks;
-    };
 
     const localizedName = getLocalizedField(data, 'name', language, name);
     const localizedSubBio = getLocalizedField(data, 'sub_bio', language, sub_bio);

@@ -24,6 +24,11 @@ router.get('/', async (req, res) => {
         const data = result.rows;
 
         res.setHeader('X-Total-Count', total);
+
+        if (data.length < 50) {
+            return res.json(data);
+        }
+
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Transfer-Encoding', 'chunked');
         res.flushHeaders();
@@ -65,13 +70,14 @@ router.post('/', authenticateToken, validate(gallerySchema), async (req, res) =>
 router.put('/:id', authenticateToken, validate(gallerySchema), async (req, res) => {
     const { image_url, caption, category } = req.body;
     try {
-        const previousResult = await db.query('SELECT image_url FROM gallery WHERE id = $1', [req.params.id]);
-        const previousRow = previousResult.rows[0] || {};
         const result = await db.query(
-            'UPDATE gallery SET image_url = $1, caption = $2, category = $3 WHERE id = $4 RETURNING *',
+            'UPDATE gallery SET image_url = $1, caption = $2, category = $3 WHERE id = $4 RETURNING *, (SELECT image_url FROM gallery WHERE id = $4) AS old_image_url',
             [image_url, caption, category, req.params.id]
         );
-        await cleanMediaUrls(diffRemovedMediaUrls([previousRow.image_url], [image_url || '']));
+        if (result.rows.length > 0) {
+            const oldImageUrl = result.rows[0].old_image_url;
+            await cleanMediaUrls(diffRemovedMediaUrls([oldImageUrl], [image_url || '']));
+        }
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -80,9 +86,10 @@ router.put('/:id', authenticateToken, validate(gallerySchema), async (req, res) 
 
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
-        const previousResult = await db.query('SELECT image_url FROM gallery WHERE id = $1', [req.params.id]);
-        await db.query('DELETE FROM gallery WHERE id = $1', [req.params.id]);
-        await cleanMediaUrls(previousResult.rows.map((row) => row.image_url));
+        const result = await db.query('DELETE FROM gallery WHERE id = $1 RETURNING image_url', [req.params.id]);
+        if (result.rows.length > 0) {
+            await cleanMediaUrls(result.rows.map((row) => row.image_url));
+        }
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

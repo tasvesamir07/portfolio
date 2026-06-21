@@ -1,24 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import api from '../api';
+import React from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { getSocialIcon } from '../utils/socialIcons';
+import { usePublicPageData } from '../hooks/useSiteName';
 
 const Footer = () => {
-    const [socialLinks, setSocialLinks] = useState([]);
-    const { language, t } = useI18n();
-
-    useEffect(() => {
-        const fetchLinks = async () => {
-            try {
-                const res = await api.get('/page-data?resources=social-links');
-                setSocialLinks(res.data.socialLinks || res.data['social-links'] || []);
-            } catch (err) {
-                console.error('Error fetching social links:', err);
-            }
-        };
-
-        fetchLinks();
-    }, [language]);
+    const { t } = useI18n();
+    const { data } = usePublicPageData();
+    const socialLinks = data?.socialLinks || data?.['social-links'] || data?.social_links || [];
 
     return (
         <footer className="py-12 md:py-24 bg-[#ceb079] overflow-hidden relative">

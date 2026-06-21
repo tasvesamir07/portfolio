@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken');
 if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
     require('dotenv').config();
 }
+const { logAuditActivity } = require('./utils/audit');
+
 
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -51,7 +53,6 @@ const authenticateToken = (req, res, next) => {
                     }
                     
                     try {
-                        const { logAuditActivity } = require('./utils/audit');
                         logAuditActivity(req, action, targetId, details);
                     } catch (auditError) {
                         console.error('Failed to log audit activity:', auditError.message);

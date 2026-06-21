@@ -24,4 +24,10 @@ const anonymousLimiter = rateLimit({
   message: { error: 'Too many anonymous messages. Try again later.' }
 });
 
-module.exports = { loginLimiter, translateLimiter, messageLimiter, anonymousLimiter };
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests from this IP. Please try again later.' }
+});
+
+module.exports = { loginLimiter, translateLimiter, messageLimiter, anonymousLimiter, globalLimiter };

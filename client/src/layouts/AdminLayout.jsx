@@ -7,6 +7,46 @@ import BackToTop from '../components/BackToTop';
 
 const MIN_SESSION_CHECK_INTERVAL_MS = 60000;
 
+const SIDEBAR_TABS = [
+    { id: 'about', label: 'Branding & About', icon: User },
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'academics', label: 'Academics', icon: GraduationCap },
+    { id: 'experiences', label: 'Experiences', icon: Briefcase },
+    { id: 'trainings', label: 'Training', icon: ExternalLink },
+    { id: 'skills', label: 'Skills', icon: Share2 },
+    { id: 'research-interests', label: 'Interests', icon: FileText },
+    { id: 'research', label: 'Research', icon: Briefcase },
+    { id: 'publications', label: 'Publications', icon: ExternalLink },
+    { id: 'blog', label: 'Blog Pages', icon: FileText },
+    { id: 'gallery', label: 'Gallery', icon: ImageIcon },
+    { id: 'messages', label: 'Messages', icon: Mail },
+    { id: 'anonymous-messages', label: 'Anon. Messages', icon: Mail },
+    { id: 'social', label: 'Social Links', icon: Share2 },
+    { id: 'newspaper', label: 'Newspaper', icon: FileText },
+    { id: 'translations', label: 'Translations', icon: Languages }
+];
+
+const SidebarLinks = ({ activeTab, onClickLink }) => {
+    return (
+        <>
+            {SIDEBAR_TABS.map(tab => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id || (!activeTab && tab.id === 'about');
+                return (
+                    <Link 
+                        key={tab.id}
+                        to={`/admin/dashboard?tab=${tab.id}`} 
+                        onClick={onClickLink}
+                        className={`flex items-center gap-3 p-3 rounded-xl transition-all font-bold text-sm ${isActive ? 'bg-[#0b3b75]/5 text-[#0b3b75]' : 'hover:bg-gray-50 text-gray-400'}`}
+                    >
+                        <Icon size={18} /> {tab.label}
+                    </Link>
+                );
+            })}
+        </>
+    );
+};
+
 const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -14,6 +54,8 @@ const AdminLayout = () => {
     const [authReady, setAuthReady] = useState(() => location.pathname === '/admin');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const lastSessionCheckRef = useRef(0);
+
+    const activeTab = new URLSearchParams(location.search).get('tab');
 
     useEffect(() => {
         const syncToken = () => {
@@ -190,33 +232,7 @@ const AdminLayout = () => {
                                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Content Management</p>
                             </div>
 
-                            {[
-                                { id: 'about', label: 'Branding & About', icon: User },
-                                { id: 'profile', label: 'Profile', icon: User },
-                                { id: 'academics', label: 'Academics', icon: GraduationCap },
-                                { id: 'experiences', label: 'Experiences', icon: Briefcase },
-                                { id: 'trainings', label: 'Training', icon: ExternalLink },
-                                { id: 'skills', label: 'Skills', icon: Share2 },
-                                { id: 'research-interests', label: 'Interests', icon: FileText },
-                                { id: 'research', label: 'Research', icon: Briefcase },
-                                { id: 'publications', label: 'Publications', icon: ExternalLink },
-                                { id: 'blog', label: 'Blog Pages', icon: FileText },
-                                { id: 'gallery', label: 'Gallery', icon: ImageIcon },
-                                { id: 'messages', label: 'Messages', icon: Mail },
-                                { id: 'anonymous-messages', label: 'Anon. Messages', icon: Mail },
-                                { id: 'social', label: 'Social Links', icon: Share2 },
-                                { id: 'newspaper', label: 'Newspaper', icon: FileText },
-                                { id: 'translations', label: 'Translations', icon: Languages }
-                            ].map(tab => (
-                                <Link 
-                                    key={tab.id}
-                                    to={`/admin/dashboard?tab=${tab.id}`} 
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className={`flex items-center gap-3 p-3 rounded-xl transition-all font-bold text-sm ${new URLSearchParams(location.search).get('tab') === tab.id || (!new URLSearchParams(location.search).get('tab') && tab.id === 'about') ? 'bg-[#0b3b75]/5 text-[#0b3b75]' : 'hover:bg-gray-50 text-gray-400'}`}
-                                >
-                                    <tab.icon size={18} /> {tab.label}
-                                </Link>
-                            ))}
+                            <SidebarLinks activeTab={activeTab} onClickLink={() => setIsMobileMenuOpen(false)} />
                         </nav>
 
                         <div className="p-6 border-t border-gray-100 flex-shrink-0 mt-auto bg-gray-50/30">
@@ -242,32 +258,7 @@ const AdminLayout = () => {
                         <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Content Management</p>
                     </div>
 
-                    {[
-                        { id: 'about', label: 'Branding & About', icon: User },
-                        { id: 'profile', label: 'Profile', icon: User },
-                        { id: 'academics', label: 'Academics', icon: GraduationCap },
-                        { id: 'experiences', label: 'Experiences', icon: Briefcase },
-                        { id: 'trainings', label: 'Training', icon: ExternalLink },
-                        { id: 'skills', label: 'Skills', icon: Share2 },
-                        { id: 'research-interests', label: 'Interests', icon: FileText },
-                        { id: 'research', label: 'Research', icon: Briefcase },
-                        { id: 'publications', label: 'Publications', icon: ExternalLink },
-                        { id: 'blog', label: 'Blog Pages', icon: FileText },
-                        { id: 'gallery', label: 'Gallery', icon: ImageIcon },
-                        { id: 'messages', label: 'Messages', icon: Mail },
-                        { id: 'anonymous-messages', label: 'Anon. Messages', icon: Mail },
-                        { id: 'social', label: 'Social Links', icon: Share2 },
-                        { id: 'newspaper', label: 'Newspaper', icon: FileText },
-                        { id: 'translations', label: 'Translations', icon: Languages }
-                    ].map(tab => (
-                        <Link 
-                            key={tab.id}
-                            to={`/admin/dashboard?tab=${tab.id}`} 
-                            className={`flex items-center gap-3 p-3 rounded-xl transition-all font-bold text-sm ${new URLSearchParams(location.search).get('tab') === tab.id || (!new URLSearchParams(location.search).get('tab') && tab.id === 'about') ? 'bg-[#0b3b75]/5 text-[#0b3b75]' : 'hover:bg-gray-50 text-gray-400'}`}
-                        >
-                            <tab.icon size={18} /> {tab.label}
-                        </Link>
-                    ))}
+                    <SidebarLinks activeTab={activeTab} />
                 </nav>
 
                 <div className="p-6 border-t border-gray-100 flex-shrink-0 mt-auto bg-gray-50/30">

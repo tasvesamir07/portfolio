@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Send, CheckCircle, XCircle } from 'lucide-react';
 import api from '../api';
@@ -8,6 +8,15 @@ const Contact = () => {
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
     const [status, setStatus] = useState('idle'); // idle, sending, success, error
     const { t } = useI18n();
+    const timerRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) {
+                clearTimeout(timerRef.current);
+            }
+        };
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -16,7 +25,7 @@ const Contact = () => {
             await api.post('/messages', formData);
             setStatus('success');
             setFormData({ name: '', email: '', message: '' });
-            setTimeout(() => setStatus('idle'), 5000);
+            timerRef.current = setTimeout(() => setStatus('idle'), 5000);
         } catch (err) {
             console.error('Error sending message:', err);
             setStatus('error');

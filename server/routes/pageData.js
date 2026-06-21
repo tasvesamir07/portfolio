@@ -45,18 +45,15 @@ router.get('/', async (req, res) => {
         }
 
         const keys = Object.keys(promises);
-        // Deduplicate promises to prevent double awaiting
-        const uniquePromises = [...new Set(Object.values(promises))];
-        await Promise.all(uniquePromises);
+        const resolvedDataArray = await Promise.all(keys.map(key => promises[key]));
 
         const responseData = {};
-        for (const key of keys) {
-            const resolvedData = await promises[key];
-            responseData[key] = localizeDataObject(resolvedData, language);
+        for (let i = 0; i < keys.length; i++) {
+            responseData[keys[i]] = localizeDataObject(resolvedDataArray[i], language);
         }
 
         res.locals.dataLocalized = true;
-        res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+        res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=86400');
         res.setHeader('Vary', 'Accept-Encoding, X-Translate-Language, x-translate-language');
         res.json(responseData);
     } catch (err) {

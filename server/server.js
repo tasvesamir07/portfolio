@@ -20,7 +20,7 @@ const compression = require('compression');
 const csrfMiddleware = require('./middleware/csrf');
 
 const autoTranslate = require('./middleware/autoTranslate');
-const { loginLimiter, translateLimiter, messageLimiter, anonymousLimiter } = require('./middleware/rateLimit');
+const { loginLimiter, translateLimiter, messageLimiter, anonymousLimiter, globalLimiter } = require('./middleware/rateLimit');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,6 +29,8 @@ const PORT = process.env.PORT || 5000;
 app.set('trust proxy', 1);
 
 app.use(compression());
+app.use(globalLimiter);
+
 // Nonce generation middleware for CSP
 app.use((req, res, next) => {
     res.locals.nonce = crypto.randomBytes(16).toString('base64');
@@ -39,11 +41,11 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`],
+            scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`, "https://www.googletagmanager.com"],
             styleSrc: ["'self'", (req, res) => `'nonce-${res.locals.nonce}'`, "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            imgSrc: ["'self'", "data:", "blob:", "https://*.supabase.co", "https://*.upstash.io", "https://*.googleapis.com", "*"],
-            connectSrc: ["'self'", "https://*.supabase.co", "https://*.upstash.io", "https://*.googleapis.com", "*"],
+            imgSrc: ["'self'", "data:", "blob:", "https://*.supabase.co", "https://*.upstash.io", "https://*.googleapis.com", "https://images.unsplash.com"],
+            connectSrc: ["'self'", "https://*.supabase.co", "https://*.upstash.io", "https://*.googleapis.com", "https://www.google-analytics.com", "https://*.google-analytics.com"],
             frameSrc: ["'self'"],
             objectSrc: ["'none'"],
             upgradeInsecureRequests: [],
@@ -102,8 +104,8 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'x-translate-language', 'x-skip-auto-translate']
 }));
 
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+app.use(bodyParser.json({ limit: '2mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '2mb' }));
 
 // Request Logger
 const requestLogger = require('./middleware/requestLogger');
@@ -127,6 +129,10 @@ app.use((req, res, next) => {
 
 // Mount the global auto-translate response modifier middleware
 app.use(autoTranslate.middleware);
+
+// Mount the query cache middleware for caching GET responses and handling ETags
+const queryCacheMiddleware = require('./middleware/queryCache');
+app.use(queryCacheMiddleware);
 
 // Static uploads folder for local dev fallback
 if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
@@ -292,6 +298,14 @@ app.get('/health', (req, res) => res.json({ status: 'ok', source: 'root' }));
 
 app.get('/sitemap.xml', async (req, res) => {
     res.header('Content-Type', 'application/xml');
+    
+    const sitemapCache = require('./utils/sitemapCache');
+    const cachedXml = sitemapCache.get();
+    if (cachedXml) {
+        res.setHeader('X-Cache', 'HIT-Sitemap');
+        return res.send(cachedXml);
+    }
+
     const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
     try {
         const pagesRes = await db.query("SELECT slug FROM pages WHERE show_in_nav = true");
@@ -350,6 +364,9 @@ app.get('/sitemap.xml', async (req, res) => {
         <priority>0.5</priority>
     </url>${blogUrls}
 </urlset>`;
+        
+        sitemapCache.set(xml);
+        res.setHeader('X-Cache', 'MISS-Sitemap');
         res.send(xml);
     } catch (err) {
         console.error('Error generating sitemap:', err);

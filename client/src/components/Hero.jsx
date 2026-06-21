@@ -10,10 +10,25 @@ const Hero = ({ data, socialLinks = [] }) => {
     const name = getLocalizedField(data, 'name', language, data?.name);
     const title = getLocalizedField(data, 'title', language, data?.title);
 
-    if (!data) return <div className="h-48 bg-[#0a2f5c]" />;
+    if (!data) {
+        return (
+            <section fetchpriority="high" className="w-full relative bg-[#0a2f5c] overflow-hidden flex flex-col items-center justify-center py-12 md:py-20 mt-16 md:mt-20 border-b-4 border-brand-gold animate-pulse">
+                <div className="max-w-5xl mx-auto px-6 relative z-10 w-full text-center">
+                    <div className="flex flex-col items-center gap-6">
+                        <div className="h-10 bg-white/10 rounded-lg w-64 xs:w-80 sm:w-96 md:w-[480px]"></div>
+                        <div className="flex flex-wrap justify-center items-center gap-3 mt-4">
+                            <div className="w-12 h-12 bg-white/10 rounded-lg"></div>
+                            <div className="w-12 h-12 bg-white/10 rounded-lg"></div>
+                            <div className="w-12 h-12 bg-white/10 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        );
+    }
 
     return (
-        <section className="w-full relative bg-gradient-to-br from-[#0a2f5c] to-[#12519e] overflow-hidden flex flex-col items-center justify-center py-12 md:py-20 mt-16 md:mt-20 border-b-4 border-brand-gold">
+        <section fetchpriority="high" className="w-full relative bg-gradient-to-br from-[#0a2f5c] to-[#12519e] overflow-hidden flex flex-col items-center justify-center py-12 md:py-20 mt-16 md:mt-20 border-b-4 border-brand-gold">
             {/* Subtle tech background overlay */}
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
             

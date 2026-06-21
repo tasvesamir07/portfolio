@@ -1,23 +1,13 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import Hero from '../components/Hero';
 import About from '../components/About';
-import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
-import { useSiteIdentity } from '../hooks/useSiteName';
+import { useSiteIdentity, usePublicPageData } from '../hooks/useSiteName';
 import SEO from '../hooks/useSeo';
 
 const Home = () => {
-    const { language } = useI18n();
     const { name, siteName } = useSiteIdentity();
-
-    const { data: pageData } = useQuery({
-        queryKey: ['page-data', 'home', language],
-        queryFn: async () => {
-            const res = await api.get('/page-data?resources=about,social-links');
-            return res.data;
-        }
-    });
+    const { data: pageData } = usePublicPageData();
 
     const aboutData = pageData?.about || null;
     const socialLinks = pageData?.socialLinks || pageData?.['social-links'] || [];

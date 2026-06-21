@@ -1,28 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import api from '../api';
+import React from 'react';
+import { usePublicPageData } from '../hooks/useSiteName';
 
 const StructuredData = () => {
-    const [meta, setMeta] = useState(null);
+    const { data: publicData } = usePublicPageData();
+    const about = publicData?.about;
+    const social = publicData?.socialLinks || publicData?.['social-links'] || [];
 
-    useEffect(() => {
-        const fetchMeta = async () => {
-            try {
-                const res = await api.get('/page-data?resources=about,social-links');
-                const about = res.data.about;
-                const social = res.data.socialLinks || res.data['social-links'] || [];
-                if (about) {
-                    setMeta({ about, social });
-                }
-            } catch (err) {
-                console.error('Error fetching structured data:', err);
-            }
-        };
-        fetchMeta();
-    }, []);
+    if (!about) return null;
 
-    if (!meta) return null;
-
-    const { about, social } = meta;
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "Person",

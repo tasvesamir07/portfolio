@@ -300,6 +300,9 @@ const middleware = (req, res, next) => {
 
     res.json = (payload) => {
         const language = req.headers[LANGUAGE_HEADER] || 'en';
+        if (normalizeTargetLanguage(language) === 'en') {
+            return originalJson(payload);
+        }
 
         const method = String(req.method || 'GET').toUpperCase();
         const fullPath = (req.originalUrl || '').split('?')[0];

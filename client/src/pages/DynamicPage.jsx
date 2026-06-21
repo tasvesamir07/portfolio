@@ -7,7 +7,7 @@ import StructuredDetails from '../components/StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
-import { useSeo } from '../hooks/useSeo';
+import SEO from '../hooks/useSeo';
 import { useSiteName } from '../hooks/useSiteName';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 
@@ -62,19 +62,16 @@ const DynamicPage = () => {
     const renderedContentRaw = normalizePageContent(getLocalizedField(page, 'content', language, page?.content || ''));
     const pageTitleRaw = getLocalizedField(page, 'title', language, page?.title || '');
 
-    useSeo({
-        title: page ? `${pageTitleRaw} | ${siteName}` : `${siteName} | Portfolio`,
-        description: page ? `Detail page of ${pageTitleRaw}` : `${siteName} | Portfolio`
-    });
-
     if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center pt-20">
+            <SEO title={`${siteName} | Loading...`} description={`${siteName} - Loading`} />
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-accent-primary"></div>
         </div>
     );
 
     if (error) return (
         <div className="min-h-screen flex flex-col items-center justify-center pt-20 px-4 text-center">
+            <SEO title={`Page Not Found | ${siteName}`} description={`${siteName} | Page Not Found`} />
             <h2 className="text-4xl font-bold mb-4">404</h2>
             <p className="text-gray-400 mb-8">{t('dynamicPage.notFoundDescription')}</p>
             <Link to="/" className="btn-primary">{t('common.backToHome')}</Link>
@@ -87,6 +84,10 @@ const DynamicPage = () => {
             animate={{ opacity: 1 }}
             className="min-h-screen pt-32 pb-20 px-4"
         >
+            <SEO 
+                title={page ? `${pageTitleRaw} | ${siteName}` : `${siteName} | Portfolio`}
+                description={page ? `Detail page of ${pageTitleRaw}` : `${siteName} | Portfolio`}
+            />
             <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

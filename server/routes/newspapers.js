@@ -39,19 +39,17 @@ router.post('/', authenticateToken, validate(newspapersSchema), async (req, res)
 router.put('/:id', authenticateToken, validate(newspapersSchema), async (req, res) => {
     const { title, short_description, image_url, link_url } = req.body;
     try {
-        const previousResult = await db.query('SELECT image_url FROM newspapers WHERE id = $1', [req.params.id]);
-        const previousRow = previousResult.rows[0] || {};
-        
         const result = await db.query(
-            'UPDATE newspapers SET title = $1, short_description = $2, image_url = $3, link_url = $4 WHERE id = $5 RETURNING *',
+            'UPDATE newspapers SET title = $1, short_description = $2, image_url = $3, link_url = $4 WHERE id = $5 RETURNING *, (SELECT image_url FROM newspapers WHERE id = $5) AS old_image_url',
             [title || '', short_description || '', image_url || '', link_url || '', req.params.id]
         );
-        
-        await cleanMediaUrls(diffRemovedMediaUrls(
-            [previousRow.image_url],
-            [image_url || '']
-        ));
-        
+        if (result.rows.length > 0) {
+            const oldImageUrl = result.rows[0].old_image_url;
+            await cleanMediaUrls(diffRemovedMediaUrls(
+                [oldImageUrl],
+                [image_url || '']
+            ));
+        }
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -60,9 +58,10 @@ router.put('/:id', authenticateToken, validate(newspapersSchema), async (req, re
 
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
-        const previousResult = await db.query('SELECT image_url FROM newspapers WHERE id = $1', [req.params.id]);
-        await db.query('DELETE FROM newspapers WHERE id = $1', [req.params.id]);
-        await cleanMediaUrls(previousResult.rows.map(row => row.image_url));
+        const result = await db.query('DELETE FROM newspapers WHERE id = $1 RETURNING image_url', [req.params.id]);
+        if (result.rows.length > 0) {
+            await cleanMediaUrls(result.rows.map(row => row.image_url));
+        }
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

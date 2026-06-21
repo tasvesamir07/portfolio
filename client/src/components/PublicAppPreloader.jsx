@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 
 const PUBLIC_ROUTE_LOADERS = [
@@ -98,8 +98,13 @@ const scheduleWarmup = () => {
 
 const PublicAppPreloader = () => {
     const { language } = useI18n();
+    const hasRun = useRef(false);
 
-    useEffect(() => scheduleWarmup(), [language]);
+    useEffect(() => {
+        if (hasRun.current || routeWarmupPromise) return;
+        hasRun.current = true;
+        return scheduleWarmup();
+    }, [language]);
 
     return null;
 };

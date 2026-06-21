@@ -35,13 +35,14 @@ router.post('/', authenticateToken, validate(experiencesSchema), async (req, res
 router.put('/:id', authenticateToken, validate(experiencesSchema), async (req, res) => {
     const { company, position, location, start_date, end_date, description, logo_url, details_json } = req.body;
     try {
-        const previousResult = await db.query('SELECT logo_url FROM experiences WHERE id = $1', [req.params.id]);
-        const previousRow = previousResult.rows[0] || {};
         const result = await db.query(
-            'UPDATE experiences SET company = $1, position = $2, location = $3, start_date = $4, end_date = $5, description = $6, logo_url = $7, details_json = $8 WHERE id = $9 RETURNING *',
+            'UPDATE experiences SET company = $1, position = $2, location = $3, start_date = $4, end_date = $5, description = $6, logo_url = $7, details_json = $8 WHERE id = $9 RETURNING *, (SELECT logo_url FROM experiences WHERE id = $9) AS old_logo_url',
             [company || '', position || '', location || '', start_date || '', end_date || '', description || '', logo_url || '', details_json || '', req.params.id]
         );
-        await cleanMediaUrls(diffRemovedMediaUrls([previousRow.logo_url], [logo_url || '']));
+        if (result.rows.length > 0) {
+            const oldLogoUrl = result.rows[0].old_logo_url;
+            await cleanMediaUrls(diffRemovedMediaUrls([oldLogoUrl], [logo_url || '']));
+        }
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -50,9 +51,10 @@ router.put('/:id', authenticateToken, validate(experiencesSchema), async (req, r
 
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
-        const previousResult = await db.query('SELECT logo_url FROM experiences WHERE id = $1', [req.params.id]);
-        await db.query('DELETE FROM experiences WHERE id = $1', [req.params.id]);
-        await cleanMediaUrls(previousResult.rows.map((row) => row.logo_url));
+        const result = await db.query('DELETE FROM experiences WHERE id = $1 RETURNING logo_url', [req.params.id]);
+        if (result.rows.length > 0) {
+            await cleanMediaUrls(result.rows.map((row) => row.logo_url));
+        }
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

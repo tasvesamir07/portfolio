@@ -4,18 +4,20 @@ if (workbox) {
   // Force development logs off in production
   workbox.setConfig({ debug: false });
 
+  const CACHE_VERSION = '20260621';
+
   // Precache basic layouts (truly static, unhashed assets)
   workbox.precaching.precacheAndRoute([
-    { url: '/favicon.svg', revision: '1' },
-    { url: '/manifest.json', revision: '1' },
-    { url: '/icon-192.png', revision: '1' },
-    { url: '/icon-512.png', revision: '1' }
+    { url: '/favicon.svg', revision: CACHE_VERSION },
+    { url: '/manifest.json', revision: CACHE_VERSION },
+    { url: '/icon-192.png', revision: CACHE_VERSION },
+    { url: '/icon-512.png', revision: CACHE_VERSION }
   ]);
 
   // Install handler to cache the latest index.html for fallback
   self.addEventListener('install', (event) => {
     event.waitUntil(
-      caches.open('samir-fallback-cache').then((cache) => {
+      caches.open('portfolio-fallback-cache').then((cache) => {
         // Fetch index.html with cache: 'reload' to ensure we bypass browser HTTP cache and get fresh content
         return fetch(new Request('/index.html', { cache: 'reload' }))
           .then((response) => {
@@ -32,7 +34,7 @@ if (workbox) {
   workbox.routing.registerRoute(
     ({ request }) => request.destination === 'script' || request.destination === 'style',
     new workbox.strategies.CacheFirst({
-      cacheName: 'samir-assets-cache',
+      cacheName: 'portfolio-assets-cache',
       plugins: [
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 100,
@@ -46,7 +48,7 @@ if (workbox) {
   workbox.routing.registerRoute(
     ({ request }) => request.destination === 'image',
     new workbox.strategies.NetworkFirst({
-      cacheName: 'samir-images-cache',
+      cacheName: 'portfolio-images-cache',
       networkTimeoutSeconds: 8,
       plugins: [
         new workbox.expiration.ExpirationPlugin({
@@ -61,7 +63,7 @@ if (workbox) {
   workbox.routing.registerRoute(
     ({ url }) => url.pathname.includes('/api/v1/page-data'),
     new workbox.strategies.StaleWhileRevalidate({
-      cacheName: 'samir-api-page-data-cache',
+      cacheName: 'portfolio-api-page-data-cache',
       plugins: [
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 10,
@@ -75,7 +77,7 @@ if (workbox) {
   workbox.routing.registerRoute(
     ({ url }) => url.origin === self.location.origin && (url.pathname.includes('.woff') || url.pathname.includes('.ttf')),
     new workbox.strategies.CacheFirst({
-      cacheName: 'samir-fonts-cache',
+      cacheName: 'portfolio-fonts-cache',
       plugins: [
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 10,
@@ -87,7 +89,7 @@ if (workbox) {
 
   // Fallback for navigation requests (SPA routing) - NetworkFirst strategy
   const navigationStrategy = new workbox.strategies.NetworkFirst({
-    cacheName: 'samir-navigation-cache',
+    cacheName: 'portfolio-navigation-cache',
     plugins: [
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 10,
@@ -107,4 +109,11 @@ if (workbox) {
       }
     }
   );
+
+  self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+      self.skipWaiting();
+    }
+  });
 }
+

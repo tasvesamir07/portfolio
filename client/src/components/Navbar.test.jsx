@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { I18nProvider } from '../i18n/I18nContext';
 import Navbar from './Navbar';
 import { ThemeProvider } from '../context/ThemeContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import api from '../api';
 
 // Mock the API client
@@ -26,18 +27,28 @@ vi.mock('../api', () => ({
 
 describe('Navbar Component', () => {
     it('renders navbar correctly with brand name and links', async () => {
+        const queryClient = new QueryClient({
+            defaultOptions: {
+                queries: {
+                    retry: false,
+                },
+            },
+        });
+
         render(
-            <MemoryRouter>
-                <I18nProvider>
-                    <ThemeProvider>
-                        <Navbar />
-                    </ThemeProvider>
-                </I18nProvider>
-            </MemoryRouter>
+            <QueryClientProvider client={queryClient}>
+                <MemoryRouter>
+                    <I18nProvider>
+                        <ThemeProvider>
+                            <Navbar />
+                        </ThemeProvider>
+                    </I18nProvider>
+                </MemoryRouter>
+            </QueryClientProvider>
         );
 
-        // Verify the API is called
-        expect(api.get).toHaveBeenCalledWith('/page-data?resources=about,pages');
+        // Verify the API is called with consolidated parameters
+        expect(api.get).toHaveBeenCalledWith('/page-data?resources=about,pages,social-links');
 
         // Brand site name or owner name should appear
         await waitFor(() => {

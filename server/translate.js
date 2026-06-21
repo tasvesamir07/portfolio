@@ -31,7 +31,7 @@ const MAX_RETRY_CHUNK_CHARS = 220;
 const CACHE_FILE = path.join(__dirname, '.translation-cache.json');
 
 // On startup, load cache from disk if Redis is not used
-if (!redis) {
+if (!process.env.UPSTASH_REDIS_URL || !process.env.UPSTASH_REDIS_TOKEN) {
     try {
         if (fs.existsSync(CACHE_FILE)) {
             const rawData = fs.readFileSync(CACHE_FILE, 'utf-8');

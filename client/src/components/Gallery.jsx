@@ -1,4 +1,4 @@
-import React, { useDeferredValue, useMemo, useState, useTransition } from 'react';
+import React, { useMemo, useState, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -50,7 +50,7 @@ const Gallery = () => {
     const translatedImages = useTranslatedDataRows(images, ['caption', 'category'], language);
     const translatedCategories = useTranslatedDataRows(categories, ['name'], language);
     const noDataLabel = getNoDataLabel(language);
-    const deferredActiveCategory = useDeferredValue(activeCategory);
+
 
     const visibleImages = useMemo(
         () => translatedImages.filter((img) => !brokenImageIds.includes(img.id)),
@@ -63,10 +63,10 @@ const Gallery = () => {
     );
 
     const filteredImages = useMemo(
-        () => (deferredActiveCategory === 'all'
+        () => (activeCategory === 'all'
             ? visibleImages
-            : visibleImages.filter((img) => img.category === deferredActiveCategory)),
-        [deferredActiveCategory, visibleImages]
+            : visibleImages.filter((img) => img.category === activeCategory)),
+        [activeCategory, visibleImages]
     );
 
     const handleCategoryChange = (nextCategory) => {

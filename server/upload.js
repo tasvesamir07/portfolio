@@ -2,13 +2,6 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { createClient } = require('@supabase/supabase-js');
-let sharp = null;
-
-try {
-    sharp = require('sharp');
-} catch {
-    sharp = null;
-}
 
 const MAX_UPLOAD_SIZE_MB = 4;
 const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
@@ -48,10 +41,17 @@ const processFile = async (file) => {
     let buffer = file.buffer;
     let contentType = file.mimetype;
 
-    const canCompressImage = Boolean(sharp)
-        && /^image\/(jpeg|jpg|png|webp|avif|tiff)$/i.test(file.mimetype || '');
+    const isCompressibleImage = /^image\/(jpeg|jpg|png|webp|avif|tiff)$/i.test(file.mimetype || '');
+    let sharp = null;
+    if (isCompressibleImage) {
+        try {
+            sharp = require('sharp');
+        } catch (e) {
+            sharp = null;
+        }
+    }
 
-    if (canCompressImage) {
+    if (isCompressibleImage && sharp) {
         const optimizedBuffer = await sharp(file.buffer)
             .rotate()
             .resize({

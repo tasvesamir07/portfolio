@@ -5,6 +5,7 @@ const router = express.Router();
 const db = require('../db');
 const authenticateToken = require('../auth');
 const { localizeDataObject } = require('../middleware/autoTranslate');
+const sitemapCache = require('../utils/sitemapCache');
 
 const LANGUAGE_HEADER = 'x-translate-language';
 
@@ -62,6 +63,7 @@ router.post('/', authenticateToken, validate(pagesSchema), async (req, res) => {
             'INSERT INTO pages (title, slug, content, show_in_nav, details_json) VALUES ($1, $2, $3, $4, $5) RETURNING *',
             [title || '', slug || '', content || '', Boolean(show_in_nav), details_json || '']
         );
+        sitemapCache.invalidate();
         res.status(201).json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -75,6 +77,7 @@ router.put('/:id', authenticateToken, validate(pagesSchema), async (req, res) =>
             'UPDATE pages SET title = $1, slug = $2, content = $3, show_in_nav = $4, details_json = $5 WHERE id = $6 RETURNING *',
             [title || '', slug || '', content || '', Boolean(show_in_nav), details_json || '', req.params.id]
         );
+        sitemapCache.invalidate();
         res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -84,6 +87,7 @@ router.put('/:id', authenticateToken, validate(pagesSchema), async (req, res) =>
 router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         await db.query('DELETE FROM pages WHERE id = $1', [req.params.id]);
+        sitemapCache.invalidate();
         res.sendStatus(204);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

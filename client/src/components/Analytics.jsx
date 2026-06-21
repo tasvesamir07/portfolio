@@ -28,7 +28,7 @@ const Analytics = () => {
             page_location: window.location.href,
             page_title: document.title
         });
-    }, [location, gaId]);
+    }, [location.pathname, location.search, gaId]);
 
     return null;
 };

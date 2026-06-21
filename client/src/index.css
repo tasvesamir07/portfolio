@@ -384,15 +384,5 @@
   .about-highlights-rich .ql-indent-5 { padding-left: 155px !important; }
 }
 
-/* Scrollbar Utilities */
-.custom-scrollbar {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
-}
-.custom-scrollbar::-webkit-scrollbar {
-  width: 0 !important;
-  height: 0 !important;
-  display: none !important;
-}
 
 
