@@ -212,6 +212,7 @@ const Gallery = () => {
                             <img 
                                 src={getTransformedUrl(selectedImage.image_url, 1200, 80)} 
                                 alt={(getLocalizedField(selectedImage, 'caption', language, selectedImage.caption) || '').replace(/<[^>]*>/g, '')} 
+                                onError={() => setSelectedImage(null)}
                                 className="max-h-[78vh] w-full rounded-[1.75rem] object-contain shadow-2xl"
                             />
                             <div className="absolute inset-x-0 bottom-0 rounded-b-[1.75rem] bg-gradient-to-t from-black/80 via-black/35 to-transparent px-4 pb-4 pt-10 sm:px-6 sm:pb-6">

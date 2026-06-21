@@ -8,9 +8,22 @@ const { cleanMediaUrls, diffRemovedMediaUrls } = require('../utils/media');
 
 router.get('/', async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM gallery ORDER BY sort_order ASC, id DESC');
+        const limit = Math.min(parseInt(req.query.limit, 10) || 0, 200);
+        const offset = parseInt(req.query.offset, 10) || 0;
+
+        const countResult = await db.query('SELECT COUNT(*) AS total FROM gallery');
+        const total = parseInt(countResult.rows[0]?.total, 10) || 0;
+
+        let query = 'SELECT * FROM gallery ORDER BY sort_order ASC, id DESC';
+        const params = [];
+        if (limit > 0) {
+            query += ' LIMIT $1 OFFSET $2';
+            params.push(limit, offset);
+        }
+        const result = await db.query(query, params);
         const data = result.rows;
 
+        res.setHeader('X-Total-Count', total);
         res.setHeader('Content-Type', 'application/json');
         res.setHeader('Transfer-Encoding', 'chunked');
         res.flushHeaders();

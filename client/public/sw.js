@@ -42,11 +42,12 @@ if (workbox) {
     })
   );
 
-  // Cache images with Cache-First strategy
+  // Cache images with NetworkFirst strategy (falls back to cache on network failure)
   workbox.routing.registerRoute(
     ({ request }) => request.destination === 'image',
-    new workbox.strategies.CacheFirst({
+    new workbox.strategies.NetworkFirst({
       cacheName: 'samir-images-cache',
+      networkTimeoutSeconds: 8,
       plugins: [
         new workbox.expiration.ExpirationPlugin({
           maxEntries: 100,

@@ -109,10 +109,17 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 const requestLogger = require('./middleware/requestLogger');
 app.use(requestLogger);
 
-// Invalidate translated response cache on any mutation request.
+// Invalidate translated response cache on mutation requests.
+// Uses scoped invalidation: only clears entries matching the mutation's URL prefix.
 app.use((req, res, next) => {
     const method = String(req.method || 'GET').toUpperCase();
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    if (['GET', 'HEAD', 'OPTIONS'].includes(method)) return next();
+
+    const fullPath = req.originalUrl || req.path || '';
+    const apiMatch = fullPath.match(/^\/api\/v1\/([^/?]+)/);
+    if (apiMatch) {
+        autoTranslate.clearResponseCache(apiMatch[1]);
+    } else {
         autoTranslate.clearResponseCache();
     }
     next();
@@ -241,6 +248,7 @@ v1Router.get('/page', async (req, res) => {
 
         if (result.rows.length === 0) return res.status(404).json({ message: 'Page not found' });
         const language = req.headers[LANGUAGE_HEADER] || 'en';
+        res.locals.dataLocalized = true;
         res.json(localizeDataObject(result.rows[0], language));
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

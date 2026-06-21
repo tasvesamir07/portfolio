@@ -1,15 +1,19 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { LogOut, FileText, Briefcase, GraduationCap, Image as ImageIcon, User, ExternalLink, Share2, Mail, Menu, X, Languages } from 'lucide-react';
 import { clearSessionToken, expireSessionAndRedirect, getStoredToken, getTokenExpiryTime, isTokenExpired, SESSION_CHANGED_EVENT } from '../utils/authSession';
 import api from '../api';
 import BackToTop from '../components/BackToTop';
+
+const MIN_SESSION_CHECK_INTERVAL_MS = 60000;
+
 const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [token, setToken] = useState(() => getStoredToken());
     const [authReady, setAuthReady] = useState(() => location.pathname === '/admin');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const lastSessionCheckRef = useRef(0);
 
     useEffect(() => {
         const syncToken = () => {
@@ -55,6 +59,10 @@ const AdminLayout = () => {
         let cancelled = false;
 
         const validateSession = async () => {
+            const now = Date.now();
+            if (now - lastSessionCheckRef.current < MIN_SESSION_CHECK_INTERVAL_MS) return;
+            lastSessionCheckRef.current = now;
+
             const currentToken = getStoredToken();
             if (!currentToken) return;
 
@@ -80,12 +88,18 @@ const AdminLayout = () => {
         validateSession();
 
         const handleFocus = () => {
-            validateSession();
+            const now = Date.now();
+            if (now - lastSessionCheckRef.current >= MIN_SESSION_CHECK_INTERVAL_MS) {
+                validateSession();
+            }
         };
 
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
-                validateSession();
+                const now = Date.now();
+                if (now - lastSessionCheckRef.current >= MIN_SESSION_CHECK_INTERVAL_MS) {
+                    validateSession();
+                }
             }
         };
 

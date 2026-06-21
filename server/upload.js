@@ -25,6 +25,20 @@ const upload = multer({
     }
 });
 
+const checkBucketExists = async (supabase) => {
+    try {
+        const { data: buckets, error } = await supabase.storage.listBuckets();
+        if (error) throw error;
+        const bucketExists = buckets.some((b) => b.name === SUPABASE_BUCKET);
+        if (!bucketExists) {
+            throw new Error(`Storage bucket "${SUPABASE_BUCKET}" does not exist. Create it in the Supabase dashboard.`);
+        }
+    } catch (err) {
+        if (err.message.includes('does not exist')) throw err;
+        console.error('[Upload] Bucket check error:', err.message);
+    }
+};
+
 const processFile = async (file) => {
     // We use the original extension since sharp (native resizing) 
     // is not supported in the Cloudflare Worker environment.
@@ -61,6 +75,8 @@ const processFile = async (file) => {
     if (supabaseUrl && supabaseKey) {
         const supabase = createClient(supabaseUrl, supabaseKey);
 
+        await checkBucketExists(supabase);
+
         const { data, error } = await supabase.storage
             .from(SUPABASE_BUCKET)
             .upload(filename, buffer, {
@@ -68,7 +84,10 @@ const processFile = async (file) => {
                 upsert: true
             });
 
-        if (error) throw new Error(`Supabase upload error: ${error.message}`);
+        if (error) {
+            console.error(`[Upload] Supabase upload error:`, error.message);
+            throw new Error(`Supabase upload error: ${error.message}`);
+        }
 
         // Return the public URL
         const { data: { publicUrl } } = supabase.storage
@@ -88,6 +107,7 @@ const processFile = async (file) => {
         return `/uploads/${filename}`;
     }
 
+    console.error('[Upload] Failed: Supabase storage is not configured (missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY).');
     throw new Error('File upload failed: Supabase storage is not configured.');
 };
 

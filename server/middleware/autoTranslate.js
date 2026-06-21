@@ -244,9 +244,8 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
     }
 
     try {
-        // Add a 15-second timeout for server-side translation (bumped from 5s)
         const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Server translation timeout')), 15000)
+            setTimeout(() => reject(new Error('Server translation timeout')), 5000)
         );
 
         const translated = await Promise.race([
@@ -311,6 +310,11 @@ const middleware = (req, res, next) => {
             return originalJson(payload);
         }
 
+        // Skip if route handler already localized data (e.g., page-data, page routes)
+        if (res.locals.dataLocalized) {
+            return originalJson(payload);
+        }
+
         return Promise.resolve(maybeTranslateApiPayload(req, res, payload, language))
             .then((translatedPayload) => originalJson(translatedPayload))
             .catch((err) => {
@@ -321,8 +325,18 @@ const middleware = (req, res, next) => {
     next();
 };
 
-const clearResponseCache = () => {
-    responseTranslationCache.clear();
+const clearResponseCache = (resourcePrefix) => {
+    if (!resourcePrefix) {
+        responseTranslationCache.clear();
+        return;
+    }
+
+    const prefixToMatch = `/api/v1/${resourcePrefix}`;
+    for (const key of responseTranslationCache.keys()) {
+        if (key.includes(prefixToMatch)) {
+            responseTranslationCache.delete(key);
+        }
+    }
 };
 
 module.exports = {
