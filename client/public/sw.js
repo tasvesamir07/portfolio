@@ -4,7 +4,7 @@ if (workbox) {
   // Force development logs off in production
   workbox.setConfig({ debug: false });
 
-  const CACHE_VERSION = '20260621';
+  const CACHE_VERSION = '20260622';
 
   // Precache basic layouts (truly static, unhashed assets)
   workbox.precaching.precacheAndRoute([
@@ -27,6 +27,22 @@ if (workbox) {
             throw new Error('Failed to fetch index.html during install');
           });
       })
+    );
+  });
+
+  // Activate handler to clear old caches upon update
+  self.addEventListener('activate', (event) => {
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName.startsWith('portfolio-api-') || cacheName.startsWith('portfolio-images-')) {
+              console.log('[Service Worker] Deleting stale cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }).then(() => self.clients.claim())
     );
   });
 
