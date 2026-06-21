@@ -11,6 +11,8 @@ import { getNoDataLabel } from '../utils/publicSectionState';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 
+import ResearchSkeleton from '../pages/skeletons/ResearchSkeleton';
+
 const Research = () => {
     const [brokenImages, setBrokenImages] = useState([]);
     const { language, t } = useI18n();
@@ -24,14 +26,7 @@ const Research = () => {
         }
     });
 
-    if (isLoading) return (
-         <section id="research" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
-            <div className="max-w-7xl mx-auto px-6 text-center">
-                <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('research.kicker')}</span>
-                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h2>
-            </div>
-         </section>
-    );
+    if (isLoading) return <ResearchSkeleton />;
 
     if (research.length === 0) return (
          <section id="research" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">

@@ -57,7 +57,7 @@ const LanguageSwitcher = ({ className = '', fullWidth = false }) => {
                 className="flex h-11 w-full items-center justify-between rounded-xl border border-[#ceb079]/70 bg-white/10 px-4 text-left text-sm font-bold tracking-[0.04em] text-white outline-none transition-all hover:bg-white/15 focus:border-[#ceb079] focus:bg-white/15"
             >
                 <span className="flex min-w-0 items-center gap-2.5">
-                    <span className="rounded-md bg-white/12 px-2 py-1 text-[11px] font-black tracking-[0.14em] text-[#ceb079]" aria-hidden="true">
+                    <span className="rounded-md bg-white/12 px-2 py-1 text-[11px] font-black tracking-[0.14em] text-white" aria-hidden="true">
                         {languageCodes[activeLanguage?.code] || 'EN'}
                     </span>
                     <span className="truncate">{activeLanguage?.label || 'English'}</span>

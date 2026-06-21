@@ -74,29 +74,12 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,h
     .split(',')
     .map(s => s.trim());
 
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    if (origin && ALLOWED_ORIGINS.includes(origin)) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-    } else {
-        res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
-    }
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-translate-language, x-skip-auto-translate');
-
-    if (req.method === 'OPTIONS') {
-        return res.status(204).end();
-    }
-    next();
-});
-
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin || ALLOWED_ORIGINS.includes(origin)) {
             callback(null, true);
         } else {
-            callback(null, ALLOWED_ORIGINS[0]);
+            callback(null, false);
         }
     },
     credentials: true,

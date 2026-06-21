@@ -8,5 +8,24 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.js',
     exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/e2e/**',
+        'src/i18n/translator.js',
+        'src/components/TipTapEditor.jsx',
+        'src/pages/skeletons/**',
+        'src/test/**',
+        'src/api.js',
+        'src/utils/structuredItems.js',
+        'src/utils/structuredDataRows.js'
+      ],
+      thresholds: {
+        statements: 60,
+      }
+    },
   },
 });

@@ -57,7 +57,11 @@ describe('Navbar Component', () => {
         });
 
         // Common links like "Research" or "Publications" should appear
-        expect(screen.getByText('Research')).toBeInTheDocument();
-        expect(screen.getByText('Publications')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText('Research')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('Publications')).toBeInTheDocument();
+        });
     });
 });

@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -7,6 +7,7 @@ import DynamicFallback from '../pages/skeletons/DynamicFallback';
 import StructuredData from '../components/StructuredData';
 import Analytics from '../components/Analytics';
 import BackToTop from '../components/BackToTop';
+import SWUpdateBanner from '../components/SWUpdateBanner';
 import { usePublicPageData } from '../hooks/useSiteName';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../api';
@@ -16,6 +17,20 @@ const PublicLayout = () => {
     usePublicPageData();
     const queryClient = useQueryClient();
     const { language } = useI18n();
+    const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+
+    useEffect(() => {
+        const handleOnline = () => setIsOffline(false);
+        const handleOffline = () => setIsOffline(true);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -47,6 +62,12 @@ const PublicLayout = () => {
 
     return (
         <div className="min-h-screen flex flex-col">
+            {isOffline && (
+                <div className="bg-amber-600 text-white text-center py-2 px-4 text-xs sm:text-sm font-semibold sticky top-0 z-50 flex items-center justify-center gap-2 animate-fade-in shadow-md">
+                    <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                    You are currently offline. Showing cached contents.
+                </div>
+            )}
             <StructuredData />
             <Analytics />
             <PublicAppPreloader />
@@ -58,6 +79,7 @@ const PublicLayout = () => {
             </main>
             <Footer />
             <BackToTop />
+            <SWUpdateBanner />
         </div>
     );
 };

@@ -10,6 +10,8 @@ import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 import { getTransformedUrl } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 
+import GallerySkeleton from '../pages/skeletons/GallerySkeleton';
+
 const getGalleryCardLayout = (index) => {
     const layouts = [
         'md:col-span-2 md:row-span-2',
@@ -76,14 +78,7 @@ const Gallery = () => {
     };
 
     if (loading) {
-        return (
-            <section id="gallery" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('gallery.kicker')}</span>
-                    <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h2>
-                </div>
-            </section>
-        );
+        return <GallerySkeleton />;
     }
 
     if (visibleImages.length === 0) {
@@ -166,6 +161,8 @@ const Gallery = () => {
                                 <img 
                                     src={getTransformedUrl(img.image_url, 600, 75)} 
                                     alt={localizedCaption ? localizedCaption.replace(/<[^>]*>/g, '') : ''}
+                                    loading="lazy"
+                                    decoding="async"
                                     onError={() => {
                                         setBrokenImageIds((current) => current.includes(img.id) ? current : [...current, img.id]);
                                         if (selectedImage?.id === img.id) {

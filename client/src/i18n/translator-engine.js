@@ -462,6 +462,32 @@ export const translateHtml = async (html = '', language = getCurrentLanguage()) 
     return translationPromise;
 };
 
+const looksLikeStructuredJson = (value = '', key = '') => {
+    if (!value || !value.trim().startsWith('[')) return false;
+
+    try {
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed)) return false;
+
+        if (key.includes('details_json') || key.startsWith('sub_bio')) {
+            return true;
+        }
+
+        return parsed.every((item) =>
+            item
+            && typeof item === 'object'
+            && (
+                typeof item.type === 'string'
+                || typeof item.title === 'string'
+                || typeof item.text === 'string'
+                || Array.isArray(item.values)
+            )
+        );
+    } catch {
+        return false;
+    }
+};
+
 const translateStructuredJson = async (value = '', language = getCurrentLanguage()) => {
     if (!value) return value;
 

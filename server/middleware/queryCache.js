@@ -107,7 +107,8 @@ const queryCacheMiddleware = async (req, res, next) => {
     const method = String(req.method || 'GET').toUpperCase();
     const fullPath = (req.originalUrl || '').split('?')[0];
     const isApiPath = fullPath.startsWith('/api/');
-    const isTranslateEndpoint = fullPath === '/api/translate';
+    const isTranslateEndpoint = fullPath === '/api/translate' || fullPath === '/api/v1/translate';
+    const isPrewarmEndpoint = fullPath === '/api/prewarm' || fullPath === '/api/v1/prewarm';
     
     // Cache invalidation on POST, PUT, DELETE
     if (['POST', 'PUT', 'DELETE'].includes(method)) {
@@ -128,8 +129,8 @@ const queryCacheMiddleware = async (req, res, next) => {
         return next();
     }
     
-    // Only cache GET requests to API paths, excluding translate and session endpoints
-    if (method !== 'GET' || !isApiPath || isTranslateEndpoint || fullPath.endsWith('/session')) {
+    // Only cache GET requests to API paths, excluding translate, prewarm and session endpoints
+    if (method !== 'GET' || !isApiPath || isTranslateEndpoint || isPrewarmEndpoint || fullPath.endsWith('/session')) {
         return next();
     }
     

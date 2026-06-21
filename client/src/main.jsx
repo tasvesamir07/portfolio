@@ -39,13 +39,22 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       .then((reg) => {
         console.log('Service Worker registered successfully:', reg.scope);
 
+        const dispatchUpdate = () => {
+          const event = new CustomEvent('sw:update-available', { detail: reg });
+          window.dispatchEvent(event);
+        };
+
+        if (reg.waiting) {
+          dispatchUpdate();
+        }
+
         // Check if there is an update waiting or installing
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                newWorker.postMessage({ type: 'SKIP_WAITING' });
+                dispatchUpdate();
               }
             });
           }

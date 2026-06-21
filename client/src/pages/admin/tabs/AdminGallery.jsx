@@ -27,6 +27,23 @@ const AdminGallery = () => {
     const [saveError, setSaveError] = useState('');
     const [saving, setSaving] = useState(false);
     const [initialData, setInitialData] = useState({});
+    const [draftAvailable, setDraftAvailable] = useState(false);
+    const [draftData, setDraftData] = useState(null);
+    const autosaveKey = 'autosave_gallery_form';
+
+    // Autosave local storage save trigger
+    useEffect(() => {
+        if (!isEditing || !autosaveKey) return;
+        const timer = setTimeout(() => {
+            if (JSON.stringify(formData) !== JSON.stringify(initialData)) {
+                localStorage.setItem(autosaveKey, JSON.stringify({
+                    formData,
+                    timestamp: Date.now()
+                }));
+            }
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [formData, isEditing, initialData, autosaveKey]);
 
     const headerRef = useRef(null);
 
@@ -112,6 +129,24 @@ const AdminGallery = () => {
         setFormData(record);
         setInitialData(record);
         setIsEditing(true);
+        setSaveError('');
+
+        // Check if there is an autosaved draft
+        if (autosaveKey) {
+            const saved = localStorage.getItem(autosaveKey);
+            if (saved) {
+                try {
+                    const { formData: savedForm, timestamp } = JSON.parse(saved);
+                    // Only prompt if draft is different from the currently loaded entity
+                    if (JSON.stringify(savedForm) !== JSON.stringify(record)) {
+                        setDraftAvailable(true);
+                        setDraftData(savedForm);
+                    }
+                } catch {
+                    localStorage.removeItem(autosaveKey);
+                }
+            }
+        }
     };
 
     const handleSave = async (e) => {
@@ -166,6 +201,10 @@ const AdminGallery = () => {
                     });
                     setSaveError(failedUploads.map((item) => `${item.name}: ${item.error}`).join(' '));
                 } else {
+                    if (autosaveKey) {
+                        localStorage.removeItem(autosaveKey);
+                    }
+                    setDraftAvailable(false);
                     setNotice({
                         type: 'success',
                         message: `${successfulCount} gallery image${successfulCount === 1 ? '' : 's'} saved successfully.`
@@ -178,6 +217,10 @@ const AdminGallery = () => {
                 } else {
                     await api.post('/gallery', formData);
                 }
+                if (autosaveKey) {
+                    localStorage.removeItem(autosaveKey);
+                }
+                setDraftAvailable(false);
                 setIsEditing(false);
                 setNotice({ type: 'success', message: 'Saved successfully.' });
             }
@@ -190,6 +233,14 @@ const AdminGallery = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleCancel = () => {
+        if (autosaveKey) {
+            localStorage.removeItem(autosaveKey);
+        }
+        setDraftAvailable(false);
+        setIsEditing(false);
     };
 
     const handleDelete = async (id) => {
@@ -371,12 +422,48 @@ const AdminGallery = () => {
                     <div className="flex justify-start mb-4">
                         <button
                             type="button"
-                            onClick={() => setIsEditing(false)}
+                            onClick={handleCancel}
                             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
                         >
                             <ArrowLeft size={14} /> Back
                         </button>
                     </div>
+
+                    {draftAvailable && (
+                        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 rounded-xl border border-brand-gold/30 bg-brand-gold/[0.03] p-4 text-sm font-semibold text-brand-gold shadow-sm">
+                            <div className="flex items-start gap-2">
+                                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                <span>We found an unsaved draft from a previous session.</span>
+                            </div>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                                <button 
+                                    type="button" 
+                                    onClick={() => {
+                                        if (draftData) {
+                                            setFormData(draftData);
+                                            setDraftAvailable(false);
+                                            setNotice({ type: 'success', message: 'Restored unsaved draft.' });
+                                        }
+                                    }}
+                                    className="bg-brand-gold text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-brand-gold/90 transition-colors"
+                                >
+                                    Restore Draft
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => {
+                                        localStorage.removeItem(autosaveKey);
+                                        setDraftAvailable(false);
+                                        setNotice({ type: 'info', message: 'Draft discarded.' });
+                                    }}
+                                    className="border border-brand-gold/30 text-brand-gold text-xs px-3 py-1.5 rounded font-bold hover:bg-brand-gold/5 transition-colors"
+                                >
+                                    Discard Draft
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <header ref={headerRef} className="mb-10 text-center border-b pb-8">
                         <h2 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">
                             {formData.id ? 'Edit Entry' : 'Add New Entry'}
@@ -388,7 +475,7 @@ const AdminGallery = () => {
                     <StickySaveBar 
                         formId="tab-form" 
                         saving={saving} 
-                        onCancel={() => setIsEditing(false)}
+                        onCancel={handleCancel}
                         saveLabel={formData.id ? 'Update Record' : 'Save Record'}
                         isDirty={JSON.stringify(formData) !== JSON.stringify(initialData)}
                     />
@@ -434,7 +521,7 @@ const AdminGallery = () => {
                         <button type="submit" disabled={saving} className={`bg-gray-900 hover:bg-black text-white px-10 py-3 rounded font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95 sm:min-w-[200px] ${saving ? 'opacity-70 cursor-wait' : ''}`}>
                             <Save size={18} /> {saving ? 'Saving...' : formData.id ? 'Update Record' : 'Save Record'}
                         </button>
-                        <button type="button" onClick={() => setIsEditing(false)} disabled={saving} className="px-10 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded font-bold text-sm text-gray-600 transition-all sm:min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed">Cancel</button>
+                        <button type="button" onClick={handleCancel} disabled={saving} className="px-10 py-3 bg-white hover:bg-gray-50 border border-gray-300 rounded font-bold text-sm text-gray-600 transition-all sm:min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed">Cancel</button>
                     </div>
                 </form>
             )}

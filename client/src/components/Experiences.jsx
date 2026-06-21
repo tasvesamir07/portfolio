@@ -10,6 +10,8 @@ import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 
+import ExperiencesSkeleton from '../pages/skeletons/ExperiencesSkeleton';
+
 const Experiences = () => {
     const [brokenLogos, setBrokenLogos] = useState([]);
     const { language, t } = useI18n();
@@ -26,7 +28,7 @@ const Experiences = () => {
     const trainings = pageData?.trainings || [];
     const skills = pageData?.skills || [];
 
-    if (isLoading) return <div className="py-24 text-center text-gray-400 font-bold uppercase tracking-widest animate-pulse">{t('experiences.loading')}</div>;
+    if (isLoading) return <ExperiencesSkeleton />;
 
     return (
         <section id="experiences" className="py-16 md:py-24 bg-[#fcfaf7]">

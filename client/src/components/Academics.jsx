@@ -11,6 +11,8 @@ import { getNoDataLabel } from '../utils/publicSectionState';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 
+import AcademicsSkeleton from '../pages/skeletons/AcademicsSkeleton';
+
 const Academics = () => {
     const [brokenLogos, setBrokenLogos] = useState([]);
     const { language, t } = useI18n();
@@ -32,14 +34,7 @@ const Academics = () => {
             .toLowerCase();
 
     if (isLoading) {
-        return (
-            <section id="academics" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('academics.kicker')}</span>
-                    <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h2>
-                </div>
-            </section>
-        );
+        return <AcademicsSkeleton />;
     }
 
     if (academics.length === 0) {

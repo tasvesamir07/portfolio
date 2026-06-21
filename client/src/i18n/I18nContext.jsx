@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supportedLanguages, translations } from './translations';
+import { supportedLanguages } from './translations';
 import { clearTranslationCaches } from './translator';
 
 const STORAGE_KEY = 'portfolio-language';
@@ -13,9 +13,9 @@ const applyLanguageSideEffects = (language) => {
     }
 };
 
-const getTranslationValue = (language, key) => {
+const getTranslationValue = (loadedTranslations, language, key) => {
     const segments = key.split('.');
-    let current = translations[language];
+    let current = loadedTranslations[language];
 
     for (const segment of segments) {
         if (current == null || typeof current !== 'object') {
@@ -43,6 +43,38 @@ export const I18nProvider = ({ children }) => {
         return supportedLanguages.some((item) => item.code === storedLanguage) ? storedLanguage : defaultLanguage;
     });
 
+    const [loadedTranslations, setLoadedTranslations] = useState({});
+
+    useEffect(() => {
+        let active = true;
+
+        const loadLang = async (lang) => {
+            try {
+                const module = await import(`./locales/${lang}.js`);
+                if (active) {
+                    setLoadedTranslations(prev => {
+                        if (prev[lang] === module.default) return prev;
+                        return {
+                            ...prev,
+                            [lang]: module.default
+                        };
+                    });
+                }
+            } catch (err) {
+                console.error(`Failed to load translations for ${lang}:`, err);
+            }
+        };
+
+        loadLang(language);
+        if (language !== 'en') {
+            loadLang('en');
+        }
+
+        return () => {
+            active = false;
+        };
+    }, [language]);
+
     const setLanguage = (nextLanguage) => {
         const resolvedLanguage = supportedLanguages.some((item) => item.code === nextLanguage) ? nextLanguage : defaultLanguage;
 
@@ -69,9 +101,9 @@ export const I18nProvider = ({ children }) => {
     }, [language]);
 
     const t = useCallback((key, variables = {}) => {
-        const localizedValue = getTranslationValue(language, key) ?? getTranslationValue(defaultLanguage, key) ?? key;
+        const localizedValue = getTranslationValue(loadedTranslations, language, key) ?? getTranslationValue(loadedTranslations, defaultLanguage, key) ?? key;
         return typeof localizedValue === 'string' ? interpolate(localizedValue, variables) : key;
-    }, [language]);
+    }, [language, loadedTranslations]);
 
     return (
         <I18nContext.Provider value={{ language, setLanguage, t, languages: supportedLanguages }}>

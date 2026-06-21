@@ -12,6 +12,8 @@ import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 import { useSiteIdentity } from '../hooks/useSiteName';
 
+import PublicationsSkeleton from '../pages/skeletons/PublicationsSkeleton';
+
 const Publications = () => {
     const [brokenThumbnails, setBrokenThumbnails] = useState([]);
     const { language, t } = useI18n();
@@ -26,14 +28,7 @@ const Publications = () => {
         }
     });
 
-    if (isLoading) return (
-         <section id="publications" className="py-16 md:py-24 bg-white min-h-[60vh] flex items-center justify-center">
-            <div className="max-w-5xl mx-auto px-6 text-center">
-                <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('publications.kicker')}</span>
-                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h2>
-            </div>
-         </section>
-    );
+    if (isLoading) return <PublicationsSkeleton />;
 
     if (publications.length === 0) return (
          <section id="publications" className="py-16 md:py-24 bg-white min-h-[60vh] flex items-center justify-center">

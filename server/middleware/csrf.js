@@ -20,6 +20,12 @@ const csrfMiddleware = (req, res, next) => {
         return next();
     }
 
+    // Bypass CSRF checks if authenticated via Authorization header (JWT is immune to CSRF)
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        return next();
+    }
+
     // 1. Get or generate CSRF token
     const cookies = parseCookies(req.headers.cookie);
     let token = cookies['XSRF-TOKEN'];
@@ -54,6 +60,8 @@ const csrfMiddleware = (req, res, next) => {
             '/api/v1/ping',
             '/api/health',
             '/api/v1/health',
+            '/api/v1/admin-login',
+            '/api/v1/forgot-password',
             '/api/v1/webhooks'
         ];
 
