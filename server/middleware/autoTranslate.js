@@ -247,7 +247,7 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
     let timeoutId;
     try {
         const timeoutPromise = new Promise((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error('Server translation timeout')), 5000);
+            timeoutId = setTimeout(() => reject(new Error('Server translation timeout')), 1000);
         });
 
         const translated = await Promise.race([
@@ -340,7 +340,7 @@ const middleware = (req, res, next) => {
 
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         const targetLang = normalizeTargetLanguage(language);
-        if (targetLang === 'en' && !hasNonEnglishText(payload)) {
+        if (targetLang === 'en') {
             return originalJson(payload);
         }
 
