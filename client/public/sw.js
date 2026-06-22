@@ -24,7 +24,10 @@ if (workbox) {
             if (response.ok) {
               return cache.put('/index.html', response);
             }
-            throw new Error('Failed to fetch index.html during install');
+            console.warn('[Service Worker] Failed to fetch index.html during install');
+          })
+          .catch((err) => {
+            console.warn('[Service Worker] Error fetching index.html during install:', err);
           });
       })
     );
@@ -36,7 +39,7 @@ if (workbox) {
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName.startsWith('portfolio-api-') || cacheName.startsWith('portfolio-images-')) {
+            if (cacheName.startsWith('portfolio-images-')) {
               console.log('[Service Worker] Deleting stale cache:', cacheName);
               return caches.delete(cacheName);
             }
@@ -75,18 +78,39 @@ if (workbox) {
     })
   );
 
-  // Stale-While-Revalidate for /api/v1/page-data
+  // Stale-While-Revalidate for /api/v1/page-data with 3s timeout on cache miss
+  const apiPageDataStrategy = new workbox.strategies.StaleWhileRevalidate({
+    cacheName: 'portfolio-api-page-data-cache',
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 10,
+        maxAgeSeconds: 24 * 60 * 60, // 1 Day max
+      }),
+    ],
+  });
+
   workbox.routing.registerRoute(
     ({ url }) => url.pathname.includes('/api/v1/page-data'),
-    new workbox.strategies.StaleWhileRevalidate({
-      cacheName: 'portfolio-api-page-data-cache',
-      plugins: [
-        new workbox.expiration.ExpirationPlugin({
-          maxEntries: 10,
-          maxAgeSeconds: 24 * 60 * 60, // 1 Day max
-        }),
-      ],
-    })
+    async (options) => {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Network timeout')), 5000)
+      );
+      try {
+        return await Promise.race([
+          apiPageDataStrategy.handle(options),
+          timeoutPromise
+        ]);
+      } catch (err) {
+        // Fallback to cache on timeout/network failure
+        const cache = await caches.open('portfolio-api-page-data-cache');
+        const cachedResponse = await cache.match(options.request);
+        if (cachedResponse) {
+          console.log('[Service Worker] Serve stale cache fallback for:', options.request.url);
+          return cachedResponse;
+        }
+        throw err;
+      }
+    }
   );
 
   // Cache-first for self-hosted font files
@@ -106,6 +130,7 @@ if (workbox) {
   // Fallback for navigation requests (SPA routing) - NetworkFirst strategy
   const navigationStrategy = new workbox.strategies.NetworkFirst({
     cacheName: 'portfolio-navigation-cache',
+    networkTimeoutSeconds: 5,
     plugins: [
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 10,

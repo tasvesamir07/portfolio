@@ -197,17 +197,12 @@ api.interceptors.response.use(
             }
 
             const fromCache = response._fromCache === true;
-            const serverAlreadyTranslated = String(
-                response.headers?.['x-response-translated']
-                || response.headers?.['X-Response-Translated']
-                || ''
-            ) === '1';
 
-            if (!fromCache && serverAlreadyTranslated) {
+            if (!fromCache) {
                 const cacheKey = response.config?.metadataCacheKey;
                 if (cacheKey) {
-                    const translatedSnapshot = cloneCachedResponse(response, response.config);
-                    getResponseCache.set(cacheKey, translatedSnapshot);
+                    const snapshot = cloneCachedResponse(response, response.config);
+                    getResponseCache.set(cacheKey, snapshot);
                     trimGetResponseCache();
                 }
             }

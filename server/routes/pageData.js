@@ -52,6 +52,7 @@ router.get('/', async (req, res) => {
             responseData[keys[i]] = localizeDataObject(resolvedDataArray[i], language);
         }
 
+        res.locals.dataLocalized = true; // Mark as localized to prevent double-translation by autoTranslate middleware
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Vary', 'Accept-Encoding, X-Translate-Language, x-translate-language');
         res.json(responseData);

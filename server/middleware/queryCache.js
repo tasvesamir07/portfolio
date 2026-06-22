@@ -52,39 +52,45 @@ const saveToCache = (key, payload) => {
 };
 
 const triggerBackgroundRefresh = (req, res, key) => {
-    const mockReq = {
-        ...req,
-        headers: { ...req.headers },
-        bypassCache: true
+    const mockReq = Object.create(req);
+    mockReq.headers = { ...req.headers };
+    mockReq.bypassCache = true;
+
+    const mockRes = Object.create(res);
+    mockRes.statusCode = 200;
+    mockRes.headers = {};
+    mockRes.locals = { ...(res?.locals || {}) };
+
+    mockRes.setHeader = function(name, value) {
+        this.headers[name.toLowerCase()] = value;
+        return this;
     };
 
-    const mockRes = {
-        statusCode: 200,
-        headers: {},
-        locals: { ...(res?.locals || {}) },
-        setHeader(name, value) {
-            this.headers[name.toLowerCase()] = value;
-        },
-        status(code) {
-            this.statusCode = code;
-            return this;
-        },
-        json(payload) {
+    mockRes.status = function(code) {
+        this.statusCode = code;
+        return this;
+    };
+
+    mockRes.json = function(payload) {
+        saveToCache(key, payload);
+        activeRefreshes.delete(key);
+        return this;
+    };
+
+    mockRes.send = function(payload) {
+        try {
+            const parsed = JSON.parse(payload);
+            saveToCache(key, parsed);
+        } catch {
             saveToCache(key, payload);
-            activeRefreshes.delete(key);
-        },
-        send(payload) {
-            try {
-                const parsed = JSON.parse(payload);
-                saveToCache(key, parsed);
-            } catch {
-                saveToCache(key, payload);
-            }
-            activeRefreshes.delete(key);
-        },
-        end() {
-            activeRefreshes.delete(key);
         }
+        activeRefreshes.delete(key);
+        return this;
+    };
+
+    mockRes.end = function() {
+        activeRefreshes.delete(key);
+        return this;
     };
 
     if (req.app && typeof req.app.handle === 'function') {

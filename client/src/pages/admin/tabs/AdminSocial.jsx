@@ -49,10 +49,10 @@ const AdminSocial = () => {
                                     platform: platform.label,
                                     color_class: platform.colorClass 
                                 })}
-                                className={`p-3 rounded-lg border transition-all flex flex-col items-center gap-1.5 ${isSelected ? 'border-[#0b3b75] bg-[#0b3b75]/5 text-[#0b3b75] font-bold shadow-sm' : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'}`}
+                                className={`p-3 rounded-lg border transition-all flex flex-col items-center gap-1.5 group ${isSelected ? 'border-[#0b3b75] bg-[#0b3b75]/5 text-[#0b3b75] font-bold shadow-sm' : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'}`}
                             >
-                                <Icon size={18} />
-                                <span className="text-[9px] font-bold uppercase truncate w-full text-center">{platform.label}</span>
+                                <Icon size={22} style={{ color: platform.color }} className="transition-transform duration-200 group-hover:scale-110" />
+                                <span className="text-[9px] font-bold uppercase truncate w-full text-center text-gray-600 group-hover:text-gray-900 transition-colors">{platform.label}</span>
                             </button>
                         );
                     })}

@@ -14,7 +14,7 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes
       refetchOnWindowFocus: false,
-      retry: 1,
+      retry: 2, // Try up to 3 times for resilience on cold starts
     },
   },
 })
@@ -69,12 +69,14 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       .catch((err) => console.error('Service Worker registration failed:', err));
   });
 
-  // Reload page when new service worker takes over
+  // Reload page when new service worker takes over (with a 500ms settle delay)
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (!refreshing) {
       refreshing = true;
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     }
   });
 }

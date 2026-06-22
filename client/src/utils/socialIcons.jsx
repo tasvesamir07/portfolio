@@ -1,14 +1,15 @@
 import React from 'react';
 import { 
-  Github, 
-  Linkedin, 
-  Twitter, 
-  Instagram, 
-  Mail, 
-  Globe, 
-  FileText, 
-  Facebook 
-} from 'lucide-react';
+  FaGithub, 
+  FaLinkedin, 
+  FaTwitter, 
+  FaInstagram, 
+  FaEnvelope, 
+  FaGlobe, 
+  FaFileLines, 
+  FaFacebook, 
+  FaXTwitter 
+} from 'react-icons/fa6';
 
 // Custom inline SVG for ORCID
 export const OrcidIcon = ({ size = 20, ...props }) => (
@@ -70,30 +71,16 @@ export const GoogleScholarIcon = ({ size = 20, ...props }) => (
   </svg>
 );
 
-// Custom inline SVG for X (formerly Twitter)
-export const XIcon = ({ size = 20, ...props }) => (
-  <svg 
-    viewBox="0 0 24 24" 
-    width={size} 
-    height={size} 
-    fill="currentColor" 
-    xmlns="http://www.w3.org/2000/svg" 
-    {...props}
-  >
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-  </svg>
-);
-
 export const socialIconMap = {
-  github: Github,
-  linkedin: Linkedin,
-  twitter: Twitter,
-  instagram: Instagram,
-  mail: Mail,
-  globe: Globe,
-  filetext: FileText,
-  facebook: Facebook,
-  x: XIcon,
+  github: FaGithub,
+  linkedin: FaLinkedin,
+  twitter: FaTwitter,
+  instagram: FaInstagram,
+  mail: FaEnvelope,
+  globe: FaGlobe,
+  filetext: FaFileLines,
+  facebook: FaFacebook,
+  x: FaXTwitter,
   orcid: OrcidIcon,
   scopus: ScopusIcon,
   webofscience: WebOfScienceIcon,
@@ -101,23 +88,23 @@ export const socialIconMap = {
 };
 
 export const getSocialIcon = (name) => {
-  if (!name) return Globe;
+  if (!name) return FaGlobe;
   const normalized = name.toLowerCase().replace(/[\s-_]/g, '');
-  return socialIconMap[normalized] || Globe;
+  return socialIconMap[normalized] || FaGlobe;
 };
 
 export const availableSocialPlatforms = [
-  { id: 'github', label: 'GitHub', icon: Github, colorClass: 'hover:text-black' },
-  { id: 'linkedin', label: 'LinkedIn', icon: Linkedin, colorClass: 'hover:text-[#0077b5]' },
-  { id: 'twitter', label: 'Twitter (Legacy)', icon: Twitter, colorClass: 'hover:text-[#1da1f2]' },
-  { id: 'instagram', label: 'Instagram', icon: Instagram, colorClass: 'hover:text-[#e1306c]' },
-  { id: 'mail', label: 'Email', icon: Mail, colorClass: 'hover:text-red-500' },
-  { id: 'globe', label: 'Website / Portals', icon: Globe, colorClass: 'hover:text-blue-500' },
-  { id: 'filetext', label: 'Documents / CV', icon: FileText, colorClass: 'hover:text-amber-600' },
-  { id: 'facebook', label: 'Facebook', icon: Facebook, colorClass: 'hover:text-[#1877f2]' },
-  { id: 'x', label: 'X (Twitter)', icon: XIcon, colorClass: 'hover:text-black' },
-  { id: 'orcid', label: 'ORCID ID', icon: OrcidIcon, colorClass: 'hover:opacity-80' },
-  { id: 'scopus', label: 'Scopus', icon: ScopusIcon, colorClass: 'hover:opacity-80' },
-  { id: 'webofscience', label: 'Web of Science', icon: WebOfScienceIcon, colorClass: 'hover:opacity-80' },
-  { id: 'googlescholar', label: 'Google Scholar', icon: GoogleScholarIcon, colorClass: 'hover:opacity-80' }
+  { id: 'github', label: 'GitHub', icon: FaGithub, color: '#24292e', colorClass: 'hover:text-[#24292e]' },
+  { id: 'linkedin', label: 'LinkedIn', icon: FaLinkedin, color: '#0077b5', colorClass: 'hover:text-[#0077b5]' },
+  { id: 'twitter', label: 'Twitter (Legacy)', icon: FaTwitter, color: '#1da1f2', colorClass: 'hover:text-[#1da1f2]' },
+  { id: 'instagram', label: 'Instagram', icon: FaInstagram, color: '#e1306c', colorClass: 'hover:text-[#e1306c]' },
+  { id: 'mail', label: 'Email', icon: FaEnvelope, color: '#ea4335', colorClass: 'hover:text-[#ea4335]' },
+  { id: 'globe', label: 'Website / Portals', icon: FaGlobe, color: '#3b82f6', colorClass: 'hover:text-[#3b82f6]' },
+  { id: 'filetext', label: 'Documents / CV', icon: FaFileLines, color: '#d97706', colorClass: 'hover:text-[#d97706]' },
+  { id: 'facebook', label: 'Facebook', icon: FaFacebook, color: '#1877f2', colorClass: 'hover:text-[#1877f2]' },
+  { id: 'x', label: 'X (Twitter)', icon: FaXTwitter, color: '#000000', colorClass: 'hover:text-[#000000]' },
+  { id: 'orcid', label: 'ORCID ID', icon: OrcidIcon, color: '#a6ce39', colorClass: 'hover:opacity-80' },
+  { id: 'scopus', label: 'Scopus', icon: ScopusIcon, color: '#e9711c', colorClass: 'hover:opacity-80' },
+  { id: 'webofscience', label: 'Web of Science', icon: WebOfScienceIcon, color: '#5e33bf', colorClass: 'hover:opacity-80' },
+  { id: 'googlescholar', label: 'Google Scholar', icon: GoogleScholarIcon, color: '#4285f4', colorClass: 'hover:opacity-80' }
 ];
