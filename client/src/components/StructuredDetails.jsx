@@ -9,7 +9,7 @@ const StructuredDetails = ({
     pairLabelClassName = 'text-gray-800 font-semibold',
     pairValueClassName = 'text-gray-700 leading-8 break-words [&_a]:text-sky-500 [&_a]:underline [&_a]:underline-offset-4',
     valueStackClassName = 'space-y-2',
-    layoutClassName = 'grid grid-cols-1 md:grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 items-start'
+    layoutClassName = 'flex flex-col md:flex-row md:items-start gap-x-4 gap-y-1.5'
 }) => {
     if (!items.length) return null;
 
@@ -56,7 +56,7 @@ const StructuredDetails = ({
                 return (
                     <div key={item.id || index} className={layoutClassName}>
                         <span 
-                            className={pairLabelClassName}
+                            className={`${pairLabelClassName} md:w-40 md:flex-shrink-0`}
                             dangerouslySetInnerHTML={{ __html: cleanHtmlInline(item.title) + ':' }}
                         />
                         <div className={valueStackClassName}>
