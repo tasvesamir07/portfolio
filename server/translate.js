@@ -259,6 +259,20 @@ const trimCache = () => {
 };
 
 const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLanguage = 'en') => {
+    const cleanText = (str) => str.replace(/<[^>]+>/g, '').replace(/[:.]/g, '').trim().toLowerCase();
+    const cleaned = cleanText(text);
+    if (cleaned === 'passing year') {
+        const normTarget = normalizeTargetLanguage(targetLanguage);
+        if (normTarget === 'bn') {
+            const hasParagraph = text.toLowerCase().includes('<p>');
+            return hasParagraph ? '<p>পাসের বছর</p>' : 'পাসের বছর';
+        }
+        if (normTarget === 'ko') {
+            const hasParagraph = text.toLowerCase().includes('<p>');
+            return hasParagraph ? '<p>졸업 연도</p>' : '졸업 연도';
+        }
+    }
+
     const key = getCacheKey(text, targetLanguage, sourceLanguage);
     
     // 1. Check L1 in-memory Map
@@ -338,6 +352,20 @@ const translateText = async (text = '', language = 'en') => {
     
     if (!text || !text.trim()) {
         return text;
+    }
+
+    // Manual overrides for specific terms (e.g. Passing Year -> Graduation Year translation)
+    const cleanText = (str) => str.replace(/<[^>]+>/g, '').replace(/[:.]/g, '').trim().toLowerCase();
+    const cleaned = cleanText(text);
+    if (cleaned === 'passing year') {
+        if (targetLanguage === 'bn') {
+            const hasParagraph = text.toLowerCase().includes('<p>');
+            return hasParagraph ? '<p>পাসের বছর</p>' : 'পাসের বছর';
+        }
+        if (targetLanguage === 'ko') {
+            const hasParagraph = text.toLowerCase().includes('<p>');
+            return hasParagraph ? '<p>졸업 연도</p>' : '졸업 연도';
+        }
     }
 
     if (!needsTranslationForTarget(text, targetLanguage) || sourceLanguage === targetLanguage) {

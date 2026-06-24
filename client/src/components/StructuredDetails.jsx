@@ -9,18 +9,21 @@ const StructuredDetails = ({
     pairLabelClassName = 'text-gray-800 font-semibold',
     pairValueClassName = 'text-gray-700 leading-8 break-words [&_a]:text-sky-500 [&_a]:underline [&_a]:underline-offset-4',
     valueStackClassName = 'space-y-2',
-    layoutClassName = 'flex flex-col md:flex-row md:items-start gap-x-4 gap-y-1.5'
+    layoutClassName = 'grid grid-cols-1 md:grid-cols-[150px_minmax(0,1fr)] gap-x-4 gap-y-2 md:gap-y-4 items-start'
 }) => {
     if (!items.length) return null;
 
+    // Strip space-y-4/space-y-3 from className since we use grid gaps on the outer container
+    const cleanedClassName = className.replace(/space-y-\d+/g, '').trim();
+
     return (
-        <div className={className}>
+        <div className={`${layoutClassName} ${cleanedClassName}`}>
             {items.map((item, index) => {
                 if (item.type === 'title') {
                     return (
                         <h4 
                             key={item.id || index} 
-                            className={titleClassName}
+                            className={`${titleClassName} md:col-span-2`}
                             dangerouslySetInnerHTML={{ __html: cleanHtmlInline(item.title) }}
                         />
                     );
@@ -30,7 +33,7 @@ const StructuredDetails = ({
                     return (
                         <div
                             key={item.id || index}
-                            className={textClassName}
+                            className={`${textClassName} md:col-span-2`}
                             dangerouslySetInnerHTML={{ __html: typeof item.text === 'string' ? item.text.replace(/&nbsp;|\u00A0/g, ' ') : item.text }}
                         />
                     );
@@ -41,7 +44,7 @@ const StructuredDetails = ({
 
                 if (!item.title) {
                     return (
-                        <div key={item.id || index} className={valueStackClassName}>
+                        <div key={item.id || index} className={`${valueStackClassName} md:col-span-2`}>
                             {values.map((value, valueIndex) => (
                                 <div
                                     key={`${item.id || index}-value-${valueIndex}`}
@@ -54,12 +57,12 @@ const StructuredDetails = ({
                 }
 
                 return (
-                    <div key={item.id || index} className={layoutClassName}>
+                    <React.Fragment key={item.id || index}>
                         <span 
-                            className={`${pairLabelClassName} md:w-40 md:flex-shrink-0`}
+                            className={`${pairLabelClassName} md:mb-0 mb-0.5`}
                             dangerouslySetInnerHTML={{ __html: cleanHtmlInline(item.title) + ':' }}
                         />
-                        <div className={valueStackClassName}>
+                        <div className={`${valueStackClassName} md:mb-0 mb-3`}>
                             {values.map((value, valueIndex) => (
                                 <div
                                     key={`${item.id || index}-value-${valueIndex}`}
@@ -68,7 +71,7 @@ const StructuredDetails = ({
                                 />
                             ))}
                         </div>
-                    </div>
+                    </React.Fragment>
                 );
             })}
         </div>
