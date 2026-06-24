@@ -99,9 +99,6 @@ const AdminExperiences = () => {
                 <div className="font-bold text-gray-900 text-base leading-tight">
                     {decodeHtmlPreview(item.position) || 'Experience Record'}
                 </div>
-                <div className="text-[10px] font-mono text-gray-400 mt-0.5 uppercase">
-                    {decodeHtmlPreview(item.company)} ({item.start_date} - {item.end_date})
-                </div>
             </td>
             <td className="py-4 px-6 text-gray-600 font-medium max-w-md">
                 <div className="truncate text-xs">

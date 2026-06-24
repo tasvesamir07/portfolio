@@ -67,9 +67,6 @@ const AdminResearch = () => {
                 <div className="font-bold text-gray-900 text-base leading-tight">
                     {decodeHtmlPreview(item.title) || 'Research Project'}
                 </div>
-                <div className="text-[10px] font-mono text-gray-400 mt-0.5 uppercase">
-                    Status: {decodeHtmlPreview(item.status) || 'N/A'} ({item.date_text || 'No date'})
-                </div>
             </td>
             <td className="py-4 px-6 text-gray-600 font-medium max-w-md">
                 <div className="truncate text-xs">

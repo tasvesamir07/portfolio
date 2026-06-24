@@ -63,9 +63,6 @@ const AdminResearchInterests = () => {
                 <div className="font-bold text-gray-900 text-base leading-tight">
                     {item.interest || 'Research Interest'}
                 </div>
-                <div className="text-[10px] font-mono text-gray-400 mt-0.5 uppercase">
-                    Icon: {item.icon_name || 'FileText'}
-                </div>
             </td>
             <td className="py-4 px-6 text-gray-600 font-medium max-w-md">
                 <div className="truncate text-xs">
