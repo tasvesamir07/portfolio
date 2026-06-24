@@ -246,7 +246,11 @@ v1Router.get('/page', async (req, res) => {
 
         if (result.rows.length === 0) return res.status(404).json({ message: 'Page not found' });
         const language = req.headers[LANGUAGE_HEADER] || 'en';
-        res.json(localizeDataObject(result.rows[0], language));
+        const localized = localizeDataObject(result.rows[0], language);
+        if (Object.keys(result.rows[0]).some(k => k.endsWith(`_${language}`))) {
+            res.locals.dataLocalized = true;
+        }
+        res.json(localized);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
     }

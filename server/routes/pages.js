@@ -16,7 +16,11 @@ router.get('/', async (req, res) => {
             ? await db.query('SELECT id, title, slug, content, details_json, show_in_nav FROM pages ORDER BY id ASC')
             : await db.query('SELECT id, title, slug, show_in_nav FROM pages ORDER BY id ASC');
         const language = req.headers[LANGUAGE_HEADER] || 'en';
-        res.json(localizeDataObject(result.rows, language));
+        const localized = localizeDataObject(result.rows, language);
+        if (result.rows[0] && Object.keys(result.rows[0]).some(k => k.endsWith(`_${language}`))) {
+            res.locals.dataLocalized = true;
+        }
+        res.json(localized);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
     }
@@ -39,7 +43,11 @@ router.get('/page', async (req, res) => {
 
         if (result.rows.length === 0) return res.status(404).json({ message: 'Page not found' });
         const language = req.headers[LANGUAGE_HEADER] || 'en';
-        res.json(localizeDataObject(result.rows[0], language));
+        const localized = localizeDataObject(result.rows[0], language);
+        if (Object.keys(result.rows[0]).some(k => k.endsWith(`_${language}`))) {
+            res.locals.dataLocalized = true;
+        }
+        res.json(localized);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
     }
@@ -50,7 +58,11 @@ router.get('/:slug', async (req, res) => {
         const result = await db.query('SELECT * FROM pages WHERE slug = $1', [req.params.slug]);
         if (result.rows.length === 0) return res.status(404).json({ message: 'Page not found' });
         const language = req.headers[LANGUAGE_HEADER] || 'en';
-        res.json(localizeDataObject(result.rows[0], language));
+        const localized = localizeDataObject(result.rows[0], language);
+        if (Object.keys(result.rows[0]).some(k => k.endsWith(`_${language}`))) {
+            res.locals.dataLocalized = true;
+        }
+        res.json(localized);
     } catch (err) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
     }
