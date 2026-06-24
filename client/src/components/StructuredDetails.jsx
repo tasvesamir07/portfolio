@@ -17,7 +17,7 @@ const StructuredDetails = ({
     const cleanedClassName = className.replace(/space-y-\d+/g, '').trim();
 
     return (
-        <div className={`${layoutClassName} ${cleanedClassName}`}>
+        <div className={`structured-details-container ${layoutClassName} ${cleanedClassName}`}>
             {items.map((item, index) => {
                 if (item.type === 'title') {
                     return (

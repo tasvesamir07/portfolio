@@ -221,6 +221,13 @@
 .quill-content em    { @apply italic; }
 .quill-content a  { @apply text-blue-600 underline hover:text-blue-800 transition-colors; overflow-wrap: anywhere; word-break: break-word; }
 
+/* ── StructuredDetails Lists / Points ── */
+.structured-details-container ul { @apply list-disc pl-5 my-2; }
+.structured-details-container ol { @apply list-decimal pl-5 my-2; }
+.structured-details-container li { @apply mb-1; word-break: normal; overflow-wrap: normal; line-height: inherit; }
+.structured-details-container strong { @apply font-bold text-gray-900; }
+.structured-details-container em { @apply italic; }
+
 .dynamic-page-shell {
   width: 100%;
   min-width: 0;

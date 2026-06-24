@@ -298,6 +298,22 @@ export const TipTapMinimal = ({ value, onChange, placeholder = 'Enter details...
             <Unlink size={14} />
           </button>
         )}
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={`p-1 rounded transition-all ${editor.isActive('bulletList') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-200'}`}
+          title="Bullet List"
+        >
+          <List size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={`p-1 rounded transition-all ${editor.isActive('orderedList') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-200'}`}
+          title="Ordered List"
+        >
+          <ListOrdered size={14} />
+        </button>
 
         <div className="h-4 w-[1px] bg-gray-300 mx-1" />
         <div className="flex items-center gap-1 px-1" title="Text Color">
