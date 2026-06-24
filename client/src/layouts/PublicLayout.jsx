@@ -61,7 +61,13 @@ const PublicLayout = () => {
     }, [language, queryClient]);
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col dark:bg-background">
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-6 focus:py-3 focus:bg-white dark:focus:bg-slate-900 focus:text-[#0b3b75] dark:focus:text-brand-gold focus:font-bold focus:rounded-lg focus:shadow-xl focus:outline-2 focus:outline-[#ceb079]"
+            >
+                Skip to main content
+            </a>
             {isOffline && (
                 <div className="bg-amber-600 text-white text-center py-2 px-4 text-xs sm:text-sm font-semibold sticky top-0 z-50 flex items-center justify-center gap-2 animate-fade-in shadow-md">
                     <span className="w-2 h-2 rounded-full bg-white animate-ping" />
@@ -72,7 +78,7 @@ const PublicLayout = () => {
             <Analytics />
             <PublicAppPreloader />
             <Navbar />
-            <main className="flex-grow">
+            <main id="main-content" className="flex-grow">
                 <Suspense fallback={<DynamicFallback />}>
                     <Outlet />
                 </Suspense>

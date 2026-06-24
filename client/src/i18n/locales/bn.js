@@ -24,7 +24,8 @@ const bn = {
         downloadCv: 'সিভি ডাউনলোড',
         toggleMenu: 'মেনু খুলুন',
         newspaper: 'পত্রিকা',
-        anonymousMessage: 'বেনামী বার্তা'
+        anonymousMessage: 'বেনামী বার্তা',
+        more: 'আরও'
     },
     hero: {
         professionalPortfolio: 'পেশাগত পোর্টফোলিও'

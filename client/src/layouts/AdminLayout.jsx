@@ -41,10 +41,10 @@ const SidebarLinks = ({ activeTab, onClickLink, tabs, draggedIndex, onDragStart,
                         onDragOver={(e) => onDragOver(e, index)}
                         onDragEnd={onDragEnd}
                         className={`flex items-center gap-1 rounded-xl transition-all cursor-grab active:cursor-grabbing group ${
-                            isActive ? 'bg-[#0b3b75]/5 text-[#0b3b75]' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-700'
+                            isActive ? 'bg-[#0b3b75]/5 dark:bg-brand-gold/10 text-[#0b3b75] dark:text-brand-gold' : 'text-gray-400 dark:text-foreground/50 hover:bg-gray-50 dark:hover:bg-muted hover:text-gray-700 dark:hover:text-foreground'
                         } ${
                             draggedIndex === index 
-                                ? 'opacity-40 border-dashed border border-brand-blue/30 bg-gray-50' 
+                                ? 'opacity-40 border-dashed border border-brand-blue/30 dark:border-brand-gold/30 bg-gray-50 dark:bg-muted' 
                                 : ''
                         }`}
                     >
@@ -352,18 +352,24 @@ const AdminLayout = () => {
     if (location.pathname === '/admin') return <Outlet />;
 
     return (
-        <div className="h-screen flex flex-col md:flex-row bg-[#fcfaf7] overflow-hidden">
+        <div className="h-screen flex flex-col md:flex-row bg-[#fcfaf7] dark:bg-background overflow-hidden">
+            <a
+                href="#admin-main"
+                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-6 focus:py-3 focus:bg-[#0b3b75] focus:text-white dark:focus:bg-brand-gold dark:focus:text-[#0b3b75] focus:font-bold focus:rounded-lg focus:shadow-xl focus:outline-2 focus:outline-[#ceb079]"
+            >
+                Skip to main content
+            </a>
             {/* Mobile Header */}
-            <header className="flex md:hidden items-center justify-between px-6 py-4 bg-white border-b border-gray-100 flex-shrink-0 z-30">
+            <header className="flex md:hidden items-center justify-between px-6 py-4 bg-white dark:bg-background border-b border-gray-100 dark:border-border-light flex-shrink-0 z-30">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsMobileMenuOpen(true)}
-                        className="p-2 text-gray-500 hover:text-[#0b3b75] hover:bg-gray-50 rounded-xl transition-all"
+                        className="p-2 text-gray-500 dark:text-foreground/80 hover:text-[#0b3b75] dark:hover:text-brand-gold hover:bg-gray-50 dark:hover:bg-muted rounded-xl transition-all"
                         aria-label="Open sidebar"
                     >
                         <Menu size={24} />
                     </button>
-                    <h2 className="text-xl font-black text-[#0b3b75] tracking-tight">Admin Panel</h2>
+                    <h2 className="text-xl font-black text-[#0b3b75] dark:text-brand-gold tracking-tight">Admin Panel</h2>
                 </div>
                 <button
                     onClick={handleLogout}
@@ -384,12 +390,12 @@ const AdminLayout = () => {
                     />
                     
                     {/* Drawer Content */}
-                    <aside className="relative flex flex-col w-[280px] max-w-[85vw] bg-white h-full shadow-2xl z-50 transition-transform duration-300">
-                        <div className="p-6 flex items-center justify-between border-b border-gray-100 flex-shrink-0">
-                            <h2 className="text-2xl font-black text-[#0b3b75] tracking-tighter">Admin Panel</h2>
+                    <aside className="relative flex flex-col w-[280px] max-w-[85vw] bg-white dark:bg-background h-full shadow-2xl z-50 transition-transform duration-300">
+                        <div className="p-6 flex items-center justify-between border-b border-gray-100 dark:border-border-light flex-shrink-0">
+                            <h2 className="text-2xl font-black text-[#0b3b75] dark:text-brand-gold tracking-tighter">Admin Panel</h2>
                             <button
                                 onClick={() => setIsMobileMenuOpen(false)}
-                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50"
+                                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-muted"
                                 aria-label="Close sidebar"
                             >
                                 <X size={20} />
@@ -398,7 +404,7 @@ const AdminLayout = () => {
                         
                         <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto pb-8 custom-scrollbar">
                             <div className="pb-2 px-3">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Content Management</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-foreground/45">Content Management</p>
                             </div>
 
                             <SidebarLinks 
@@ -412,10 +418,10 @@ const AdminLayout = () => {
                             />
                         </nav>
 
-                        <div className="p-6 border-t border-gray-100 flex-shrink-0 mt-auto bg-gray-50/30">
+                        <div className="p-6 border-t border-gray-100 dark:border-border-light flex-shrink-0 mt-auto bg-gray-50/30 dark:bg-muted/30">
                             <button 
                                 onClick={handleLogout}
-                                className="flex items-center gap-3 text-red-500 hover:text-red-700 transition-all w-full font-bold text-sm px-3 py-2 rounded-lg hover:bg-red-50"
+                                className="flex items-center gap-3 text-red-500 hover:text-red-700 transition-all w-full font-bold text-sm px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20"
                             >
                                 <LogOut size={18} /> Logout Session
                             </button>
@@ -425,14 +431,14 @@ const AdminLayout = () => {
             )}
 
             {/* Desktop Sidebar */}
-            <aside className="w-[280px] h-full flex-shrink-0 bg-white border-r border-gray-100 hidden md:flex flex-col">
+            <aside className="w-[280px] h-full flex-shrink-0 bg-white dark:bg-background border-r border-gray-100 dark:border-border-light hidden md:flex flex-col">
                 <div className="p-8 flex-shrink-0">
-                    <h2 className="text-3xl font-black text-[#0b3b75] tracking-tighter leading-none">Admin<br/>Panel</h2>
+                    <h2 className="text-3xl font-black text-[#0b3b75] dark:text-brand-gold tracking-tighter leading-none">Admin<br/>Panel</h2>
                 </div>
                 
                 <nav className="flex-1 px-4 space-y-1 overflow-y-auto pb-8 custom-scrollbar">
                     <div className="pt-2 pb-2 px-3 mt-2">
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Content Management</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-foreground/45">Content Management</p>
                     </div>
 
                     <SidebarLinks 
@@ -445,10 +451,10 @@ const AdminLayout = () => {
                     />
                 </nav>
 
-                <div className="p-6 border-t border-gray-100 flex-shrink-0 mt-auto bg-gray-50/30">
+                <div className="p-6 border-t border-gray-100 dark:border-border-light flex-shrink-0 mt-auto bg-gray-50/30 dark:bg-muted/30">
                     <button 
                         onClick={handleLogout}
-                        className="flex items-center gap-3 text-red-500 hover:text-red-700 transition-all w-full font-bold text-sm px-3 py-2 rounded-lg hover:bg-red-50"
+                        className="flex items-center gap-3 text-red-500 hover:text-red-700 transition-all w-full font-bold text-sm px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20"
                     >
                         <LogOut size={18} /> Logout Session
                     </button>
@@ -456,7 +462,7 @@ const AdminLayout = () => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-grow h-full overflow-y-auto">
+            <main id="admin-main" className="flex-grow h-full overflow-y-auto">
                 <div className="min-h-full">
                     <Outlet />
                 </div>

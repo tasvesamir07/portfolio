@@ -1,16 +1,20 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Save } from 'lucide-react';
+import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
 const StickySaveBar = ({ formId, saving, onCancel, saveLabel, isDirty = false }) => {
+    const prefersReduced = useReducedMotion();
     return (
         <AnimatePresence>
             {isDirty && (
                 <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.2 }}
+                    {...(!prefersReduced ? {
+                        initial: { opacity: 0, y: -20 },
+                        animate: { opacity: 1, y: 0 },
+                        exit: { opacity: 0, y: -20 },
+                        transition: { duration: 0.2 }
+                    } : {})}
                     className="hidden lg:flex fixed top-0 left-0 right-0 md:left-[280px] bg-white/90 backdrop-blur-md border-b border-gray-200 py-4 px-8 justify-between items-center z-40 shadow-md transition-all"
                 >
                     <div className="flex items-center gap-2.5">

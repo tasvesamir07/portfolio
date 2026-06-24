@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FileText, GraduationCap, Briefcase, Globe } from 'lucide-react';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import StructuredDetails from './StructuredDetails';
@@ -18,6 +19,7 @@ const iconMap = {
 };
 
 const ResearchInterests = () => {
+    const prefersReduced = useReducedMotion();
     const { language, t } = useI18n();
     const noDataLabel = getNoDataLabel(language);
 
@@ -29,12 +31,12 @@ const ResearchInterests = () => {
         }
     });
 
-    if (isLoading) {
+     if (isLoading) {
         return (
-            <section id="research-interests" className="py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
+            <section id="research-interests" className="py-24 bg-[#fcfaf7] dark:bg-background min-h-[60vh] flex items-center justify-center">
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center">{t('researchInterests.kicker')}</span>
-                    <h2 className="text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h2>
+                    <h2 className="text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 dark:text-foreground tracking-tight">{t('common.loading')}</h2>
                 </div>
             </section>
         );
@@ -42,21 +44,21 @@ const ResearchInterests = () => {
 
     if (interests.length === 0) {
         return (
-            <section id="research-interests" className="py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
+            <section id="research-interests" className="py-24 bg-[#fcfaf7] dark:bg-background min-h-[60vh] flex items-center justify-center">
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center">{t('researchInterests.kicker')}</span>
-                    <h2 className="text-5xl md:text-7xl font-bold text-center mb-4 text-gray-900 tracking-tight">{t('researchInterests.titleMain')} <span className="text-brand-blue">{t('researchInterests.titleAccent')}</span></h2>
-                    <p className="text-gray-500 font-medium">{noDataLabel}</p>
+                    <h2 className="text-5xl md:text-7xl font-bold text-center mb-4 text-gray-900 dark:text-foreground tracking-tight">{t('researchInterests.titleMain')} <span className="text-brand-blue dark:text-brand-gold">{t('researchInterests.titleAccent')}</span></h2>
+                    <p className="text-gray-500 dark:text-foreground/70 font-medium">{noDataLabel}</p>
                 </div>
             </section>
         );
     }
 
     return (
-        <section id="research-interests" className="py-24 bg-[#fcfaf7]">
+        <section id="research-interests" className="py-24 bg-[#fcfaf7] dark:bg-background">
             <div className="max-w-7xl mx-auto px-6">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center">{t('researchInterests.kicker')}</span>
-                <h2 className="text-5xl md:text-7xl font-bold text-center mb-16 text-gray-900 tracking-tight">{t('researchInterests.titleMain')} <span className="text-brand-blue">{t('researchInterests.titleAccent')}</span></h2>
+                <h2 className="text-5xl md:text-7xl font-bold text-center mb-16 text-gray-900 dark:text-foreground tracking-tight">{t('researchInterests.titleMain')} <span className="text-brand-blue dark:text-brand-gold">{t('researchInterests.titleAccent')}</span></h2>
                 <div className="grid grid-cols-1 gap-8">
                     {interests.map((item, index) => {
                         const detailItems = parseStructuredItems(getLocalizedFirstField(item, ['details_json', 'details'], language, ''));
@@ -65,26 +67,28 @@ const ResearchInterests = () => {
                         return (
                             <motion.div 
                                 key={item.id}
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.5, delay: index * 0.1 }}
-                                whileHover={{ scale: 1.02, y: -6 }}
-                                className="bg-white p-10 rounded-[3rem] border-2 border-gray-100 transition-colors duration-300 shadow-xl shadow-gray-200/20 group motion-card-hover"
+                                {...(!prefersReduced ? {
+                                    initial: { opacity: 0, scale: 0.9 },
+                                    whileInView: { opacity: 1, scale: 1 },
+                                    viewport: { once: true },
+                                    transition: { duration: 0.5, delay: index * 0.1 },
+                                    whileHover: { scale: 1.02, y: -6 }
+                                } : {})}
+                                className="bg-white dark:bg-background p-10 rounded-[3rem] border-2 border-gray-100 dark:border-border-light transition-colors duration-300 shadow-xl shadow-gray-200/20 group motion-card-hover"
                             >
-                                <div className="w-16 h-16 bg-brand-blue/5 rounded-2xl flex items-center justify-center text-brand-blue mb-8 group-hover:bg-brand-blue group-hover:text-white transition-all shadow-lg shadow-brand-blue/10">
+                                <div className="w-16 h-16 bg-brand-blue/5 rounded-2xl flex items-center justify-center text-brand-blue dark:text-brand-gold mb-8 group-hover:bg-brand-blue dark:group-hover:bg-brand-gold group-hover:text-white dark:group-hover:text-[#0b3b75] transition-all shadow-lg shadow-brand-blue/10">
                                     {React.createElement(iconMap[item.icon_name] || FileText, { size: 32 })}
                                 </div>
-                                <h3 className="text-[1.75rem] md:text-[1.95rem] font-bold text-gray-900 mb-4 group-hover:text-brand-blue transition-colors tracking-tight leading-[1.18] break-words">
+                                <h3 className="text-[1.75rem] md:text-[1.95rem] font-bold text-gray-900 dark:text-foreground mb-4 group-hover:text-brand-blue dark:group-hover:text-brand-gold transition-colors tracking-tight leading-[1.18] break-words">
                                     <RenderInlineHtml html={interest} />
                                 </h3>
                                 <StructuredDetails
                                     items={detailItems}
                                     className="space-y-4 research-interest-content"
-                                    titleClassName="text-xl font-bold text-gray-900 leading-tight"
-                                    textClassName="text-gray-600 leading-8 text-[1.05rem] break-words"
-                                    pairLabelClassName="text-gray-800 font-semibold"
-                                    pairValueClassName="text-gray-600 leading-8 text-[1.05rem] break-words"
+                                    titleClassName="text-xl font-bold text-gray-900 dark:text-brand-gold leading-tight"
+                                    textClassName="text-gray-600 dark:text-foreground/80 leading-8 text-[1.05rem] break-words"
+                                    pairLabelClassName="text-gray-800 dark:text-foreground font-semibold"
+                                    pairValueClassName="text-gray-600 dark:text-foreground/80 leading-8 text-[1.05rem] break-words"
                                 />
                             </motion.div>
                         );

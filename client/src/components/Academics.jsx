@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Calendar } from 'lucide-react';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import StructuredDetails from './StructuredDetails';
@@ -14,6 +15,7 @@ import { RenderInlineHtml } from '../utils/htmlRenderer';
 import AcademicsSkeleton from '../pages/skeletons/AcademicsSkeleton';
 
 const Academics = () => {
+    const prefersReduced = useReducedMotion();
     const [brokenLogos, setBrokenLogos] = useState([]);
     const { language, t } = useI18n();
     const noDataLabel = getNoDataLabel(language);
@@ -111,12 +113,14 @@ const Academics = () => {
                             return (
                         <motion.div 
                             key={item.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.5, delay: index * 0.1 }}
-                            whileHover={{ scale: 1.02, y: -6 }}
-                            className="bg-white p-6 md:p-9 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-start gap-5 md:gap-7 group border border-gray-100 transition-colors duration-300 shadow-sm motion-card-hover"
+                            {...(!prefersReduced ? {
+                                initial: { opacity: 0, y: 20 },
+                                whileInView: { opacity: 1, y: 0 },
+                                viewport: { once: true },
+                                transition: { duration: 0.5, delay: index * 0.1 },
+                                whileHover: { scale: 1.02, y: -6 }
+                            } : {})}
+                            className="bg-white dark:bg-background p-6 md:p-9 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-start gap-5 md:gap-7 group border border-gray-100 dark:border-border-light transition-colors duration-300 shadow-sm motion-card-hover"
                         >
                             <div className="flex-shrink-0 w-16 h-16 sm:w-[74px] sm:h-[74px] bg-brand-blue/5 rounded-2xl flex items-center justify-center transition-all mt-1">
                                 {item.logo_url && !brokenLogos.includes(item.id) ? (
@@ -139,18 +143,18 @@ const Academics = () => {
                             <div className="flex-1 w-full text-left">
                                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 md:gap-8 mb-5">
                                     <div className="min-w-0">
-                                        <h3 className="text-[2rem] sm:text-[2.35rem] md:text-[2.7rem] font-medium tracking-tight text-gray-700 leading-[1.12] break-words">
+                                        <h3 className="text-[2rem] sm:text-[2.35rem] md:text-[2.7rem] font-medium tracking-tight text-gray-700 dark:text-foreground leading-[1.12] break-words">
                                             <RenderInlineHtml html={primaryTitle} />
                                         </h3>
                                         {showInstitutionSubtitle && (
-                                            <p className="mt-2 text-lg md:text-[1.15rem] leading-8 text-gray-500 break-words">
+                                            <p className="mt-2 text-lg md:text-[1.15rem] leading-8 text-gray-500 dark:text-foreground/70 break-words">
                                                 <RenderInlineHtml html={institutionText} />
                                             </p>
                                         )}
                                     </div>
                                     {timelineText && (
                                         <div className="text-left md:text-right flex flex-col gap-1.5 md:min-w-[220px] pt-1">
-                                            <p className="text-[12px] sm:text-[13px] font-semibold text-gray-500 flex items-center justify-start md:justify-end gap-1.5 whitespace-nowrap">
+                                            <p className="text-[12px] sm:text-[13px] font-semibold text-gray-500 dark:text-foreground/70 flex items-center justify-start md:justify-end gap-1.5 whitespace-nowrap">
                                                 <Calendar size={14} className="text-gray-400" /> <RenderInlineHtml html={timelineText} />
                                             </p>
                                         </div>

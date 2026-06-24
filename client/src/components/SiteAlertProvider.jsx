@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import { consumeFlashSiteAlert, SITE_ALERT_EVENT, showSiteAlert } from '../utils/siteAlerts';
 
 const SiteAlertContext = createContext({ showAlert: showSiteAlert });
@@ -8,22 +9,23 @@ const SiteAlertContext = createContext({ showAlert: showSiteAlert });
 const alertStyles = {
     success: {
         icon: CheckCircle2,
-        wrapper: 'border-emerald-200 bg-white text-emerald-900 shadow-emerald-900/10',
-        badge: 'bg-emerald-50 text-emerald-600'
+        wrapper: 'border-emerald-200 bg-white text-emerald-900 shadow-emerald-900/10 dark:bg-slate-900 dark:border-emerald-900/30 dark:text-emerald-300',
+        badge: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
     },
     error: {
         icon: AlertCircle,
-        wrapper: 'border-red-200 bg-white text-red-900 shadow-red-900/10',
-        badge: 'bg-red-50 text-red-600'
+        wrapper: 'border-red-200 bg-white text-red-900 shadow-red-900/10 dark:bg-slate-900 dark:border-red-900/30 dark:text-red-300',
+        badge: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400'
     },
     info: {
         icon: Info,
-        wrapper: 'border-blue-200 bg-white text-blue-900 shadow-blue-900/10',
-        badge: 'bg-blue-50 text-blue-600'
+        wrapper: 'border-blue-200 bg-white text-blue-900 shadow-blue-900/10 dark:bg-slate-900 dark:border-blue-900/30 dark:text-blue-300',
+        badge: 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400'
     }
 };
 
 export const SiteAlertProvider = ({ children }) => {
+    const prefersReduced = useReducedMotion();
     const [alerts, setAlerts] = useState([]);
 
     useEffect(() => {
@@ -73,7 +75,7 @@ export const SiteAlertProvider = ({ children }) => {
     return (
         <SiteAlertContext.Provider value={contextValue}>
             {children}
-            <div className="pointer-events-none fixed right-4 top-4 z-[1000] flex w-[min(92vw,24rem)] flex-col gap-3">
+            <div aria-live="polite" aria-relevant="additions removals" className="pointer-events-none fixed right-4 top-4 z-[1000] flex w-[min(92vw,24rem)] flex-col gap-3">
                 <AnimatePresence>
                     {alerts.map((alert) => {
                         const style = alertStyles[alert.type] || alertStyles.info;
@@ -82,9 +84,11 @@ export const SiteAlertProvider = ({ children }) => {
                         return (
                             <motion.div
                                 key={alert.id}
-                                initial={{ opacity: 0, x: 24, scale: 0.98 }}
-                                animate={{ opacity: 1, x: 0, scale: 1 }}
-                                exit={{ opacity: 0, x: 24, scale: 0.98 }}
+                                {...(!prefersReduced ? {
+                                    initial: { opacity: 0, x: 24, scale: 0.98 },
+                                    animate: { opacity: 1, x: 0, scale: 1 },
+                                    exit: { opacity: 0, x: 24, scale: 0.98 }
+                                } : {})}
                                 className={`pointer-events-auto overflow-hidden rounded-2xl border p-4 shadow-xl backdrop-blur ${style.wrapper}`}
                             >
                                 <div className="flex items-start gap-3">
@@ -95,14 +99,14 @@ export const SiteAlertProvider = ({ children }) => {
                                         {alert.title && (
                                             <div className="mb-1 text-sm font-bold">{alert.title}</div>
                                         )}
-                                        <div className="text-sm font-medium leading-relaxed text-gray-700">
+                                        <div className="text-sm font-medium leading-relaxed text-gray-700 dark:text-foreground/80">
                                             {alert.message}
                                         </div>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setAlerts((current) => current.filter((item) => item.id !== alert.id))}
-                                        className="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                        className="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-800 dark:hover:text-gray-200"
                                     >
                                         <X size={16} />
                                     </button>

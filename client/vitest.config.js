@@ -16,15 +16,13 @@ export default defineConfig({
         '**/dist/**',
         '**/e2e/**',
         'src/i18n/translator.js',
-        'src/components/TipTapEditor.jsx',
         'src/pages/skeletons/**',
-        'src/test/**',
-        'src/api.js',
-        'src/utils/structuredItems.js',
-        'src/utils/structuredDataRows.js'
+        'src/test/**'
       ],
       thresholds: {
-        statements: 60,
+        statements: 80,
+        branches: 70,
+        functions: 75,
       }
     },
   },

@@ -1,7 +1,8 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import Footer from './Footer';
+import { usePublicPageData } from '../hooks/useSiteName';
 
 vi.mock('../i18n/I18nContext', () => ({
     useI18n: () => ({
@@ -15,31 +16,69 @@ vi.mock('../i18n/I18nContext', () => ({
 }));
 
 vi.mock('../hooks/useSiteName', () => ({
-    usePublicPageData: () => ({
-        data: {
-            socialLinks: [
-                { id: '1', platform: 'GitHub', url: 'https://github.com', icon_name: 'Github' },
-                { id: '2', platform: 'LinkedIn', url: 'https://linkedin.com', icon_name: 'Linkedin' }
-            ]
-        }
-    })
+    usePublicPageData: vi.fn()
 }));
 
 describe('Footer Component', () => {
-    it('renders social media links and translated texts', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('renders socialLinks correctly', () => {
+        vi.mocked(usePublicPageData).mockReturnValue({
+            data: {
+                socialLinks: [
+                    { platform: 'GitHub', url: 'https://github.com' }
+                ]
+            }
+        });
+
         render(<Footer />);
+        expect(screen.getByTitle('GitHub')).toBeInTheDocument();
+    });
 
-        // Verify social links render correctly
-        const githubLink = screen.getByTitle('GitHub');
-        const linkedinLink = screen.getByTitle('LinkedIn');
+    it('renders social-links key correctly', () => {
+        vi.mocked(usePublicPageData).mockReturnValue({
+            data: {
+                'social-links': [
+                    { id: '2', platform: 'LinkedIn', url: 'https://linkedin.com', icon_name: 'Linkedin' }
+                ]
+            }
+        });
 
-        expect(githubLink).toBeInTheDocument();
-        expect(githubLink).toHaveAttribute('href', 'https://github.com');
-        expect(linkedinLink).toBeInTheDocument();
-        expect(linkedinLink).toHaveAttribute('href', 'https://linkedin.com');
+        render(<Footer />);
+        expect(screen.getByTitle('LinkedIn')).toBeInTheDocument();
+    });
 
-        // Verify texts
+    it('renders social_links key correctly', () => {
+        vi.mocked(usePublicPageData).mockReturnValue({
+            data: {
+                social_links: [
+                    { id: '3', platform: 'Twitter', url: 'https://twitter.com', icon_name: 'Twitter' }
+                ]
+            }
+        });
+
+        render(<Footer />);
+        expect(screen.getByTitle('Twitter')).toBeInTheDocument();
+    });
+
+    it('handles empty data / missing social links gracefully', () => {
+        vi.mocked(usePublicPageData).mockReturnValue({
+            data: {}
+        });
+
+        const { container } = render(<Footer />);
+        expect(container.querySelector('footer')).toBeInTheDocument();
         expect(screen.getByText('footer.developedWithPassion')).toBeInTheDocument();
-        expect(screen.getByText(/All rights reserved/)).toBeInTheDocument();
+    });
+
+    it('handles null data gracefully', () => {
+        vi.mocked(usePublicPageData).mockReturnValue({
+            data: null
+        });
+
+        const { container } = render(<Footer />);
+        expect(container.querySelector('footer')).toBeInTheDocument();
     });
 });

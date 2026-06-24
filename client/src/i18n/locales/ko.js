@@ -24,7 +24,8 @@ const ko = {
         downloadCv: '이력서 다운로드',
         toggleMenu: '메뉴 열기',
         newspaper: '신문',
-        anonymousMessage: '익명 메시지'
+        anonymousMessage: '익명 메시지',
+        more: '더 보기'
     },
     hero: {
         professionalPortfolio: '전문 포트폴리오'

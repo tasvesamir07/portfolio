@@ -42,7 +42,8 @@ const knownNavLabelKeys = {
     contact: 'nav.contact',
     blog: 'nav.blog',
     newspaper: 'nav.newspaper',
-    'anon. message': 'nav.anonymousMessage'
+    'anon. message': 'nav.anonymousMessage',
+    more: 'nav.more'
 };
 
 export const normalizeLabel = (value = '') =>
@@ -57,12 +58,21 @@ export const getLocalizedNavName = (item, language, t) => {
 
     // Try only the current language's specific field (no cross-language fallback)
     const langKey = `name_${language}`;
-    if (item?.[langKey]) return item[langKey];
+    let resolvedName = '';
+    
+    if (item?.[langKey]) {
+        resolvedName = item[langKey];
+    } else {
+        // Then check if the base name matches a localized label
+        const translationKey = knownNavLabelKeys[normalizeLabel(item?.name)];
+        if (translationKey) {
+            resolvedName = t(translationKey);
+        } else {
+            // Fall back to raw name
+            resolvedName = item?.name || '';
+        }
+    }
 
-    // Then check if the base name matches a localized label
-    const translationKey = knownNavLabelKeys[normalizeLabel(item?.name)];
-    if (translationKey) return t(translationKey);
-
-    // Fall back to raw name
-    return item?.name || '';
+    // Strip HTML tags from resolved name
+    return resolvedName.replace(/<[^>]*>/g, '').replace(/&nbsp;|\u00A0/g, ' ').trim();
 };

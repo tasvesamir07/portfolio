@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import api from '../api';
 import StructuredDetails from '../components/StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
@@ -27,6 +28,7 @@ const normalizePageContent = (html = '') => {
 };
 
 const DynamicPage = () => {
+    const prefersReduced = useReducedMotion();
     const { slug } = useParams();
     const { language, t } = useI18n();
     const siteName = useSiteName();
@@ -80,8 +82,10 @@ const DynamicPage = () => {
 
     return (
         <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            {...(!prefersReduced ? {
+                initial: { opacity: 0 },
+                animate: { opacity: 1 }
+            } : {})}
             className="min-h-screen pt-32 pb-20 px-4"
         >
             <SEO 
@@ -89,8 +93,10 @@ const DynamicPage = () => {
                 description={page ? `Detail page of ${pageTitleRaw}` : `${siteName} | Portfolio`}
             />
             <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                {...(!prefersReduced ? {
+                    initial: { opacity: 0 },
+                    animate: { opacity: 1 }
+                } : {})}
                 className="dynamic-page-shell max-w-4xl mx-auto glass p-6 sm:p-8 md:p-12 rounded-[32px] border border-gray-200 shadow-2xl shadow-gray-200/50 overflow-hidden"
             >
                 <h1 className="text-4xl sm:text-5xl font-black mb-8 md:mb-10 text-gray-900 tracking-tight break-words">

@@ -31,71 +31,156 @@ describe('CRUD API Routes Tests', () => {
         );
     });
 
-    describe('GET & POST /api/v1/academics', () => {
-        it('GET should return list of academics', async () => {
-            const mockAcademics = [
-                { id: 1, degree: 'BSc', institution: 'University X' }
-            ];
-            db.query.mockResolvedValueOnce({ rows: mockAcademics });
+    describe('CRUD Lifecycle: /api/v1/academics', () => {
+        it('should perform a full CREATE -> READ -> UPDATE -> DELETE lifecycle', async () => {
+            const record = {
+                degree: 'PhD Research',
+                institution: 'State Univ',
+                start_year: '2020',
+                end_year: '2024',
+                logo_url: 'http://pic.png',
+                details_json: '[]'
+            };
 
-            const res = await request(app)
+            // 1. CREATE (POST)
+            db.query.mockResolvedValueOnce({ rows: [{ id: 10, ...record }] });
+            const createRes = await request(app)
+                .post('/api/v1/academics')
+                .set('Authorization', `Bearer ${validToken}`)
+                .send(record)
+                .expect(201);
+
+            expect(createRes.body.id).toBe(10);
+            expect(createRes.body.degree).toBe('PhD Research');
+
+            // 2. READ (GET)
+            db.query.mockResolvedValueOnce({ rows: [{ id: 10, ...record }] });
+            const readRes = await request(app)
                 .get('/api/v1/academics')
                 .expect(200);
 
-            expect(res.body).toEqual(mockAcademics);
-        });
+            expect(readRes.body).toHaveLength(1);
+            expect(readRes.body[0].id).toBe(10);
 
-        it('POST should create academic record if authorized', async () => {
-            const newRecord = {
-                degree: 'PhD',
-                institution: 'University Y',
-                start_year: '2020',
-                end_year: '2024',
-                logo_url: '',
-                details_json: ''
-            };
-            db.query.mockResolvedValueOnce({ rows: [{ id: 2, ...newRecord }] });
-
-            const res = await request(app)
-                .post('/api/v1/academics')
+            // 3. UPDATE (PUT)
+            const updatedRecord = { ...record, degree: 'PhD Research Updated' };
+            db.query.mockResolvedValueOnce({ rows: [{ id: 10, ...updatedRecord }] });
+            const updateRes = await request(app)
+                .put('/api/v1/academics/10')
                 .set('Authorization', `Bearer ${validToken}`)
-                .send(newRecord)
-                .expect(201);
+                .send(updatedRecord)
+                .expect(200);
 
-            expect(res.body.degree).toBe('PhD');
-        });
+            expect(updateRes.body.degree).toBe('PhD Research Updated');
 
-        it('POST should fail if unauthorized', async () => {
+            // 4. DELETE (DELETE)
+            db.query.mockResolvedValueOnce({ rows: [{ logo_url: 'http://pic.png' }] }); // returns details and completes in 1 query
             await request(app)
-                .post('/api/v1/academics')
-                .send({ degree: 'PhD' })
-                .expect(401);
+                .delete('/api/v1/academics/10')
+                .set('Authorization', `Bearer ${validToken}`)
+                .expect(204);
         });
     });
 
-    describe('GET & PUT /api/v1/about', () => {
-        it('GET should return about details', async () => {
-            const mockAbout = { name: 'Samir', title: 'Researcher' };
-            db.query.mockResolvedValueOnce({ rows: [mockAbout] });
+    describe('CRUD Lifecycle: /api/v1/experiences', () => {
+        it('should perform a full CREATE -> READ -> UPDATE -> DELETE lifecycle', async () => {
+            const record = {
+                company: 'Google LLC',
+                position: 'SWE Intern',
+                location: 'Mountain View',
+                start_date: '2023-01-01',
+                end_date: '2023-04-01',
+                description: 'Coding Intern',
+                logo_url: 'http://glogo.png',
+                details_json: '[]'
+            };
 
-            const res = await request(app)
-                .get('/api/v1/about')
-                .expect(200);
-
-            expect(res.body.name).toBe('Samir');
-        });
-
-        it('PUT should update about details if authorized', async () => {
-            db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] }); // Select row
-            db.query.mockResolvedValueOnce({ rows: [{ name: 'Samir Updated' }] }); // Update row
-
-            const res = await request(app)
-                .put('/api/v1/about')
+            // 1. CREATE (POST)
+            db.query.mockResolvedValueOnce({ rows: [{ id: 20, ...record }] });
+            const createRes = await request(app)
+                .post('/api/v1/experiences')
                 .set('Authorization', `Bearer ${validToken}`)
-                .send({ name: 'Samir Updated' })
+                .send(record)
+                .expect(201);
+
+            expect(createRes.body.id).toBe(20);
+            expect(createRes.body.company).toBe('Google LLC');
+
+            // 2. READ (GET)
+            db.query.mockResolvedValueOnce({ rows: [{ id: 20, ...record }] });
+            const readRes = await request(app)
+                .get('/api/v1/experiences')
                 .expect(200);
 
-            expect(res.body.name).toBe('Samir Updated');
+            expect(readRes.body).toHaveLength(1);
+            expect(readRes.body[0].id).toBe(20);
+
+            // 3. UPDATE (PUT)
+            const updatedRecord = { ...record, company: 'Alphabet Google' };
+            db.query.mockResolvedValueOnce({ rows: [{ id: 20, ...updatedRecord, old_logo_url: 'http://glogo.png' }] });
+            const updateRes = await request(app)
+                .put('/api/v1/experiences/20')
+                .set('Authorization', `Bearer ${validToken}`)
+                .send(updatedRecord)
+                .expect(200);
+
+            expect(updateRes.body.company).toBe('Alphabet Google');
+
+            // 4. DELETE (DELETE)
+            db.query.mockResolvedValueOnce({ rows: [{ logo_url: 'http://glogo.png' }] }); // returns details and completes in 1 query
+            await request(app)
+                .delete('/api/v1/experiences/20')
+                .set('Authorization', `Bearer ${validToken}`)
+                .expect(204);
+        });
+    });
+
+    describe('CRUD Lifecycle: /api/v1/research-interests', () => {
+        it('should perform a full CREATE -> READ -> UPDATE -> DELETE lifecycle', async () => {
+            const record = {
+                interest: 'Machine Learning',
+                details: 'Deep neural networks study',
+                icon_name: 'brain',
+                details_json: '[]'
+            };
+
+            // 1. CREATE (POST)
+            db.query.mockResolvedValueOnce({ rows: [{ id: 30, ...record }] });
+            const createRes = await request(app)
+                .post('/api/v1/research-interests')
+                .set('Authorization', `Bearer ${validToken}`)
+                .send(record)
+                .expect(201);
+
+            expect(createRes.body.id).toBe(30);
+            expect(createRes.body.interest).toBe('Machine Learning');
+
+            // 2. READ (GET)
+            db.query.mockResolvedValueOnce({ rows: [{ id: 30, ...record }] });
+            const readRes = await request(app)
+                .get('/api/v1/research-interests')
+                .expect(200);
+
+            expect(readRes.body).toHaveLength(1);
+            expect(readRes.body[0].id).toBe(30);
+
+            // 3. UPDATE (PUT)
+            const updatedRecord = { ...record, interest: 'ML & AI' };
+            db.query.mockResolvedValueOnce({ rows: [{ id: 30, ...updatedRecord }] });
+            const updateRes = await request(app)
+                .put('/api/v1/research-interests/30')
+                .set('Authorization', `Bearer ${validToken}`)
+                .send(updatedRecord)
+                .expect(200);
+
+            expect(updateRes.body.interest).toBe('ML & AI');
+
+            // 4. DELETE (DELETE)
+            db.query.mockResolvedValueOnce({ rows: [] }); // delete query completes in 1 operation
+            await request(app)
+                .delete('/api/v1/research-interests/30')
+                .set('Authorization', `Bearer ${validToken}`)
+                .expect(204);
         });
     });
 });

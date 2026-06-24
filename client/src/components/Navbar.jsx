@@ -121,7 +121,7 @@ const Navbar = () => {
             id: 'blog-menu',
             name: 'Blog', // Will be localized by localizeLinkTree
             dropdown: blogPages.map((page) => ({
-                name: getLocalizedField(page, 'title', language, page.title),
+                name: stripHtml(getLocalizedField(page, 'title', language, page.title)),
                 path: `/blog/${page.slug}`
             }))
         };
@@ -150,6 +150,41 @@ const Navbar = () => {
 
         return localizeLinkTree(normalizedLinks, language, t);
     }, [baseNavLinks, blogPages, language, t]);
+
+    const groupedNavLinks = useMemo(() => {
+        const moreItems = [];
+        const mainItems = [];
+
+        activeNavLinks.forEach((link) => {
+            const path = link.path || '';
+            const normalizedName = normalizeLabel(link.name);
+
+            // Group Gallery, Contact, and Anon. Message under 'More'
+            const isMoreTarget = 
+                path === '/gallery' ||
+                path === '/contact' ||
+                path.includes('anonymous-message') ||
+                normalizedName === 'gallery' ||
+                normalizedName === 'contact' ||
+                normalizedName.includes('anon') ||
+                normalizedName.includes('benami');
+
+            if (isMoreTarget) {
+                moreItems.push(link);
+            } else {
+                mainItems.push(link);
+            }
+        });
+
+        if (moreItems.length > 0) {
+            mainItems.push({
+                name: t('nav.more'),
+                dropdown: moreItems
+            });
+        }
+
+        return mainItems;
+    }, [activeNavLinks, t]);
 
     const flatMobileLinks = useMemo(() => {
         const flat = [];
@@ -200,7 +235,7 @@ const Navbar = () => {
                         </Link>
 
                         <div className="hidden xl:flex items-center gap-4 2xl:gap-8">
-                            {activeNavLinks.map((link, idx) => (
+                            {groupedNavLinks.map((link, idx) => (
                                 link.dropdown ? (
                                     <div
                                         key={idx}
@@ -215,12 +250,12 @@ const Navbar = () => {
                                             )}
                                         </button>
                                         <div className={`absolute top-full left-1/2 -translate-x-1/2 w-56 pt-4 transition-all duration-200 origin-top ${isDropdownOpen === idx ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}`}>
-                                            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 flex flex-col">
+                                            <div className="bg-white dark:bg-background rounded-2xl shadow-2xl border border-gray-100 dark:border-border-light p-2 flex flex-col">
                                                 {link.dropdown.map((subLink, subIndex) => (
                                                     <Link
                                                         key={subIndex}
                                                         to={subLink.path || '#'}
-                                                        className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${location.pathname === subLink.path ? 'bg-[#ceb079]/10 text-[#ceb079]' : 'text-gray-700 hover:bg-gray-50 hover:text-[#ceb079]'}`}
+                                                        className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${location.pathname === subLink.path ? 'bg-[#ceb079]/10 text-[#ceb079]' : 'text-gray-700 dark:text-foreground/80 hover:bg-gray-50 dark:hover:bg-muted hover:text-[#ceb079]'}`}
                                                     >
                                                         {subLink.name}
                                                     </Link>

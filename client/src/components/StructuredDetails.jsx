@@ -4,10 +4,10 @@ import { cleanHtmlInline } from '../utils/htmlRenderer';
 const StructuredDetails = ({
     items = [],
     className = 'space-y-4',
-    titleClassName = 'text-xl font-bold text-[#0b3b75] leading-tight',
-    textClassName = 'text-gray-700 leading-8 text-base break-words [&_a]:text-sky-500 [&_a]:underline [&_a]:underline-offset-4',
-    pairLabelClassName = 'text-gray-800 font-semibold',
-    pairValueClassName = 'text-gray-700 leading-8 break-words [&_a]:text-sky-500 [&_a]:underline [&_a]:underline-offset-4',
+    titleClassName = 'text-xl font-bold text-[#0b3b75] dark:text-brand-gold leading-tight',
+    textClassName = 'text-gray-700 dark:text-foreground/80 leading-8 text-base break-words [&_a]:text-sky-500 [&_a]:underline [&_a]:underline-offset-4',
+    pairLabelClassName = 'text-gray-800 dark:text-foreground font-semibold',
+    pairValueClassName = 'text-gray-700 dark:text-foreground/80 leading-8 break-words [&_a]:text-sky-500 [&_a]:underline [&_a]:underline-offset-4',
     valueStackClassName = 'space-y-2',
     layoutClassName = 'grid grid-cols-1 md:grid-cols-[150px_minmax(0,1fr)] gap-x-4 gap-y-2 md:gap-y-4 items-start'
 }) => {

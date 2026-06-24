@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink, Download } from 'lucide-react';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import StructuredDetails from './StructuredDetails';
@@ -15,6 +16,7 @@ import { useSiteIdentity } from '../hooks/useSiteName';
 import PublicationsSkeleton from '../pages/skeletons/PublicationsSkeleton';
 
 const Publications = () => {
+    const prefersReduced = useReducedMotion();
     const [brokenThumbnails, setBrokenThumbnails] = useState([]);
     const { language, t } = useI18n();
     const { authorNames } = useSiteIdentity();
@@ -31,11 +33,11 @@ const Publications = () => {
     if (isLoading) return <PublicationsSkeleton />;
 
     if (publications.length === 0) return (
-         <section id="publications" className="py-16 md:py-24 bg-white min-h-[60vh] flex items-center justify-center">
+         <section id="publications" className="py-16 md:py-24 bg-white dark:bg-background min-h-[60vh] flex items-center justify-center">
             <div className="max-w-5xl mx-auto px-6 text-center">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('publications.kicker')}</span>
-                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('publications.emptyTitleMain')} <span className="text-brand-blue">{t('publications.emptyTitleAccent')}</span> {t('publications.emptyTitleSuffix')}</h2>
-                <p className="text-gray-500 font-medium">{noDataLabel}</p>
+                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 dark:text-foreground tracking-tight">{t('publications.emptyTitleMain')} <span className="text-brand-blue dark:text-brand-gold">{t('publications.emptyTitleAccent')}</span> {t('publications.emptyTitleSuffix')}</h2>
+                <p className="text-gray-500 dark:text-foreground/70 font-medium">{noDataLabel}</p>
             </div>
          </section>
     );
@@ -61,7 +63,7 @@ const Publications = () => {
 
                     return (
                         <React.Fragment key={idx}>
-                            {idx > 0 && <span className="text-gray-500">, </span>}
+                            {idx > 0 && <span className="text-gray-500 dark:text-foreground/50">, </span>}
                             <a
                                 href={searchUrl}
                                 target="_blank"
@@ -69,7 +71,7 @@ const Publications = () => {
                                 className={`hover:underline transition-colors ${
                                     isMainAuthor 
                                         ? 'font-bold text-[#c2410c] hover:text-[#9a3412] decoration-[#c2410c]/40' 
-                                        : 'text-gray-700 hover:text-brand-blue'
+                                        : 'text-gray-700 dark:text-foreground/80 hover:text-brand-blue dark:hover:text-brand-gold'
                                 }`}
                             >
                                 <RenderInlineHtml html={trimmed} />
@@ -82,17 +84,17 @@ const Publications = () => {
     };
 
     return (
-        <section id="publications" className="py-16 md:py-24 bg-white">
+        <section id="publications" className="py-16 md:py-24 bg-white dark:bg-background">
             <div className="max-w-7xl mx-auto px-6">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-xs sm:text-sm">{t('publications.kicker')}</span>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-center mb-6 text-[#8c2626] tracking-tight animate-none">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-center mb-6 text-[#8c2626] dark:text-foreground tracking-tight animate-none">
                     {language === 'en' ? (
-                        <>Recent <span className="text-brand-blue font-sans font-black">Publications</span></>
+                        <>Recent <span className="text-brand-blue dark:text-brand-gold font-sans font-black">Publications</span></>
                     ) : (
-                        <>{t('publications.titleMain')} <span className="text-brand-blue font-sans font-black">{t('publications.titleAccent')}</span></>
+                        <>{t('publications.titleMain')} <span className="text-brand-blue dark:text-brand-gold font-sans font-black">{t('publications.titleAccent')}</span></>
                     )}
                 </h2>
-                <div className="w-32 h-[1px] bg-gray-200 mx-auto mb-16" />
+                <div className="w-32 h-[1px] bg-gray-200 dark:bg-border-light mx-auto mb-16" />
                 
                 <div className="flex flex-col gap-8 max-w-4xl mx-auto">
                     {publications.map((item) => {
@@ -140,18 +142,21 @@ const Publications = () => {
                         return (
                             <motion.article
                                 key={item.id}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.6 }}
-                                whileHover={{ scale: 1.02, y: -6 }}
-                                className="group bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm motion-card-hover flex flex-col justify-between cursor-pointer"
+                                {...(!prefersReduced ? {
+                                    initial: { opacity: 0, y: 30 },
+                                    whileInView: { opacity: 1, y: 0 },
+                                    viewport: { once: true },
+                                    transition: { duration: 0.6 },
+                                    whileHover: { scale: 1.02, y: -6 }
+                                } : {})}
+                                className="group bg-white dark:bg-background rounded-2xl border border-gray-100 dark:border-border-light p-6 sm:p-8 shadow-sm motion-card-hover flex flex-col justify-between cursor-pointer"
+                                style={{ contentVisibility: 'auto', containIntrinsicSize: '200px' }}
                             >
                                 <div className="flex-grow flex flex-col justify-start">
                                     {/* Header Section: Image + Meta */}
                                     <div className="flex flex-col sm:flex-row gap-6 mb-2">
                                         {item.thumbnail_url && !brokenThumbnails.includes(item.id) && (
-                                            <div className="w-full sm:w-44 sm:h-56 h-48 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200/60 shrink-0 shadow-sm">
+                                            <div className="w-full sm:w-44 sm:h-56 h-48 overflow-hidden rounded-xl bg-gray-50 dark:bg-muted flex items-center justify-center border border-gray-200/60 dark:border-border-light shrink-0 shadow-sm">
                                                 <img 
                                                     src={getTransformedUrl(item.thumbnail_url, 240, 75)} 
                                                     srcSet={buildSrcSet(item.thumbnail_url)}
@@ -167,9 +172,9 @@ const Publications = () => {
                                             </div>
                                         )}
                                         <div className="text-left flex-grow flex flex-col justify-center">
-                                            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-4">
+                                            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-foreground leading-snug mb-4">
                                                 {titleLink ? (
-                                                    <a href={titleLink} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-[#2d8da8] transition-colors">
+                                                    <a href={titleLink} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-[#2d8da8] dark:hover:text-brand-gold transition-colors">
                                                         <RenderInlineHtml html={title} />
                                                     </a>
                                                 ) : (
@@ -177,28 +182,28 @@ const Publications = () => {
                                                 )}
                                             </h3>
  
-                                            <div className="space-y-2 text-xs sm:text-sm text-gray-600">
+                                            <div className="space-y-2 text-xs sm:text-sm text-gray-600 dark:text-foreground/70">
                                                 <p className="leading-relaxed">
-                                                    <span className="font-bold text-gray-900">{t('publications.journalName')}:</span>{' '}
+                                                    <span className="font-bold text-gray-900 dark:text-foreground">{t('publications.journalName')}:</span>{' '}
                                                     {item.journal_url ? (
-                                                        <a href={item.journal_url} target="_blank" rel="noopener noreferrer" className="text-[#3a96b7] hover:underline font-semibold">
+                                                        <a href={item.journal_url} target="_blank" rel="noopener noreferrer" className="text-[#3a96b7] dark:text-[#5bc0be] hover:underline font-semibold">
                                                             <RenderInlineHtml html={journalName || t('common.notAvailable')} />
                                                         </a>
                                                     ) : (
-                                                        <span className="text-[#3a96b7] font-semibold">
+                                                        <span className="text-[#3a96b7] dark:text-[#5bc0be] font-semibold">
                                                             <RenderInlineHtml html={journalName || t('common.notAvailable')} />
                                                         </span>
                                                     )}
                                                 </p>
                                                 <p className="leading-relaxed">
-                                                    <span className="font-bold text-gray-900">{t('publications.publicationYear')}:</span>{' '}
-                                                    <span className="text-gray-600 font-medium">
+                                                    <span className="font-bold text-gray-900 dark:text-foreground">{t('publications.publicationYear')}:</span>{' '}
+                                                    <span className="text-gray-600 dark:text-foreground/80 font-medium">
                                                         <RenderInlineHtml html={item.pub_year || t('common.notAvailable')} />
                                                     </span>
                                                 </p>
                                                 {(item.doi || item.doi_url) && (
                                                     <p className="leading-relaxed">
-                                                        <span className="font-bold text-gray-900">DOI:</span>{' '}
+                                                        <span className="font-bold text-gray-900 dark:text-foreground">DOI:</span>{' '}
                                                         {(() => {
                                                             const doiUrl = item.doi_url || (item.doi ? `https://doi.org/${item.doi.trim()}` : '');
                                                             const doiText = item.doi || (item.doi_url ? (() => {
@@ -210,12 +215,12 @@ const Publications = () => {
                                                                     href={doiUrl} 
                                                                     target="_blank" 
                                                                     rel="noopener noreferrer" 
-                                                                    className="text-[#3a96b7] hover:underline font-semibold break-all"
+                                                                    className="text-[#3a96b7] dark:text-[#5bc0be] hover:underline font-semibold break-all"
                                                                 >
                                                                     {doiText}
                                                                 </a>
                                                             ) : (
-                                                                <span className="text-gray-600 font-medium break-all">
+                                                                <span className="text-gray-600 dark:text-foreground/80 font-medium break-all">
                                                                     {doiText}
                                                                 </span>
                                                             );
@@ -223,8 +228,8 @@ const Publications = () => {
                                                     </p>
                                                 )}
                                                 <p className="leading-relaxed">
-                                                    <span className="font-bold text-gray-900">{t('publications.authors')}:</span>{' '}
-                                                    <span className="text-gray-600 font-medium">
+                                                    <span className="font-bold text-gray-900 dark:text-foreground">{t('publications.authors')}:</span>{' '}
+                                                    <span className="text-gray-600 dark:text-foreground/80 font-medium">
                                                         {renderAuthors(authors)}
                                                     </span>
                                                 </p>
@@ -234,14 +239,14 @@ const Publications = () => {
  
                                     {/* Content Sections */}
                                     {detailItems.length > 0 && (
-                                        <div className="mt-4 pt-6 border-t border-gray-100">
+                                        <div className="mt-4 pt-6 border-t border-gray-100 dark:border-border-light">
                                             <StructuredDetails
                                                 items={detailItems}
-                                                className="space-y-6 text-gray-700 leading-relaxed"
-                                                titleClassName="text-sm font-black text-gray-900 mt-6 mb-2 text-left uppercase tracking-wider animate-none"
-                                                textClassName="text-[14px] text-gray-600 leading-relaxed text-left mb-3 break-words"
-                                                pairLabelClassName="text-gray-900 font-bold"
-                                                pairValueClassName="text-[14px] text-gray-600 leading-relaxed text-left mb-3 break-words"
+                                                className="space-y-6 text-gray-700 dark:text-foreground/80 leading-relaxed"
+                                                titleClassName="text-sm font-black text-gray-900 dark:text-brand-gold mt-6 mb-2 text-left uppercase tracking-wider animate-none"
+                                                textClassName="text-[14px] text-gray-600 dark:text-foreground/80 leading-relaxed text-left mb-3 break-words"
+                                                pairLabelClassName="text-gray-900 dark:text-foreground font-bold"
+                                                pairValueClassName="text-[14px] text-gray-600 dark:text-foreground/80 leading-relaxed text-left mb-3 break-words"
                                                 valueStackClassName="space-y-2"
                                             />
                                         </div>
@@ -250,13 +255,13 @@ const Publications = () => {
  
                                 {/* Actions */}
                                 {(item.link_url || item.file_url) && (
-                                    <div className="mt-6 pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-3 w-full justify-end items-center">
+                                    <div className="mt-6 pt-4 border-t border-gray-100 dark:border-border-light flex flex-col sm:flex-row gap-3 w-full justify-end items-center">
                                         {item.link_url && (
                                             <a 
                                                 href={item.link_url} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#2d8da8] hover:text-[#1d6b82] transition-colors w-full sm:w-auto justify-center sm:justify-start"
+                                                className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#2d8da8] hover:text-[#1d6b82] dark:hover:text-white transition-colors w-full sm:w-auto justify-center sm:justify-start"
                                             >
                                                 {t('publications.readFullArticle')} <ExternalLink size={14} />
                                             </a>
@@ -266,7 +271,7 @@ const Publications = () => {
                                                 href={item.file_url} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer" 
-                                                className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-[#ceb079] text-[#0b3b75] px-5 py-2.5 rounded hover:bg-[#0b3b75] hover:text-white transition-all shadow-sm w-full sm:w-auto justify-center"
+                                                className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-[#ceb079] text-[#0b3b75] dark:bg-muted dark:text-brand-gold px-5 py-2.5 rounded hover:bg-[#0b3b75] hover:text-white dark:hover:bg-brand-gold dark:hover:text-[#0b3b75] transition-all shadow-sm w-full sm:w-auto justify-center"
                                             >
                                                 {t('publications.downloadPdf')} <Download size={14} />
                                             </a>

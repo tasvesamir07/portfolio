@@ -7,6 +7,17 @@ import { I18nProvider } from './i18n/I18nContext.jsx'
 import { SiteAlertProvider } from './components/SiteAlertProvider.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import interWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
+
+if (typeof window !== 'undefined') {
+  const link = document.createElement('link');
+  link.rel = 'preload';
+  link.as = 'font';
+  link.type = 'font/woff2';
+  link.href = interWoff2;
+  link.crossOrigin = 'anonymous';
+  document.head.appendChild(link);
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,7 +54,9 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((reg) => {
-        console.log('Service Worker registered successfully:', reg.scope);
+        if (import.meta.env.DEV) {
+          console.log('Service Worker registered successfully:', reg.scope);
+        }
 
         const dispatchUpdate = () => {
           const event = new CustomEvent('sw:update-available', { detail: reg });

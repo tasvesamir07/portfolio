@@ -24,7 +24,8 @@ const en = {
         downloadCv: 'Download CV',
         toggleMenu: 'Toggle menu',
         newspaper: 'Newspaper',
-        anonymousMessage: 'Anon. Message'
+        anonymousMessage: 'Anon. Message',
+        more: 'More'
     },
     hero: {
         professionalPortfolio: 'Professional Portfolio'
