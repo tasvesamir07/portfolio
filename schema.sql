@@ -59,9 +59,9 @@ CREATE TABLE IF NOT EXISTS academics (
 -- 5. Experiences Table
 CREATE TABLE IF NOT EXISTS experiences (
     id SERIAL PRIMARY KEY,
-    company VARCHAR(255),
-    position VARCHAR(255),
-    location VARCHAR(255),
+    company TEXT,
+    position TEXT,
+    location TEXT,
     start_date TEXT,
     end_date TEXT,
     description TEXT,
@@ -74,10 +74,10 @@ CREATE TABLE IF NOT EXISTS experiences (
 -- 6. Trainings Table
 CREATE TABLE IF NOT EXISTS trainings (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(255),
+    title TEXT,
     topic TEXT,
     date_text TEXT,
-    instructor VARCHAR(255),
+    instructor TEXT,
     details_json TEXT DEFAULT '',
     sort_order INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS trainings (
 -- 7. Skills Table
 CREATE TABLE IF NOT EXISTS skills (
     id SERIAL PRIMARY KEY,
-    category VARCHAR(100),
+    category TEXT,
     items TEXT,
     details_json TEXT DEFAULT '',
     sort_order INTEGER DEFAULT 0,
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS skills (
 -- 8. Research Interests Table
 CREATE TABLE IF NOT EXISTS research_interests (
     id SERIAL PRIMARY KEY,
-    interest VARCHAR(255),
+    interest TEXT,
     details TEXT,
     icon_name VARCHAR(100),
     details_json TEXT DEFAULT '',
@@ -107,12 +107,12 @@ CREATE TABLE IF NOT EXISTS research_interests (
 -- 9. Research Table
 CREATE TABLE IF NOT EXISTS research (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(255),
+    title TEXT,
     description TEXT,
     image_url TEXT,
     link TEXT,
     file_url TEXT,
-    status VARCHAR(100),
+    status TEXT,
     date_text VARCHAR(100),
     details_json TEXT DEFAULT '',
     sort_order INTEGER DEFAULT 0,
@@ -122,9 +122,9 @@ CREATE TABLE IF NOT EXISTS research (
 -- 10. Publications Table
 CREATE TABLE IF NOT EXISTS publications (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(255),
+    title TEXT,
     thumbnail_url TEXT,
-    journal_name VARCHAR(255),
+    journal_name TEXT,
     pub_year VARCHAR(20),
     authors TEXT,
     introduction TEXT,
@@ -179,9 +179,9 @@ CREATE TABLE IF NOT EXISTS social_links (
 -- 15. Newspapers Table
 CREATE TABLE IF NOT EXISTS newspapers (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    title_bn VARCHAR(255) DEFAULT '',
-    title_ko VARCHAR(255) DEFAULT '',
+    title TEXT NOT NULL,
+    title_bn TEXT DEFAULT '',
+    title_ko TEXT DEFAULT '',
     short_description TEXT DEFAULT '',
     short_description_bn TEXT DEFAULT '',
     short_description_ko TEXT DEFAULT '',

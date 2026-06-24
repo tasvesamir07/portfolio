@@ -45,6 +45,7 @@ Thumbs.db
 
 *.md
 *.sql
+!server/migrations/*.sql
 *.txt
 *.env
 *.env.*
