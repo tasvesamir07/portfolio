@@ -6,7 +6,6 @@ import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
-import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 import { getTransformedUrl } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 
@@ -49,8 +48,8 @@ const Gallery = () => {
     });
 
     const loading = imagesLoading || categoriesLoading;
-    const translatedImages = useTranslatedDataRows(images, ['caption', 'category'], language);
-    const translatedCategories = useTranslatedDataRows(categories, ['name'], language);
+    const translatedImages = images;
+    const translatedCategories = categories;
     const noDataLabel = getNoDataLabel(language);
 
 

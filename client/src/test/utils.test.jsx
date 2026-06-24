@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+
 import {
     TOKEN_STORAGE_KEY,
     SESSION_CHANGED_EVENT,
@@ -19,7 +19,6 @@ import {
     extractHighlights,
     extractBioBlocks
 } from '../utils/aboutHelpers';
-import { useTranslatedDataRows } from '../utils/useTranslatedDataRows';
 
 // Mock translator
 vi.mock('../i18n/translator', () => ({
@@ -171,24 +170,4 @@ describe('Client Utility Modules Tests', () => {
         });
     });
 
-    describe('useTranslatedDataRows.js', () => {
-        it('should translate fields on language change', async () => {
-            const rows = [
-                { id: '1', title: 'Developer', company: 'Google' }
-            ];
-            const fields = ['title', 'company'];
-
-            const { result } = renderHook(() => useTranslatedDataRows(rows, fields, 'bn'));
-
-            // Initial render should show originals
-            expect(result.current).toEqual(rows);
-
-            // Wait for translation promise resolution
-            await waitFor(() => {
-                expect(result.current).toEqual([
-                    { id: '1', title: 'Developer_translated', company: 'Google_translated' }
-                ]);
-            });
-        });
-    });
 });
