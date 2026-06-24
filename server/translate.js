@@ -258,6 +258,22 @@ const trimCache = () => {
     }
 };
 
+const postProcessTranslation = (str, targetLanguage) => {
+    if (!str || targetLanguage !== 'bn') return str;
+    const banglaDigits = {'0': '০', '1': '১', '2': '২', '3': '৩', '4': '৪', '5': '৫', '6': '৬', '7': '৭', '8': '৮', '9': '৯'};
+    const segments = str.split(/(<[^>]+>)/g);
+    return segments.map((segment) => {
+        if (!segment) return '';
+        if (segment.startsWith('<')) return segment;
+        const words = segment.split(/(\s+)/);
+        return words.map((word) => {
+            if (word.includes('@') && word.includes('.')) return word;
+            if (word.startsWith('http://') || word.startsWith('https://') || word.startsWith('www.')) return word;
+            return word.replace(/[0-9]/g, (w) => banglaDigits[w]);
+        }).join('');
+    }).join('');
+};
+
 const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLanguage = 'en') => {
     const cleanText = (str) => str.replace(/<[^>]+>/g, '').replace(/[:.]/g, '').trim().toLowerCase();
     const cleaned = cleanText(text);
@@ -281,7 +297,7 @@ const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLan
         // Refresh insertion order for basic LRU behavior.
         translationCache.delete(key);
         translationCache.set(key, value);
-        return value;
+        return postProcessTranslation(value, targetLanguage);
     }
 
     // 2. Check L2 Redis Cache
@@ -292,7 +308,7 @@ const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLan
                 // Populate L1 cache
                 translationCache.set(key, value);
                 trimCache();
-                return value;
+                return postProcessTranslation(value, targetLanguage);
             }
         } catch (e) {
             console.warn('[Auto-Translate] Redis get failed:', e.message);
@@ -432,7 +448,7 @@ const translateText = async (text = '', language = 'en') => {
             await writeCachedTranslation(text, targetLanguage, sourceLanguage, resolved);
         }
 
-        return decodeHtmlEntities(resolved);
+        return postProcessTranslation(decodeHtmlEntities(resolved), targetLanguage);
     } catch (error) {
         console.error(`Translation proxy failed:`, error.message);
         return text;
