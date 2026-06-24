@@ -9,7 +9,7 @@ const StructuredDetails = ({
     pairLabelClassName = 'text-gray-800 dark:text-foreground font-semibold',
     pairValueClassName = 'text-gray-700 dark:text-foreground/80 leading-8 break-words [&_a]:text-sky-500 [&_a]:underline [&_a]:underline-offset-4',
     valueStackClassName = 'space-y-2',
-    layoutClassName = 'grid grid-cols-1 md:grid-cols-[150px_minmax(0,1fr)] gap-x-4 gap-y-2 md:gap-y-4 items-start'
+    layoutClassName = 'grid grid-cols-1 md:grid-cols-[180px_minmax(0,1fr)] gap-x-4 gap-y-2 md:gap-y-4 items-start'
 }) => {
     if (!items.length) return null;
 

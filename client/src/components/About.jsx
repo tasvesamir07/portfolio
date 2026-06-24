@@ -77,7 +77,7 @@ const About = ({ data }) => {
                                                 <div className="w-2.5 h-2.5 mt-2 bg-[#ceb079] rotate-45" />
                                                 <div className="min-w-0 max-w-full space-y-1">
                                                     {label ? (
-                                                        <div className="flex flex-col sm:grid sm:grid-cols-[150px_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1 sm:gap-y-2 min-w-0 max-w-full">
+                                                        <div className="flex flex-col sm:grid sm:grid-cols-[180px_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1 sm:gap-y-2 min-w-0 max-w-full">
                                                             <span
                                                                 className="about-highlight-text text-[#0b3b75] dark:text-brand-gold font-extrabold sm:whitespace-nowrap pr-1.5"
                                                                 dangerouslySetInnerHTML={{ __html: cleanHtmlInline(label) + ':' }}
