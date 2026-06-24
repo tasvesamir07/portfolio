@@ -13,10 +13,11 @@ const getNeonSql = () => {
 const getPool = () => {
     if (pool) return pool;
 
-    const isProduction = process.env.NODE_ENV === 'production' || process.env.CF_PAGES;
     const connectionString = process.env.DATABASE_URL;
+    const isNeon = connectionString && connectionString.includes('neon.tech');
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.CF_PAGES;
     
-    if (connectionString && isProduction) {
+    if (connectionString && isProduction && isNeon) {
         const { Pool } = require('@neondatabase/serverless');
         pool = new Pool({
             connectionString,
@@ -44,8 +45,11 @@ const getPool = () => {
 
 module.exports = {
     query: async (text, params) => {
+        const connectionString = process.env.DATABASE_URL;
+        const isNeon = connectionString && connectionString.includes('neon.tech');
         const isProduction = process.env.NODE_ENV === 'production' || process.env.CF_PAGES;
-        if (isProduction && process.env.DATABASE_URL) {
+        
+        if (isProduction && isNeon) {
             const sql = getNeonSql();
             const result = await sql.query(text, params);
             return Array.isArray(result) ? { rows: result } : result;
