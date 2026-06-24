@@ -27,16 +27,16 @@ router.get('/', async (req, res) => {
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         let data = localizeDataObject(result.rows, language);
 
-        const { normalizeTargetLanguage, shouldServerTranslateResponse, translateResponseData } = require('../middleware/autoTranslate');
-        const targetLang = normalizeTargetLanguage(language);
-        if (targetLang !== 'en' && shouldServerTranslateResponse(req, targetLang)) {
-            data = await translateResponseData(data, targetLang);
-        }
-
         res.setHeader('X-Total-Count', total);
 
         if (data.length < 50) {
             return res.json(data);
+        }
+
+        const { normalizeTargetLanguage, shouldServerTranslateResponse, translateResponseData } = require('../middleware/autoTranslate');
+        const targetLang = normalizeTargetLanguage(language);
+        if (targetLang !== 'en' && shouldServerTranslateResponse(req, targetLang)) {
+            data = await translateResponseData(data, targetLang);
         }
 
         res.setHeader('Content-Type', 'application/json');

@@ -371,7 +371,7 @@ const translateText = async (text = '', language = 'en') => {
         // Retry in smaller pieces when long mixed content comes back mostly unchanged.
         if (
             looksLikeBrokenTranslation(resolved, text, targetLanguage)
-            && (String(text).includes('\n') || String(text).length > 220)
+            && fragments.length > 1
         ) {
             if (fragments.length > 1) {
                 const translatedFragments = await processWithConcurrency(
