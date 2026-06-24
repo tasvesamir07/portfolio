@@ -335,7 +335,7 @@ const AdminGallery = () => {
                                                 )}
                                                 <div>
                                                     <div className="font-bold text-gray-900 text-base leading-tight">
-                                                        {item.caption || 'Gallery Image'}
+                                                        {decodeHtmlPreview(item.caption) || 'Gallery Image'}
                                                     </div>
                                                 </div>
                                             </div>

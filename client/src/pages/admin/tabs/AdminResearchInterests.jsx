@@ -61,7 +61,7 @@ const AdminResearchInterests = () => {
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
-                    {item.interest || 'Research Interest'}
+                    {decodeHtmlPreview(item.interest) || 'Research Interest'}
                 </div>
             </td>
             <td className="py-4 px-6 text-gray-600 font-medium max-w-md">

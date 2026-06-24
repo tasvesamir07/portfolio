@@ -190,10 +190,7 @@ const AdminAbout = () => {
                                     <tr className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
                                         <td className="py-4 px-6">
                                             <div className="font-bold text-gray-900 text-base leading-tight">
-                                                <RenderInlineHtml html={content.name || 'Biography'} />
-                                            </div>
-                                            <div className="text-[10px] font-mono text-gray-400 mt-0.5 uppercase">
-                                                <RenderInlineHtml html={content.title || 'No Title'} />
+                                                {decodeHtmlPreview(content.name) || 'Biography'}
                                             </div>
                                         </td>
                                         <td className="py-4 px-6 text-gray-600 font-medium max-w-md">

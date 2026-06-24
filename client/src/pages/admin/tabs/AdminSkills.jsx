@@ -70,7 +70,7 @@ const AdminSkills = () => {
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
-                    {item.category || 'Skill Category'}
+                    {decodeHtmlPreview(item.category) || 'Skill Category'}
                 </div>
             </td>
             <td className="py-4 px-6 text-gray-600 font-medium max-w-md">

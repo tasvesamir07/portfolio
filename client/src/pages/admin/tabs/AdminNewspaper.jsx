@@ -59,18 +59,8 @@ const AdminNewspaper = () => {
             </td>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
-                    {item.title ? <RenderInlineHtml html={item.title} /> : 'Untitled Article'}
+                    {decodeHtmlPreview(item.title) || 'Untitled Article'}
                 </div>
-                {item.link_url && (
-                    <a 
-                        href={item.link_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-xs text-brand-blue hover:underline font-mono truncate max-w-[200px] block mt-1"
-                    >
-                        {item.link_url}
-                    </a>
-                )}
             </td>
             <td className="py-4 px-6 text-gray-600 font-medium max-w-xs md:max-w-md">
                 <div className="truncate text-xs">
