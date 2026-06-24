@@ -137,7 +137,7 @@ const researchSchema = z.object({
 });
 
 const researchInterestsSchema = z.object({
-    interest: reqString,
+    interest: optString,
     details: optString,
     icon_name: optString,
     details_json: optString
