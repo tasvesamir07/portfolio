@@ -98,10 +98,10 @@ const AdminTrainings = () => {
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
-                    {item.title || 'Training Record'}
+                    {decodeHtmlPreview(item.title) || 'Training Record'}
                 </div>
                 <div className="text-[10px] font-mono text-gray-400 mt-0.5 uppercase">
-                    {item.instructor} ({item.date_text})
+                    {decodeHtmlPreview(item.instructor)} ({item.date_text})
                 </div>
             </td>
             <td className="py-4 px-6 text-gray-600 font-medium max-w-md">

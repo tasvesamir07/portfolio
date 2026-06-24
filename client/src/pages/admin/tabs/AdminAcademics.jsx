@@ -91,10 +91,10 @@ const AdminAcademics = () => {
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
-                    {item.degree || item.institution || 'Academic Qualification'}
+                    {decodeHtmlPreview(item.degree) || decodeHtmlPreview(item.institution) || 'Academic Qualification'}
                 </div>
                 <div className="text-[10px] font-mono text-gray-400 mt-0.5 uppercase">
-                    {item.institution} ({item.start_year} - {item.end_year})
+                    {decodeHtmlPreview(item.institution)} ({item.start_year} - {item.end_year})
                 </div>
             </td>
             <td className="py-4 px-6 text-gray-600 font-medium max-w-md">
