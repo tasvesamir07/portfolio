@@ -443,14 +443,20 @@ const translateViaGoogleEndpoint = async (text = '', sourceLanguage = 'auto', ta
         client: 'gtx',
         sl: sourceLanguage || 'auto',
         tl: targetLanguage,
-        dt: 't',
+        dt: 't'
+    });
+
+    const body = new URLSearchParams({
         q: text
     });
 
     const response = await fetch(`${GOOGLE_TRANSLATE_ENDPOINT}?${params.toString()}`, {
+        method: 'POST',
         headers: {
-            'Accept': 'application/json, text/plain, */*'
-        }
+            'Accept': 'application/x-www-form-urlencoded, application/json, text/plain, */*',
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: body.toString()
     });
 
     if (!response.ok) {
