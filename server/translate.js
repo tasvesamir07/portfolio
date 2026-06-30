@@ -42,6 +42,7 @@ const translationCache = new Map();
 const MAX_CACHE_ENTRIES = 6000;
 const CHUNK_CONCURRENCY = 8;
 const CACHE_VERSION = 'v7';
+const REDIS_RESPONSE_CACHE_PREFIX = 'response_cache';
 const GOOGLE_TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
@@ -556,6 +557,60 @@ const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLan
     return null;
 };
 
+const readCachedTranslations = async (texts, targetLanguage, sourceLanguage) => {
+    const keys = texts.map(t => getCacheKey(t, targetLanguage, sourceLanguage));
+    const results = new Map();
+    
+    const cleanText = (str) => str.replace(/<[^>]+>/g, '').replace(/[:.]/g, '').trim().toLowerCase();
+    const l1MissKeys = [];
+    
+    for (let i = 0; i < keys.length; i++) {
+        const text = texts[i];
+        const key = keys[i];
+        
+        const cleaned = cleanText(text);
+        if (cleaned === 'passing year') {
+            const normTarget = normalizeTargetLanguage(targetLanguage);
+            if (normTarget === 'bn') {
+                const hasParagraph = text.toLowerCase().includes('<p>');
+                results.set(text, hasParagraph ? '<p>পাসের বছর</p>' : 'পাসের বছর');
+                continue;
+            }
+            if (normTarget === 'ko') {
+                const hasParagraph = text.toLowerCase().includes('<p>');
+                results.set(text, hasParagraph ? '<p>졸업 연도</p>' : '졸업 연도');
+                continue;
+            }
+        }
+        
+        if (translationCache.has(key)) {
+            const value = translationCache.get(key);
+            translationCache.delete(key);
+            translationCache.set(key, value);
+            results.set(text, postProcessTranslation(value, targetLanguage));
+        } else {
+            l1MissKeys.push({ text, key });
+        }
+    }
+    
+    if (redis && l1MissKeys.length > 0) {
+        try {
+            const redisValues = await redis.mget(...l1MissKeys.map(m => m.key));
+            for (let i = 0; i < l1MissKeys.length; i++) {
+                const value = redisValues[i];
+                if (value) {
+                    translationCache.set(l1MissKeys[i].key, value);
+                    results.set(l1MissKeys[i].text, postProcessTranslation(value, targetLanguage));
+                }
+            }
+        } catch (e) {
+            console.warn('[Auto-Translate] Redis mget failed:', e.message);
+        }
+    }
+    
+    return (text) => results.get(text) ?? null;
+};
+
 const writeCachedTranslation = async (text = '', targetLanguage = 'en', sourceLanguage = 'en', translated = '') => {
     const key = getCacheKey(text, targetLanguage, sourceLanguage);
     
@@ -740,25 +795,38 @@ const translateText = async (text = '', language = 'en') => {
 const translateTexts = async (texts = [], language = 'en') => {
     if (!texts || texts.length === 0) return [];
 
+    const targetLanguage = normalizeTargetLanguage(language);
     const normalizedTexts = texts.map((text) => String(text || ''));
     const uniqueTexts = [...new Set(normalizedTexts)];
     
-    const unresolved = [];
-    await Promise.all(uniqueTexts.map(async (text) => {
-        const targetLanguage = normalizeTargetLanguage(language);
-        if (!needsTranslationForTarget(text, targetLanguage)) return;
+    const sourceLanguageGroups = {};
+    for (const text of uniqueTexts) {
+        if (!needsTranslationForTarget(text, targetLanguage)) continue;
         const sourceLanguage = detectSourceLanguage(text, targetLanguage);
-        if (sourceLanguage === targetLanguage) return;
-        const cached = await readCachedTranslation(text, targetLanguage, sourceLanguage);
-        if (cached == null) {
-            unresolved.push(text);
+        if (sourceLanguage === targetLanguage) continue;
+        
+        if (!sourceLanguageGroups[sourceLanguage]) {
+            sourceLanguageGroups[sourceLanguage] = [];
+        }
+        sourceLanguageGroups[sourceLanguage].push(text);
+    }
+    
+    const cacheReaders = {};
+    const unresolved = [];
+    
+    await Promise.all(Object.entries(sourceLanguageGroups).map(async ([sourceLanguage, groupTexts]) => {
+        const reader = await readCachedTranslations(groupTexts, targetLanguage, sourceLanguage);
+        cacheReaders[sourceLanguage] = reader;
+        
+        for (const text of groupTexts) {
+            if (reader(text) == null) {
+                unresolved.push(text);
+            }
         }
     }));
 
     if (unresolved.length > 0) {
         const groups = {};
-        const targetLanguage = normalizeTargetLanguage(language);
-        
         for (const text of unresolved) {
             const sourceLanguage = detectSourceLanguage(text, targetLanguage);
             const groupKey = `${sourceLanguage}::${targetLanguage}`;
@@ -814,11 +882,11 @@ const translateTexts = async (texts = [], language = 'en') => {
     }
 
     return Promise.all(normalizedTexts.map(async (text) => {
-        const targetLanguage = normalizeTargetLanguage(language);
         if (!needsTranslationForTarget(text, targetLanguage)) return text;
         const sourceLanguage = detectSourceLanguage(text, targetLanguage);
         if (sourceLanguage === targetLanguage) return text;
-        const cached = await readCachedTranslation(text, targetLanguage, sourceLanguage);
+        
+        const cached = cacheReaders[sourceLanguage]?.(text);
         return decodeHtmlEntities(cached != null ? cached : text);
     }));
 };
@@ -902,7 +970,21 @@ const getCacheStats = () => {
     };
 };
 
+const clearRedisResponseCache = async (language) => {
+    if (!redis || !language) return;
+    try {
+        const keys = await redis.keys(`${REDIS_RESPONSE_CACHE_PREFIX}::${language}::*`);
+        if (keys && keys.length > 0) {
+            await redis.del(...keys);
+        }
+    } catch (e) {
+        console.warn('[Auto-Translate] Failed to clear Redis response cache:', e.message);
+    }
+};
+
 module.exports = {
+    redis,
+    clearRedisResponseCache,
     translateText,
     translateTexts,
     getAllCachedTranslations,

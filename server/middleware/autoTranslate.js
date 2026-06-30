@@ -1,4 +1,4 @@
-const { translateTexts } = require('../translate');
+const { translateTexts, redis } = require('../translate');
 const fs = require('fs');
 const path = require('path');
 
@@ -405,6 +405,9 @@ const translateResponseData = async (payload, language = 'en') => {
     return applyTranslations(payload, translationMap, language);
 };
 
+const REDIS_RESPONSE_CACHE_PREFIX = 'response_cache';
+const REDIS_RESPONSE_CACHE_TTL = 86400; // 24 hours
+
 const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
     const normalizedLanguage = normalizeTargetLanguage(language);
     if (!shouldServerTranslateResponse(req, normalizedLanguage)) {
@@ -412,6 +415,8 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
     }
 
     const cacheKey = buildResponseTranslationCacheKey(req, normalizedLanguage);
+
+    // 1. Check L1 (in-memory) — instant for warm instances
     if (responseTranslationCache.has(cacheKey)) {
         res.setHeader(RESPONSE_TRANSLATED_HEADER, '1');
         res.setHeader('Cache-Control', 'no-cache');
@@ -419,6 +424,26 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
         return responseTranslationCache.get(cacheKey);
     }
 
+    // 2. Check L2 (Redis full response cache) — shared across instances
+    const redisResponseKey = `${REDIS_RESPONSE_CACHE_PREFIX}::${normalizedLanguage}::${req.originalUrl || req.path || ''}`;
+    if (redis) {
+        try {
+            const cachedResponse = await redis.get(redisResponseKey);
+            if (cachedResponse) {
+                const parsed = JSON.parse(cachedResponse);
+                responseTranslationCache.set(cacheKey, parsed);
+                trimResponseTranslationCache();
+                res.setHeader(RESPONSE_TRANSLATED_HEADER, '1');
+                res.setHeader('Cache-Control', 'no-cache');
+                res.setHeader('Vary', 'Accept-Encoding, x-translate-language');
+                return parsed;
+            }
+        } catch (e) {
+            console.warn('[Auto-Translate] Redis response cache get failed:', e.message);
+        }
+    }
+
+    // 3. Translate fresh
     let timeoutId;
     try {
         const timeoutPromise = new Promise((_, reject) => {
@@ -431,8 +456,16 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
         ]);
         clearTimeout(timeoutId);
 
+        // Store in L1
         responseTranslationCache.set(cacheKey, translated);
         trimResponseTranslationCache();
+
+        // Store in L2 (Redis) — fire and forget, non-blocking
+        if (redis && translated) {
+            redis.set(redisResponseKey, JSON.stringify(translated), { ex: REDIS_RESPONSE_CACHE_TTL })
+                .catch(e => console.warn('[Auto-Translate] Redis response cache set failed:', e.message));
+        }
+
         res.setHeader(RESPONSE_TRANSLATED_HEADER, '1');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Vary', 'Accept-Encoding, x-translate-language');
@@ -543,6 +576,16 @@ const middleware = (req, res, next) => {
 
 
 const clearResponseCache = (resourcePrefix) => {
+    if (resourcePrefix && ['en', 'bn', 'ko'].includes(resourcePrefix)) {
+        const prefix = `${RESPONSE_TRANSLATION_CACHE_VERSION}::${resourcePrefix}::`;
+        for (const key of responseTranslationCache.keys()) {
+            if (key.startsWith(prefix)) {
+                responseTranslationCache.delete(key);
+            }
+        }
+        return;
+    }
+
     if (!resourcePrefix) {
         responseTranslationCache.clear();
         return;

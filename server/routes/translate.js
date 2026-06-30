@@ -5,7 +5,8 @@ const {
     translateTexts, 
     getAllCachedTranslations, 
     updateCachedTranslation, 
-    deleteCachedTranslation 
+    deleteCachedTranslation,
+    clearRedisResponseCache
 } = require('../translate');
 const { clearResponseCache } = require('../middleware/autoTranslate');
 
@@ -41,8 +42,10 @@ router.put('/cache', authenticateToken, async (req, res) => {
         return res.status(400).json({ error: 'key and translatedText are required' });
     }
     try {
+        const targetLang = key.split('::')[2] || 'en';
         await updateCachedTranslation(key, translatedText);
-        clearResponseCache();
+        clearResponseCache(targetLang);
+        await clearRedisResponseCache(targetLang);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -57,8 +60,10 @@ router.delete('/cache', authenticateToken, async (req, res) => {
         return res.status(400).json({ error: 'key is required' });
     }
     try {
+        const deleteLang = targetKey.split('::')[2] || 'en';
         await deleteCachedTranslation(targetKey);
-        clearResponseCache();
+        clearResponseCache(deleteLang);
+        await clearRedisResponseCache(deleteLang);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });

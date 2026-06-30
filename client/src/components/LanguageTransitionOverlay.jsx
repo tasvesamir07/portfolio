@@ -14,7 +14,7 @@ const LABELS = {
     ko: '한국어'
 };
 
-const MIN_DISPLAY_MS = 1500;
+const MIN_DISPLAY_MS = 800;
 
 const LanguageTransitionOverlay = () => {
     const { language } = useI18n();

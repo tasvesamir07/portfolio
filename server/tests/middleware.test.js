@@ -31,7 +31,9 @@ jest.mock('../translate', () => ({
     getAllCachedTranslations: jest.fn().mockResolvedValue({ 'key': 'val' }),
     updateCachedTranslation: jest.fn().mockResolvedValue(true),
     deleteCachedTranslation: jest.fn().mockResolvedValue(true),
-    getCacheStats: jest.fn().mockReturnValue({ l1Size: 10, maxEntries: 2000, redisConnected: false })
+    clearRedisResponseCache: jest.fn().mockResolvedValue(true),
+    getCacheStats: jest.fn().mockReturnValue({ l1Size: 10, maxEntries: 2000, redisConnected: false }),
+    redis: null
 }));
 
 describe('Server Middleware Tests', () => {
