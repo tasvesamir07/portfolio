@@ -18,13 +18,13 @@ if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
 }
 
 const CHUNK_SIZES: Record<string, Record<string, number>> = {
-    'en': { 'bn': 280, 'ko': 250 },
-    'bn': { 'en': 400, 'ko': 250 },
-    'ko': { 'en': 280, 'bn': 200 },
+    'en': { 'bn': 3000, 'ko': 3000 },
+    'bn': { 'en': 3000, 'ko': 3000 },
+    'ko': { 'en': 3000, 'bn': 3000 },
 };
 
 const getMaxChunkSize = (sourceLang: string, targetLang: string): number => {
-    return CHUNK_SIZES[sourceLang]?.[targetLang] ?? 220;
+    return CHUNK_SIZES[sourceLang]?.[targetLang] ?? 3000;
 };
 
 let glossary: Record<string, Record<string, string>> = {};
@@ -40,7 +40,7 @@ try {
 let translator: any = null;
 const translationCache = new Map<string, string>();
 const MAX_CACHE_ENTRIES = 6000;
-const CHUNK_CONCURRENCY = 8;
+const CHUNK_CONCURRENCY = 3;
 const CACHE_VERSION = 'v7';
 const REDIS_RESPONSE_CACHE_PREFIX = 'response_cache';
 const GOOGLE_TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
@@ -735,8 +735,8 @@ const translateText = async (text = '', language = 'en'): Promise<string> => {
             }
         } else {
             const hasHtml = chunks.some(c => HTML_REGEX.test(c.text));
-            if (!hasHtml) {
-                const joinedChunks = chunks.map(c => c.text).join('\n');
+            const joinedChunks = chunks.map(c => c.text).join('\n');
+            if (!hasHtml && joinedChunks.length <= 4000) {
                 try {
                     const prefixMap = await translateOverlapPrefixes(chunks, sourceLanguage, targetLanguage);
                     const translatedJoined = await translateWithFallbacks(joinedChunks, sourceLanguage, targetLanguage);
