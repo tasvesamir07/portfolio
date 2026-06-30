@@ -17,16 +17,36 @@ if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
     console.warn('[Auto-Translate] Upstash Redis credentials not set. Falling back to local/memory cache.');
 }
 
+const CHUNK_SIZES = {
+  'en': { 'bn': 280, 'ko': 150 },   // source → target max chars
+  'bn': { 'en': 400, 'ko': 150 },
+  'ko': { 'en': 280, 'bn': 200 },
+};
+
+const getMaxChunkSize = (sourceLang, targetLang) => {
+    return CHUNK_SIZES[sourceLang]?.[targetLang] ?? 220;
+};
+
+let glossary = {};
+try {
+    const glossaryPath = path.join(__dirname, 'glossary.json');
+    if (fs.existsSync(glossaryPath)) {
+        glossary = JSON.parse(fs.readFileSync(glossaryPath, 'utf-8'));
+    }
+} catch (e) {
+    console.warn('[Auto-Translate] Failed to load glossary:', e.message);
+}
+
 let translator = null;
 const translationCache = new Map();
 const MAX_CACHE_ENTRIES = 6000;
 const CHUNK_CONCURRENCY = 8;
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const GOOGLE_TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
 const LATIN_REGEX = /[A-Za-z]/;
-const MAX_RETRY_CHUNK_CHARS = 220;
+const HTML_REGEX = /<[a-z][\s\S]*>/i;
 
 const CACHE_FILE = path.join(__dirname, '.translation-cache.json');
 
@@ -130,7 +150,7 @@ const needsTranslationForTarget = (text = '', targetLanguage = 'en') => {
     return false;
 };
 
-const chunkTextByLength = (text = '', maxChars = MAX_RETRY_CHUNK_CHARS) => {
+const chunkTextByLength = (text = '', maxChars = 220) => {
     const source = String(text || '');
     if (!source.trim() || source.length <= maxChars) {
         return [source];
@@ -157,25 +177,243 @@ const chunkTextByLength = (text = '', maxChars = MAX_RETRY_CHUNK_CHARS) => {
     return chunks.length ? chunks : [source];
 };
 
-const splitForRetry = (text = '') => {
+const tokenizeSemantically = (text) => {
+    const tokens = [];
+    const paragraphs = text.split(/(\r?\n\r?\n+)/);
+    
+    for (const para of paragraphs) {
+        if (!para) continue;
+        if (/^\r?\n\r?\n+$/.test(para)) {
+            tokens.push({ text: para, isSeparator: true });
+            continue;
+        }
+        
+        let sentencesAndSep;
+        if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+            try {
+                let locale = 'en';
+                if (BANGLA_REGEX.test(para)) locale = 'bn';
+                else if (HANGUL_REGEX.test(para)) locale = 'ko';
+                
+                const segmenter = new Intl.Segmenter(locale, { granularity: 'sentence' });
+                const segments = [...segmenter.segment(para)];
+                sentencesAndSep = [];
+                for (const seg of segments) {
+                    sentencesAndSep.push(seg.segment);
+                }
+            } catch {
+                sentencesAndSep = para.split(/(?<=[.!?\u0964])(\s+)/);
+            }
+        } else {
+            sentencesAndSep = para.split(/(?<=[.!?\u0964])(\s+)/);
+        }
+        
+        for (const item of sentencesAndSep) {
+            if (!item) continue;
+            if (/^\s+$/.test(item)) {
+                tokens.push({ text: item, isSeparator: true });
+                continue;
+            }
+            
+            const clausesAndSep = item.split(/(?<=[,;:])(\s+)/);
+            for (const subItem of clausesAndSep) {
+                if (!subItem) continue;
+                if (/^\s+$/.test(subItem)) {
+                    tokens.push({ text: subItem, isSeparator: true });
+                    continue;
+                }
+                
+                tokens.push({ text: subItem, isSeparator: false });
+            }
+        }
+    }
+    
+    return tokens;
+};
+
+const chunkTokens = (tokens, maxChars) => {
+    const chunks = [];
+    let currentChunk = [];
+    let currentLen = 0;
+    
+    for (const token of tokens) {
+        if (token.isSeparator) {
+            if (currentChunk.length > 0) {
+                currentChunk.push(token);
+                currentLen += token.text.length;
+            }
+            continue;
+        }
+        
+        const text = token.text;
+        if (text.length > maxChars) {
+            const wordTokens = text.split(/(\s+)/);
+            for (const wt of wordTokens) {
+                if (!wt) continue;
+                const isSep = /^\s+$/.test(wt);
+                
+                if (isSep) {
+                    if (currentChunk.length > 0) {
+                        currentChunk.push({ text: wt, isSeparator: true });
+                        currentLen += wt.length;
+                    }
+                } else {
+                    if (wt.length > maxChars) {
+                        let pos = 0;
+                        while (pos < wt.length) {
+                            const part = wt.slice(pos, pos + maxChars);
+                            if (currentChunk.length > 0) {
+                                chunks.push(currentChunk);
+                                currentChunk = [];
+                                currentLen = 0;
+                            }
+                            chunks.push([{ text: part, isSeparator: false }]);
+                            pos += maxChars;
+                        }
+                    } else if (currentLen + wt.length > maxChars) {
+                        if (currentChunk.length > 0) {
+                            chunks.push(currentChunk);
+                        }
+                        currentChunk = [{ text: wt, isSeparator: false }];
+                        currentLen = wt.length;
+                    } else {
+                        currentChunk.push({ text: wt, isSeparator: false });
+                        currentLen += wt.length;
+                    }
+                }
+            }
+        } else if (currentLen + text.length > maxChars) {
+            while (currentChunk.length > 0 && currentChunk[currentChunk.length - 1].isSeparator) {
+                currentChunk.pop();
+            }
+            if (currentChunk.length > 0) {
+                chunks.push(currentChunk);
+            }
+            currentChunk = [token];
+            currentLen = text.length;
+        } else {
+            currentChunk.push(token);
+            currentLen += text.length;
+        }
+    }
+    
+    if (currentChunk.length > 0) {
+        while (currentChunk.length > 0 && currentChunk[currentChunk.length - 1].isSeparator) {
+            currentChunk.pop();
+        }
+        if (currentChunk.length > 0) {
+            chunks.push(currentChunk);
+        }
+    }
+    
+    return chunks;
+};
+
+const chunkWithOverlap = (text, maxChars) => {
+    const tokens = tokenizeSemantically(text);
+    const chunks = chunkTokens(tokens, maxChars);
+    
+    const result = [];
+    for (let i = 0; i < chunks.length; i++) {
+        const currentChunkTokens = chunks[i];
+        let overlapPrefix = null;
+        
+        if (i > 0) {
+            const prevChunkTokens = chunks[i - 1];
+            let lastNonSepIdx = -1;
+            for (let j = prevChunkTokens.length - 1; j >= 0; j--) {
+                if (!prevChunkTokens[j].isSeparator) {
+                    lastNonSepIdx = j;
+                    break;
+                }
+            }
+            if (lastNonSepIdx !== -1) {
+                overlapPrefix = prevChunkTokens[lastNonSepIdx].text;
+            }
+        }
+        
+        let chunkText = currentChunkTokens.map(t => t.text).join('');
+        if (overlapPrefix) {
+            chunkText = overlapPrefix + " " + chunkText;
+        }
+        
+        result.push({
+            text: chunkText,
+            overlapPrefix: overlapPrefix
+        });
+    }
+    
+    return result;
+};
+
+const splitForRetry = (text = '', maxChars = 220) => {
     const normalized = String(text || '');
-    const parts = normalized
-        .split(/(\r?\n+|(?<=[.!?\u0964])\s+)/)
-        .filter((part) => part != null && part !== '');
-
-    if (parts.length > 1) {
-        return parts;
+    if (normalized.length <= maxChars) {
+        return [normalized];
     }
+    
+    const tokens = tokenizeSemantically(normalized);
+    const chunks = chunkTokens(tokens, maxChars);
+    return chunks.map(chunk => chunk.map(t => t.text).join(''));
+};
 
-    const clauseParts = normalized
-        .split(/(?<=[,;:])(\s+)/)
-        .filter((part) => part != null && part !== '');
-
-    if (clauseParts.length > 1) {
-        return clauseParts;
+const stripPrefix = (text, prefix) => {
+    if (!prefix || !text) return text;
+    const cleanText = text.trim();
+    const cleanPrefix = prefix.trim();
+    if (cleanText.startsWith(cleanPrefix)) {
+        return cleanText.slice(cleanPrefix.length).trim();
     }
+    const index = cleanText.indexOf(cleanPrefix);
+    if (index >= 0) {
+        return cleanText.slice(index + cleanPrefix.length).trim();
+    }
+    return cleanText;
+};
 
-    return chunkTextByLength(normalized);
+const protectGlossary = (text, sourceLang, targetLang) => {
+    if (!text || typeof text !== 'string') return { text, map: {} };
+    
+    let processed = text;
+    const map = {};
+    let counter = 0;
+    
+    const terms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+    
+    for (const term of terms) {
+        const replacement = glossary[term]?.[targetLang];
+        if (!replacement) continue;
+        
+        let sourceText = term;
+        if (sourceLang !== 'en') {
+            sourceText = glossary[term]?.[sourceLang];
+        }
+        if (!sourceText) continue;
+        
+        const escaped = sourceText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regexStr = sourceLang === 'en' ? `\\b${escaped}\\b` : escaped;
+        const regex = new RegExp(regexStr, 'gi');
+        
+        if (regex.test(processed)) {
+            processed = processed.replace(regex, (match) => {
+                const placeholder = `__GLOSS_${counter}__`;
+                map[placeholder] = replacement;
+                counter++;
+                return placeholder;
+            });
+        }
+    }
+    
+    return { text: processed, map };
+};
+
+const restoreGlossary = (text, map) => {
+    if (!text || typeof text !== 'string') return text;
+    let processed = text;
+    for (const [placeholder, replacement] of Object.entries(map)) {
+        processed = processed.replace(new RegExp(placeholder, 'g'), replacement);
+    }
+    return processed;
 };
 
 const looksLikeBrokenTranslation = (translated = '', original = '', targetLanguage = 'en') => {
@@ -362,6 +600,49 @@ const processWithConcurrency = async (items, concurrency, processor) => {
  * Single-string translation proxy. 
  * Now uses the 'translate' package for more robust processing.
  */
+const translateOverlapPrefixes = async (chunks, sourceLanguage, targetLanguage) => {
+    const prefixes = [...new Set(chunks.map(c => c.overlapPrefix).filter(Boolean))];
+    const prefixMap = new Map();
+    if (prefixes.length === 0) return prefixMap;
+
+    try {
+        const translations = await translateTexts(prefixes, targetLanguage);
+        prefixes.forEach((prefix, index) => {
+            prefixMap.set(prefix, translations[index] || prefix);
+        });
+    } catch (err) {
+        console.warn(`[Auto-Translate] Batch translation of overlap prefixes failed: ${err.message}. Prefix stripping may be degraded.`);
+    }
+
+    return prefixMap;
+};
+
+const translateChunksIndividually = async (chunks, sourceLanguage, targetLanguage, glossaryMap) => {
+    const prefixMap = await translateOverlapPrefixes(chunks, sourceLanguage, targetLanguage);
+    const translatedFragments = await processWithConcurrency(
+        chunks,
+        CHUNK_CONCURRENCY,
+        async (chunk) => {
+            try {
+                let trans = await translateWithFallbacks(chunk.text, sourceLanguage, targetLanguage);
+                if (chunk.overlapPrefix) {
+                    const translatedPrefix = prefixMap.get(chunk.overlapPrefix);
+                    if (translatedPrefix) {
+                        trans = stripPrefix(trans, translatedPrefix);
+                    }
+                }
+                return trans;
+            } catch {
+                return chunk.text;
+            }
+        }
+    );
+    
+    const joined = translatedFragments.join(' ');
+    const restored = restoreGlossary(joined, glossaryMap);
+    return restored;
+};
+
 const translateText = async (text = '', language = 'en') => {
     const targetLanguage = normalizeTargetLanguage(language);
     const sourceLanguage = detectSourceLanguage(text, targetLanguage);
@@ -370,7 +651,6 @@ const translateText = async (text = '', language = 'en') => {
         return text;
     }
 
-    // Manual overrides for specific terms (e.g. Passing Year -> Graduation Year translation)
     const cleanText = (str) => str.replace(/<[^>]+>/g, '').replace(/[:.]/g, '').trim().toLowerCase();
     const cleaned = cleanText(text);
     if (cleaned === 'passing year') {
@@ -394,53 +674,54 @@ const translateText = async (text = '', language = 'en') => {
     }
 
     try {
-        const fragments = splitForRetry(text);
-        if (fragments.length > 1 && (String(text).includes('\n') || String(text).length > 280)) {
-            const translatedFragments = await processWithConcurrency(
-                fragments,
-                CHUNK_CONCURRENCY,
-                (fragment) => translateText(fragment, language)
-            );
-            const resolved = translatedFragments.join('');
-
-            if (!looksLikeBrokenTranslation(resolved, text, targetLanguage)) {
-                await writeCachedTranslation(text, targetLanguage, sourceLanguage, resolved);
-                return resolved;
+        const { text: protectedText, map: glossaryMap } = protectGlossary(text, sourceLanguage, targetLanguage);
+        const maxChars = getMaxChunkSize(sourceLanguage, targetLanguage);
+        const chunks = chunkWithOverlap(protectedText, maxChars);
+        
+        let resolved;
+        if (chunks.length === 1) {
+            try {
+                const translatedChunk = await translateWithFallbacks(chunks[0].text, sourceLanguage, targetLanguage);
+                resolved = restoreGlossary(translatedChunk, glossaryMap);
+            } catch {
+                resolved = text;
             }
-        }
-
-        const translated = await translateWithFallbacks(text, sourceLanguage, targetLanguage);
-        let resolved = translated || text;
-
-        // Retry in smaller pieces when long mixed content comes back mostly unchanged.
-        if (
-            looksLikeBrokenTranslation(resolved, text, targetLanguage)
-            && fragments.length > 1
-        ) {
-            if (fragments.length > 1) {
-                const translatedFragments = await processWithConcurrency(
-                    fragments,
-                    CHUNK_CONCURRENCY,
-                    async (fragment) => {
-                        if (!fragment.trim() || !needsTranslationForTarget(fragment, targetLanguage)) {
-                            return fragment;
+        } else {
+            const hasHtml = chunks.some(c => HTML_REGEX.test(c.text));
+            if (!hasHtml) {
+                const joinedChunks = chunks.map(c => c.text).join('\n');
+                try {
+                    const prefixMap = await translateOverlapPrefixes(chunks, sourceLanguage, targetLanguage);
+                    const translatedJoined = await translateWithFallbacks(joinedChunks, sourceLanguage, targetLanguage);
+                    const translatedFragments = translatedJoined.split('\n').map(s => s.trim());
+                    
+                    if (translatedFragments.length === chunks.length) {
+                        const assembledFragments = [];
+                        for (let i = 0; i < chunks.length; i++) {
+                            const chunk = chunks[i];
+                            let fragmentTrans = translatedFragments[i];
+                            
+                            if (chunk.overlapPrefix) {
+                                const translatedPrefix = prefixMap.get(chunk.overlapPrefix);
+                                if (translatedPrefix) {
+                                    fragmentTrans = stripPrefix(fragmentTrans, translatedPrefix);
+                                }
+                            }
+                            assembledFragments.push(fragmentTrans);
                         }
-
-                        const fragmentSourceLanguage = detectSourceLanguage(fragment, targetLanguage);
-                        if (fragmentSourceLanguage === targetLanguage) {
-                            return fragment;
-                        }
-
-                        try {
-                            const piece = await translateWithFallbacks(fragment, fragmentSourceLanguage, targetLanguage);
-                            return piece || fragment;
-                        } catch {
-                            return fragment;
-                        }
+                        
+                        resolved = assembledFragments.join(' ');
+                        resolved = restoreGlossary(resolved, glossaryMap);
+                    } else {
+                        console.warn(`[Auto-Translate] Batch length mismatch (${translatedFragments.length} vs ${chunks.length}). Retrying individually.`);
+                        resolved = await translateChunksIndividually(chunks, sourceLanguage, targetLanguage, glossaryMap);
                     }
-                );
-
-                resolved = translatedFragments.join('');
+                } catch (err) {
+                    console.warn(`[Auto-Translate] Batch translation failed: ${err.message}. Retrying individually.`);
+                    resolved = await translateChunksIndividually(chunks, sourceLanguage, targetLanguage, glossaryMap);
+                }
+            } else {
+                resolved = await translateChunksIndividually(chunks, sourceLanguage, targetLanguage, glossaryMap);
             }
         }
 
@@ -455,10 +736,6 @@ const translateText = async (text = '', language = 'en') => {
     }
 };
 
-/**
- * Batch translation proxy.
- * Processes small batches incoming from the frontend with chunked concurrency.
- */
 const translateTexts = async (texts = [], language = 'en') => {
     if (!texts || texts.length === 0) return [];
 
@@ -478,11 +755,61 @@ const translateTexts = async (texts = [], language = 'en') => {
     }));
 
     if (unresolved.length > 0) {
-        await processWithConcurrency(
-            unresolved,
-            CHUNK_CONCURRENCY,
-            (text) => translateText(text, language)
-        );
+        const groups = {};
+        const targetLanguage = normalizeTargetLanguage(language);
+        
+        for (const text of unresolved) {
+            const sourceLanguage = detectSourceLanguage(text, targetLanguage);
+            const groupKey = `${sourceLanguage}::${targetLanguage}`;
+            if (!groups[groupKey]) {
+                groups[groupKey] = [];
+            }
+            groups[groupKey].push(text);
+        }
+        
+        const BATCH_SIZE = 10;
+        for (const [groupKey, groupTexts] of Object.entries(groups)) {
+            const [sourceLanguage, targetLanguage] = groupKey.split('::');
+            const batches = [];
+            for (let i = 0; i < groupTexts.length; i += BATCH_SIZE) {
+                batches.push(groupTexts.slice(i, i + BATCH_SIZE));
+            }
+            
+            await processWithConcurrency(
+                batches,
+                CHUNK_CONCURRENCY,
+                async (batch) => {
+                    const hasHtml = batch.some(t => HTML_REGEX.test(t));
+                    if (hasHtml) {
+                        await Promise.all(batch.map(t => translateText(t, language)));
+                        return;
+                    }
+                    
+                    const protectedBatches = batch.map(t => protectGlossary(t, sourceLanguage, targetLanguage));
+                    const joinedText = protectedBatches.map(pb => pb.text).join('\n');
+                    
+                    try {
+                        const translatedJoined = await translateWithFallbacks(joinedText, sourceLanguage, targetLanguage);
+                        const translatedParts = translatedJoined.split('\n').map(s => s.trim());
+                        
+                        if (translatedParts.length === batch.length) {
+                            for (let i = 0; i < batch.length; i++) {
+                                const original = batch[i];
+                                const translatedPart = restoreGlossary(translatedParts[i], protectedBatches[i].map);
+                                if (!looksLikeBrokenTranslation(translatedPart, original, targetLanguage)) {
+                                    await writeCachedTranslation(original, targetLanguage, sourceLanguage, translatedPart);
+                                }
+                            }
+                        } else {
+                            await Promise.all(batch.map(t => translateText(t, language)));
+                        }
+                    } catch (err) {
+                        console.warn(`[Auto-Translate] Batch translateTexts failed: ${err.message}. Falling back to individual.`);
+                        await Promise.all(batch.map(t => translateText(t, language)));
+                    }
+                }
+            );
+        }
     }
 
     return Promise.all(normalizedTexts.map(async (text) => {
@@ -499,7 +826,7 @@ const getAllCachedTranslations = async () => {
     const items = [];
     if (redis) {
         try {
-            const keys = await redis.keys('v5::*');
+            const keys = await redis.keys(`${CACHE_VERSION}::*`);
             if (keys && keys.length > 0) {
                 for (let i = 0; i < keys.length; i += 100) {
                     const chunkKeys = keys.slice(i, i + 100);
@@ -580,5 +907,10 @@ module.exports = {
     getAllCachedTranslations,
     updateCachedTranslation,
     deleteCachedTranslation,
-    getCacheStats
+    getCacheStats,
+    tokenizeSemantically,
+    chunkTokens,
+    chunkWithOverlap,
+    protectGlossary,
+    restoreGlossary
 };

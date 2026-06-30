@@ -1,9 +1,50 @@
 const { translateTexts } = require('../translate');
+const fs = require('fs');
+const path = require('path');
+
+let glossary = {};
+try {
+    const glossaryPath = path.join(__dirname, '../glossary.json');
+    if (fs.existsSync(glossaryPath)) {
+        glossary = JSON.parse(fs.readFileSync(glossaryPath, 'utf-8'));
+    }
+} catch (e) {
+    console.warn('[Auto-Translate Middleware] Failed to load glossary:', e.message);
+}
+
+const applyGlossaryToText = (text, language = 'en') => {
+    if (!text || typeof text !== 'string') return text;
+    
+    let processed = text;
+    const terms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+    
+    for (const term of terms) {
+        const replacement = glossary[term]?.[language];
+        if (!replacement) continue;
+        
+        const sourceVariants = new Set([term]);
+        Object.values(glossary[term]).forEach(val => {
+            if (val) sourceVariants.add(val);
+        });
+        
+        sourceVariants.delete(replacement);
+        
+        for (const variant of sourceVariants) {
+            const escaped = variant.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const isEnglish = /^[A-Za-z\s]+$/.test(variant);
+            const regexStr = isEnglish ? `\\b${escaped}\\b` : escaped;
+            const regex = new RegExp(regexStr, 'gi');
+            processed = processed.replace(regex, replacement);
+        }
+    }
+    
+    return processed;
+};
 
 const LANGUAGE_HEADER = 'x-translate-language';
 const SKIP_TRANSLATION_HEADER = 'x-skip-auto-translate';
 const RESPONSE_TRANSLATED_HEADER = 'X-Response-Translated';
-const RESPONSE_TRANSLATION_CACHE_VERSION = 'v4';
+const RESPONSE_TRANSLATION_CACHE_VERSION = 'v5';
 
 const MAX_RESPONSE_CACHE_ENTRIES = 2000;
 const responseTranslationCache = new Map();
@@ -404,7 +445,7 @@ const maybeTranslateApiPayload = async (req, res, payload, language = 'en') => {
 };
 
 const localizeDataObject = (data, language = 'en') => {
-    if (data == null || language === 'en') return data;
+    if (data == null) return data;
 
     if (Array.isArray(data)) {
         return data.map(item => localizeDataObject(item, language));
@@ -427,7 +468,19 @@ const localizeDataObject = (data, language = 'en') => {
             }
         });
 
+        Object.keys(result).forEach(key => {
+            if (typeof result[key] === 'string' && result[key].trim()) {
+                if (key !== 'details_json' && !key.endsWith('_url') && !SKIP_TRANSLATION_KEYS.has(key)) {
+                    result[key] = applyGlossaryToText(result[key], language);
+                }
+            }
+        });
+
         return result;
+    }
+
+    if (typeof data === 'string') {
+        return applyGlossaryToText(data, language);
     }
 
     return data;
