@@ -394,7 +394,6 @@ const AdminGallery = () => {
                                 placeholder="Add new category (e.g. Workshop)" 
                                 value={newCategoryName}
                                 onChange={e => setNewCategoryName(e.target.value)}
-                                required
                             />
                             <button type="submit" className="bg-gray-800 text-white px-6 py-2 rounded font-bold hover:bg-black transition-all text-sm">
                                 Add
@@ -495,19 +494,18 @@ const AdminGallery = () => {
                                 />
                             )}
                             <FileUploadField 
-                                label={formData.id ? "Gallery Image" : "Single Gallery Image (Optional)"} required={Boolean(formData.id)}
+                                label={formData.id ? "Gallery Image" : "Single Gallery Image (Optional)"}
                                 value={formData.image_url || ''} 
                                 onChange={val => setFormData({...formData, image_url: val})} 
                             />
                             <Field label="Short Caption">
                                 <InlineFormatEditor value={formData.caption || ''} onChange={val => setFormData({...formData, caption: val})} />
                             </Field>
-                            <Field label="Category" required>
+                            <Field label="Category">
                                 <select 
                                     className="input" 
                                     value={formData.category || ''} 
                                     onChange={e => setFormData({...formData, category: e.target.value})}
-                                    required
                                 >
                                     <option value="">Select Category</option>
                                     {categories.map(cat => (

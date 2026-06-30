@@ -71,14 +71,6 @@ const AdminPublications = () => {
     };
 
     const preparePayloadData = (formData) => {
-        if (!formData.title?.trim()) {
-            throw new Error('Publication Title is required.');
-        }
-
-        if (!formData.pub_year?.trim()) {
-            throw new Error('Publication Year is required.');
-        }
-
         const validateUrl = (url, fieldName) => {
             if (!url) return;
             try {
@@ -142,13 +134,13 @@ const AdminPublications = () => {
         <div className="grid grid-cols-1 gap-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Field label="Publication Title">
-                    <InlineFormatEditor value={formData.title || ''} onChange={val => setFormData({...formData, title: val})} required />
+                    <InlineFormatEditor value={formData.title || ''} onChange={val => setFormData({...formData, title: val})} />
                 </Field>
                 <Field label="Journal / Conference Name">
                     <InlineFormatEditor value={formData.journal_name || ''} onChange={val => setFormData({...formData, journal_name: val})} />
                 </Field>
                 <Field label="Publication Year">
-                    <InlineFormatEditor value={formData.pub_year || ''} onChange={val => setFormData({...formData, pub_year: val})} required />
+                    <InlineFormatEditor value={formData.pub_year || ''} onChange={val => setFormData({...formData, pub_year: val})} />
                 </Field>
                 <Field label="Authors (Separate with commas)">
                     <InlineFormatEditor value={formData.authors || ''} onChange={val => setFormData({...formData, authors: val})} />

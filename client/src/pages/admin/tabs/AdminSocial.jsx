@@ -28,10 +28,10 @@ const AdminSocial = () => {
 
     const renderFormFields = (formData, setFormData) => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Platform Name" required>
-                <input className="input" value={formData.platform || ''} onChange={e => setFormData({...formData, platform: e.target.value})} placeholder="e.g. GitHub" required />
+            <Field label="Platform Name">
+                <input className="input" value={formData.platform || ''} onChange={e => setFormData({...formData, platform: e.target.value})} placeholder="e.g. GitHub" />
             </Field>
-            <Field label="Icon Selection" required>
+            <Field label="Icon Selection">
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2 mt-1 max-h-60 overflow-y-auto p-1 border border-gray-200 rounded-lg bg-gray-50/50">
                     {availableSocialPlatforms.map((platform) => {
                         const Icon = platform.icon;
@@ -56,8 +56,8 @@ const AdminSocial = () => {
                 </div>
             </Field>
             <div className="md:col-span-2">
-                <Field label="Full profile URL" required>
-                    <input className="input" value={formData.url || ''} onChange={e => setFormData({...formData, url: e.target.value})} placeholder="https://..." required />
+                <Field label="Full profile URL">
+                    <input className="input" value={formData.url || ''} onChange={e => setFormData({...formData, url: e.target.value})} placeholder="https://..." />
                 </Field>
             </div>
             <Field label="Color Theme">

@@ -18,10 +18,6 @@ const AdminNewspaper = () => {
     });
 
     const preparePayloadData = (formData) => {
-        if (!formData.title?.trim()) {
-            throw new Error('Newspaper Title is required.');
-        }
-
         if (formData.link_url) {
             try {
                 new URL(formData.link_url);
@@ -76,7 +72,7 @@ const AdminNewspaper = () => {
                 <h3 className="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">English (Primary)</h3>
                 <div className="grid grid-cols-1 gap-4">
                     <Field label="Title">
-                        <InlineFormatEditor value={formData.title || ''} onChange={val => setFormData({...formData, title: val})} required />
+                        <InlineFormatEditor value={formData.title || ''} onChange={val => setFormData({...formData, title: val})} />
                     </Field>
                     <Field label="Short Description">
                         <InlineFormatEditor value={formData.short_description || ''} onChange={val => setFormData({...formData, short_description: val})} />

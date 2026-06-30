@@ -2,7 +2,7 @@ const { z } = require('zod');
 
 // Helpers for optional/nullable strings
 const optString = z.string().optional().nullable().or(z.literal(''));
-const reqString = z.string().min(1, 'Required field');
+const reqString = z.string().optional().nullable().or(z.literal(''));
 
 const adminLoginSchema = z.object({
     identifier: z.string().min(1, 'Identifier is required.').optional(),
