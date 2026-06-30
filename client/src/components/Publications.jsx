@@ -15,6 +15,12 @@ import { useSiteIdentity } from '../hooks/useSiteName';
 
 import PublicationsSkeleton from '../pages/skeletons/PublicationsSkeleton';
 
+const isFieldEmpty = (html) => {
+    if (!html) return true;
+    const clean = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+    return clean === '' || clean.toLowerCase() === 'n/a';
+};
+
 const Publications = () => {
     const prefersReduced = useReducedMotion();
     const [brokenThumbnails, setBrokenThumbnails] = useState([]);
@@ -183,30 +189,35 @@ const Publications = () => {
                                             </h3>
  
                                             <div className="space-y-2 text-xs sm:text-sm text-gray-600 dark:text-foreground/70">
-                                                <p className="leading-relaxed">
-                                                    <span className="font-bold text-gray-900 dark:text-foreground">{t('publications.journalName')}:</span>{' '}
-                                                    {item.journal_url ? (
-                                                        <a href={item.journal_url} target="_blank" rel="noopener noreferrer" className="text-[#3a96b7] dark:text-[#5bc0be] hover:underline font-semibold">
-                                                            <RenderInlineHtml html={journalName || t('common.notAvailable')} />
-                                                        </a>
-                                                    ) : (
-                                                        <span className="text-[#3a96b7] dark:text-[#5bc0be] font-semibold">
-                                                            <RenderInlineHtml html={journalName || t('common.notAvailable')} />
+                                                {!isFieldEmpty(journalName) && (
+                                                    <p className="leading-relaxed">
+                                                        <span className="font-bold text-gray-900 dark:text-foreground">{t('publications.journalName')}:</span>{' '}
+                                                        {item.journal_url ? (
+                                                            <a href={item.journal_url} target="_blank" rel="noopener noreferrer" className="text-[#3a96b7] dark:text-[#5bc0be] hover:underline font-semibold">
+                                                                <RenderInlineHtml html={journalName} />
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-[#3a96b7] dark:text-[#5bc0be] font-semibold">
+                                                                <RenderInlineHtml html={journalName} />
+                                                            </span>
+                                                        )}
+                                                    </p>
+                                                )}
+                                                {!isFieldEmpty(item.pub_year) && (
+                                                    <p className="leading-relaxed">
+                                                        <span className="font-bold text-gray-900 dark:text-foreground">{t('publications.publicationYear')}:</span>{' '}
+                                                        <span className="text-gray-600 dark:text-foreground/80 font-medium">
+                                                            <RenderInlineHtml html={item.pub_year} />
                                                         </span>
-                                                    )}
-                                                </p>
-                                                <p className="leading-relaxed">
-                                                    <span className="font-bold text-gray-900 dark:text-foreground">{t('publications.publicationYear')}:</span>{' '}
-                                                    <span className="text-gray-600 dark:text-foreground/80 font-medium">
-                                                        <RenderInlineHtml html={item.pub_year || t('common.notAvailable')} />
-                                                    </span>
-                                                </p>
-                                                {(item.doi || item.doi_url) && (
+                                                    </p>
+                                                )}
+                                                {(!isFieldEmpty(item.doi) || !isFieldEmpty(item.doi_url)) && (
                                                     <p className="leading-relaxed">
                                                         <span className="font-bold text-gray-900 dark:text-foreground">DOI:</span>{' '}
                                                         {(() => {
-                                                            const doiUrl = item.doi_url || (item.doi ? `https://doi.org/${item.doi.trim()}` : '');
-                                                            const doiText = item.doi || (item.doi_url ? (() => {
+                                                            const doiUrl = item.doi_url || (item.doi ? `https://doi.org/${item.doi.trim().replace(/<[^>]*>/g, '')}` : '');
+                                                            const cleanDoi = item.doi ? item.doi.replace(/<[^>]*>/g, '') : '';
+                                                            const doiText = cleanDoi || (item.doi_url ? (() => {
                                                                 const match = item.doi_url.match(/(10\.\d{4,9}\/[^\s]+)/i);
                                                                 return match ? match[1] : item.doi_url;
                                                             })() : '');
@@ -227,12 +238,14 @@ const Publications = () => {
                                                         })()}
                                                     </p>
                                                 )}
-                                                <p className="leading-relaxed">
-                                                    <span className="font-bold text-gray-900 dark:text-foreground">{t('publications.authors')}:</span>{' '}
-                                                    <span className="text-gray-600 dark:text-foreground/80 font-medium">
-                                                        {renderAuthors(authors)}
-                                                    </span>
-                                                </p>
+                                                {!isFieldEmpty(authors) && (
+                                                    <p className="leading-relaxed">
+                                                        <span className="font-bold text-gray-900 dark:text-foreground">{t('publications.authors')}:</span>{' '}
+                                                        <span className="text-gray-600 dark:text-foreground/80 font-medium">
+                                                            {renderAuthors(authors)}
+                                                        </span>
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
