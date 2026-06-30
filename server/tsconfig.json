@@ -11,8 +11,7 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "allowJs": true,
-    "resolveJsonModule": true,
-    "ignoreDeprecations": "6.0"
+    "resolveJsonModule": true
   },
   "include": [
     "server.ts",
