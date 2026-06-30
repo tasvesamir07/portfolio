@@ -6,6 +6,12 @@ import ConfirmModal from '../../../components/ConfirmModal';
 import { showSiteAlert } from '../../../utils/siteAlerts';
 import StickySaveBar from './StickySaveBar';
 
+const getEndpointWithId = (endpoint, id) => {
+    if (!id) return endpoint;
+    const [base, query] = endpoint.split('?');
+    return query ? `${base}/${id}?${query}` : `${base}/${id}`;
+};
+
 export const AdminCrudLayout = ({
     title,
     entityName,
@@ -125,7 +131,7 @@ export const AdminCrudLayout = ({
         try {
             const payload = preparePayloadData(formData);
             if (formData.id) {
-                await api.put(`${apiEndpoint}/${formData.id}`, payload);
+                await api.put(getEndpointWithId(apiEndpoint, formData.id), payload);
             } else {
                 await api.post(apiEndpoint, payload);
             }
@@ -153,7 +159,7 @@ export const AdminCrudLayout = ({
             'Are you sure you want to delete this record? This action cannot be undone.',
             async () => {
                 try {
-                    await api.delete(`${apiEndpoint}/${id}`);
+                    await api.delete(getEndpointWithId(apiEndpoint, id));
                     clearTranslationCache();
                     clearResponseCache();
                     fetchData();
