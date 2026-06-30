@@ -38,6 +38,17 @@ const PORT = process.env.PORT || 5000;
 app.set('trust proxy', 1);
 
 app.use(compression());
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.query && req.query.lang) {
+        req.headers['x-translate-language'] = req.query.lang as string;
+    }
+    next();
+});
+
+const queryCacheMiddleware = require('./middleware/queryCache');
+app.use(queryCacheMiddleware);
+
 app.use(globalLimiter);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -73,13 +84,6 @@ app.use((req: any, res: any, next: NextFunction) => {
         res.getHeader = (name: string) => res.get ? res.get(name) : (res.headers ? res.headers.get(name) : null);
     }
     if (!res.header) res.header = res.setHeader;
-    next();
-});
-
-app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.query && req.query.lang) {
-        req.headers['x-translate-language'] = req.query.lang as string;
-    }
     next();
 });
 
@@ -119,9 +123,6 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     }
     next();
 });
-
-const queryCacheMiddleware = require('./middleware/queryCache');
-app.use(queryCacheMiddleware);
 
 app.use(autoTranslate.middleware);
 
