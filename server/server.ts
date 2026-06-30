@@ -49,7 +49,11 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 const queryCacheMiddleware = require('./middleware/queryCache');
 app.use(queryCacheMiddleware);
 
-app.use(globalLimiter);
+app.use((req: Request, res: Response, next: NextFunction) => {
+    const method = String(req.method || 'GET').toUpperCase();
+    if (['GET', 'HEAD', 'OPTIONS'].includes(method)) { next(); return; }
+    globalLimiter(req, res, next);
+});
 
 app.use((req: Request, res: Response, next: NextFunction) => {
     res.locals.nonce = crypto.randomBytes(16).toString('base64');

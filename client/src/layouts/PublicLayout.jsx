@@ -34,31 +34,28 @@ const PublicLayout = () => {
     }, []);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
+        const prefetchData = (key, endpoint) =>
             queryClient.prefetchQuery({
-                queryKey: ['academics', language],
+                queryKey: [key, language],
                 queryFn: async () => {
-                    const res = await api.get('/academics');
+                    const res = await api.get(endpoint);
                     return Array.isArray(res.data) ? res.data : [];
                 }
             });
-            queryClient.prefetchQuery({
-                queryKey: ['publications', language],
-                queryFn: async () => {
-                    const res = await api.get('/publications');
-                    return Array.isArray(res.data) ? res.data : [];
-                }
-            });
-            queryClient.prefetchQuery({
-                queryKey: ['research', language],
-                queryFn: async () => {
-                    const res = await api.get('/research');
-                    return Array.isArray(res.data) ? res.data : [];
-                }
-            });
-        }, 2000);
 
-        return () => clearTimeout(timer);
+        prefetchData('academics', '/academics');
+        prefetchData('publications', '/publications');
+        prefetchData('research', '/research');
+        prefetchData('research-interests', '/research-interests');
+        prefetchData('gallery', '/gallery');
+        prefetchData('gallery-categories', '/gallery-categories');
+        queryClient.prefetchQuery({
+            queryKey: ['page-data', 'experiences-trainings-skills', language],
+            queryFn: async () => {
+                const res = await api.get('/page-data?resources=experiences,trainings,skills');
+                return res.data;
+            }
+        });
     }, [language, queryClient]);
 
     return (
