@@ -49,7 +49,7 @@ const BackToTop = () => {
                         exit: { opacity: 0, scale: 0.5, y: 20 }
                     } : {})}
                     onClick={scrollToTop}
-                    className="fixed bottom-8 right-8 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#ceb079] text-[#0b3b75] dark:bg-muted dark:text-brand-gold shadow-lg hover:bg-[#ceb079]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ceb079] transition-all hover:scale-110 active:scale-95 cursor-pointer"
+                    className="fixed bottom-8 right-8 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#ceb079] text-[#0b3b75] shadow-lg hover:bg-[#ceb079]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ceb079] transition-all hover:scale-110 active:scale-95 cursor-pointer"
                     aria-label="Scroll to top"
                 >
                     <ArrowUp size={24} strokeWidth={2.5} />

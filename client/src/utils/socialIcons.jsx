@@ -21,7 +21,7 @@ export const OrcidIcon = ({ size = 20, ...props }) => (
     xmlns="http://www.w3.org/2000/svg" 
     {...props}
   >
-    <circle cx="12" cy="12" r="11" fill="#A6CE39"/>
+    <circle cx="12" cy="12" r="11" fill="currentColor"/>
     <path d="M7.5 17.5H6V8.5h1.5v9zM6.75 5.5c-.523 0-.95.427-.95.95s.427.95.95.95.95-.427.95-.95-.427-.95-.95-.95zM9.25 8.5v9h2.5c2.209 0 4-1.791 4-4s-1.791-4-4-4H9.25zm1.5 7.5v-6h1c1.381 0 2.5 1.119 2.5 2.5s-1.119 2.5-2.5 2.5h-1z" fill="white"/>
   </svg>
 );
@@ -36,7 +36,7 @@ export const ScopusIcon = ({ size = 20, ...props }) => (
     xmlns="http://www.w3.org/2000/svg" 
     {...props}
   >
-    <circle cx="12" cy="12" r="11" fill="#E9711C"/>
+    <circle cx="12" cy="12" r="11" fill="currentColor"/>
     <path d="M12.5 6c-2 0-3.5 1-3.5 2.5 0 2.5 3.5 2 3.5 4s-1.5 2-3 2c-1.5 0-2.5-.5-3-1l-.5 1.5c.5.5 2 1 3.5 1 2.5 0 4.5-1 4.5-3 0-2.5-3.5-2-3.5-4s1.5-2 3-2c1.2 0 2.2.5 2.8 1l.5-1.5c-.7-.5-1.8-1-2.8-1z" fill="white" stroke="white" strokeWidth="0.5"/>
   </svg>
 );
@@ -51,7 +51,7 @@ export const WebOfScienceIcon = ({ size = 20, ...props }) => (
     xmlns="http://www.w3.org/2000/svg" 
     {...props}
   >
-    <circle cx="12" cy="12" r="11" fill="#5E33BF"/>
+    <circle cx="12" cy="12" r="11" fill="currentColor"/>
     <path d="M5.5 7l2.5 10 2-7 2 7 2.5-10h-1.5l-1.5 7-2-7h-1l-2 7-1.5-7H5.5z" fill="#F5C400"/>
   </svg>
 );

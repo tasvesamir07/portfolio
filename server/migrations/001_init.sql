@@ -158,7 +158,4 @@ CREATE TABLE IF NOT EXISTS social_links (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Seed default admin user (Username: admin, Password: admin) if not exists
-INSERT INTO users (username, email, password_hash) 
-VALUES ('admin', 'tasvesamir15471@gmail.com', '$2b$10$H9Lh.wuPGAj5v9GiwnxI0eOvinIhUOx/p1MptF/6g2NUEP8iGvq7O')
-ON CONFLICT (username) DO NOTHING;
+-- No default admin user seeded here. Use node server/scripts/create-admin.js instead.

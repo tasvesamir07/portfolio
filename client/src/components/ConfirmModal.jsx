@@ -20,7 +20,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
                             animate: { opacity: 1, scale: 1, y: 0 },
                             exit: { opacity: 0, scale: 0.95, y: 20 }
                         } : {})}
-                        className="bg-white dark:bg-background rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 dark:border-border-light"
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="modal-title"
@@ -30,8 +30,8 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
                                 <AlertCircle size={24} />
                             </div>
                             <div className="flex-1 text-left">
-                                <h3 id="modal-title" className="text-xl font-bold text-gray-900 dark:text-foreground mb-2">{title}</h3>
-                                <p className="text-gray-500 dark:text-foreground/60 text-sm leading-relaxed">{message}</p>
+                                <h3 id="modal-title" className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
+                                <p className="text-gray-500 text-sm leading-relaxed">{message}</p>
                             </div>
                             <button 
                                 onClick={onClose}
@@ -42,10 +42,10 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
                             </button>
                         </div>
                         
-                        <div className="bg-gray-50 dark:bg-muted p-4 px-6 flex justify-end gap-3 border-t border-transparent dark:border-border-light">
+                        <div className="bg-gray-50 p-4 px-6 flex justify-end gap-3 border-t border-transparent">
                             <button 
                                 onClick={onClose}
-                                className="px-5 py-2.5 rounded-lg border border-gray-300 dark:border-border-light text-gray-600 dark:text-foreground/80 font-bold text-sm hover:bg-white dark:hover:bg-background transition-all active:scale-95 cursor-pointer"
+                                className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-600 font-bold text-sm hover:bg-white transition-all active:scale-95 cursor-pointer"
                             >
                                 Cancel
                             </button>

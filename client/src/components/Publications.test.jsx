@@ -55,7 +55,7 @@ describe('Publications Component', () => {
         await waitForExpect(() => {
             expect(screen.getByText('Quantum Computing Breakthrough')).toBeInTheDocument();
             expect(screen.getByText('Nature Science')).toBeInTheDocument();
-            expect(screen.getByText('Samir')).toBeInTheDocument();
+            expect(screen.getByText(/Samir/)).toBeInTheDocument();
         });
     });
 });

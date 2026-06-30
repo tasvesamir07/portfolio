@@ -43,11 +43,11 @@ export const ContactForm = () => {
                     initial: { opacity: 0, scale: 0.9 },
                     animate: { opacity: 1, scale: 1 }
                 } : {})}
-                className="bg-white dark:bg-background p-10 md:p-16 rounded-[2rem] md:rounded-[3rem] border-4 border-brand-gold/10 shadow-2xl shadow-brand-gold/10 text-center hover-glow"
+                className="bg-white p-10 md:p-16 rounded-[2rem] md:rounded-[3rem] border-4 border-brand-gold/10 shadow-2xl shadow-brand-gold/10 text-center hover-glow"
             >
                 <CheckCircle size={80} className="mx-auto text-brand-gold mb-6 md:mb-8 stroke-[1.5]" />
-                <h3 className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-foreground mb-4 tracking-tight uppercase">{t('contact.successTitle')}</h3>
-                <p className="text-lg md:text-xl text-gray-500 dark:text-foreground/70 font-medium">{t('contact.successMessage')}</p>
+                <h3 className="text-2xl md:text-4xl font-bold text-gray-900 mb-4 tracking-tight uppercase">{t('contact.successTitle')}</h3>
+                <p className="text-lg md:text-xl text-gray-500 font-medium">{t('contact.successMessage')}</p>
             </motion.div>
         );
     }
@@ -60,11 +60,11 @@ export const ContactForm = () => {
                 whileInView: { opacity: 1, y: 0 },
                 viewport: { once: true }
             } : {})}
-            className="bg-white dark:bg-background p-6 sm:p-10 md:p-16 rounded-2xl md:rounded-[2.5rem] border border-gray-100 dark:border-border-light shadow-sm flex flex-col gap-6 md:gap-8 hover-glow text-left"
+            className="bg-white p-6 sm:p-10 md:p-16 rounded-2xl md:rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col gap-6 md:gap-8 hover-glow text-left"
         >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 <div className="flex flex-col gap-2 text-left">
-                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-foreground/60 ml-1">{t('contact.nameLabel')}</label>
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 ml-1">{t('contact.nameLabel')}</label>
                     <input 
                         type="text" 
                         className="input"
@@ -75,7 +75,7 @@ export const ContactForm = () => {
                     />
                 </div>
                 <div className="flex flex-col gap-2 text-left">
-                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-foreground/60 ml-1">{t('contact.emailLabel')}</label>
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 ml-1">{t('contact.emailLabel')}</label>
                     <input 
                         type="email" 
                         className="input"
@@ -87,7 +87,7 @@ export const ContactForm = () => {
                 </div>
             </div>
             <div className="flex flex-col gap-2 text-left">
-                <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 dark:text-foreground/60 ml-1">{t('contact.messageLabel')}</label>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 ml-1">{t('contact.messageLabel')}</label>
                 <textarea 
                     rows="6"
                     className="input min-h-[150px]"

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "build": "vite build && node check-bundle-size.js",
+    "build": "vite build && node check-bundle-size.js && node scripts/prerender.cjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run"
@@ -14,6 +14,7 @@
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource/inter": "^5.2.8",
+    "@sentry/react": "^10.62.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/react-query": "^5.101.0",

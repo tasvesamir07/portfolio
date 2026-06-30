@@ -56,3 +56,12 @@ Thumbs.db
 .vercel
 .env*.local
 !**/.env.example
+
+# Scratch and local test scripts
+server/scratch/
+scratch/
+server/test_about_put.js
+client/coverage/
+client/playwright-report/
+client/test-results/
+server/coverage/

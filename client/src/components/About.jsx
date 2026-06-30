@@ -29,12 +29,12 @@ const About = ({ data }) => {
     if (!data) return null;
 
     return (
-        <section className="bg-white dark:bg-background py-12 md:py-16 w-full shadow-md z-20 relative -mt-4 text-left" id="about">
+        <section className="bg-white py-12 md:py-16 w-full shadow-md z-20 relative -mt-4 text-left" id="about">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 xl:px-12 overflow-x-hidden">
                 <div className="grid grid-cols-1 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)] gap-8 md:gap-12 lg:gap-14 items-start lg:items-stretch">
                     <div className="w-full flex justify-center lg:justify-start">
                         <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[320px] pt-3 pb-5">
-                            <div className="bg-white dark:bg-background p-2 rounded-sm shadow-2xl border border-gray-100 dark:border-border-light aspect-[3/4] overflow-hidden hover-glow">
+                            <div className="bg-white p-2 rounded-sm shadow-2xl border border-gray-100 aspect-[3/4] overflow-hidden hover-glow">
                                 <img
                                     src={getTransformedUrl(hero_image_url, 320, 75) || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'}
                                     alt={localizedName || 'Profile'}
@@ -79,7 +79,7 @@ const About = ({ data }) => {
                                                     {label ? (
                                                         <div className="about-highlight-row max-w-full">
                                                             <span
-                                                                className="about-highlight-text text-[#0b3b75] dark:text-brand-gold font-extrabold sm:whitespace-nowrap pr-1.5"
+                                                                className="about-highlight-text text-[#0b3b75] font-extrabold sm:whitespace-nowrap pr-1.5"
                                                                 dangerouslySetInnerHTML={{ __html: cleanHtmlInline(label) + ':' }}
                                                             />
                                                             {isContact ? (
@@ -101,7 +101,7 @@ const About = ({ data }) => {
                                                                     {(item.valueHtmls || [sanitizeInlineHtml(value)]).map((valueHtml, valueIndex) => (
                                                                         <span
                                                                             key={`${i}-value-${valueIndex}`}
-                                                                            className="about-highlight-text text-[#334155] dark:text-foreground/80 font-semibold break-words"
+                                                                            className="about-highlight-text text-[#334155] font-semibold break-words"
                                                                             dangerouslySetInnerHTML={{ __html: valueHtml }}
                                                                         />
                                                                     ))}
@@ -110,7 +110,7 @@ const About = ({ data }) => {
                                                         </div>
                                                     ) : (
                                                         <p
-                                                            className={`about-highlight-text min-w-0 max-w-full ${isContact ? 'text-[#0ea5e9] font-bold break-words' : 'text-[#334155] dark:text-foreground/80 font-semibold break-words'}`}
+                                                            className={`about-highlight-text min-w-0 max-w-full ${isContact ? 'text-[#0ea5e9] font-bold break-words' : 'text-[#334155]  font-semibold break-words'}`}
                                                             dangerouslySetInnerHTML={{ __html: item.textHtml || sanitizeInlineHtml(point) }}
                                                         />
                                                     )}
@@ -125,10 +125,10 @@ const About = ({ data }) => {
                 </div>
 
                 {translatedBioBlocks.length > 0 && (
-                    <div className="mt-16 md:mt-24 pt-8 md:pt-12 border-t border-gray-100 dark:border-border-light">
+                    <div className="mt-16 md:mt-24 pt-8 md:pt-12 border-t border-gray-100">
                         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8 md:mb-12">
-                            <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-800 dark:text-foreground tracking-tight uppercase leading-tight break-words max-w-full">
-                                {t('about.short')} <span className="text-gray-400 dark:text-foreground/50">{t('about.biography')}</span>
+                            <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-800 tracking-tight uppercase leading-tight break-words max-w-full">
+                                {t('about.short')} <span className="text-gray-400">{t('about.biography')}</span>
                             </h3>
                             {resume_url && (
                                 <a
@@ -143,7 +143,7 @@ const About = ({ data }) => {
                         </div>
 
                         <div className="w-full max-w-none min-w-0 overflow-hidden">
-                            <div className="w-full max-w-none min-w-0 text-gray-600 dark:text-foreground/80 text-[clamp(1rem,0.95rem+0.3vw,1.22rem)] leading-[1.9] font-medium">
+                            <div className="w-full max-w-none min-w-0 text-gray-600 text-[clamp(1rem,0.95rem+0.3vw,1.22rem)] leading-[1.9] font-medium">
                                 {translatedBioBlocks.map((block, index) => {
                                     if (block.type === 'ul' || block.type === 'ol') {
                                         const ListTag = block.type;

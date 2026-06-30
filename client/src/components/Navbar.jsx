@@ -249,12 +249,12 @@ const Navbar = () => {
                                             )}
                                         </button>
                                         <div className={`absolute top-full left-1/2 -translate-x-1/2 w-56 pt-4 transition-all duration-200 origin-top ${isDropdownOpen === idx ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}`}>
-                                            <div className="bg-white dark:bg-background rounded-2xl shadow-2xl border border-gray-100 dark:border-border-light p-2 flex flex-col">
+                                            <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 flex flex-col">
                                                 {link.dropdown.map((subLink, subIndex) => (
                                                     <Link
                                                         key={subIndex}
                                                         to={subLink.path || '#'}
-                                                        className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${location.pathname === subLink.path ? 'bg-[#ceb079]/10 text-[#ceb079]' : 'text-gray-700 dark:text-foreground/80 hover:bg-gray-50 dark:hover:bg-muted hover:text-[#ceb079]'}`}
+                                                        className={`px-4 py-3 rounded-xl text-sm font-bold transition-all ${location.pathname === subLink.path ? 'bg-[#ceb079]/10 text-[#ceb079]' : 'text-gray-700  hover:bg-gray-50  hover:text-[#ceb079]'}`}
                                                     >
                                                         {subLink.name}
                                                     </Link>

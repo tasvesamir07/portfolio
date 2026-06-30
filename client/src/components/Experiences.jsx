@@ -33,11 +33,11 @@ const Experiences = () => {
     if (isLoading) return <ExperiencesSkeleton />;
 
     return (
-        <section id="experiences" className="py-16 md:py-24 bg-[#fcfaf7] dark:bg-background">
+        <section id="experiences" className="py-16 md:py-24 bg-[#fcfaf7]">
             <div className="max-w-7xl mx-auto px-6">
                 {/* Work Experience Section */}
-                <span className="text-brand-blue dark:text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('experiences.workKicker')}</span>
-                <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-16 text-gray-900 dark:text-foreground tracking-tight">{t('experiences.workTitleMain')} <span className="text-brand-gold font-black">{t('experiences.workTitleAccent')}</span></h2>
+                <span className="text-brand-blue font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('experiences.workKicker')}</span>
+                <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('experiences.workTitleMain')} <span className="text-brand-gold font-black">{t('experiences.workTitleAccent')}</span></h2>
                 
                 <div className="flex flex-col gap-10 mb-24">
                     {experiences.length > 0 ? experiences.map((item, index) => (
@@ -64,9 +64,9 @@ const Experiences = () => {
                                 transition: { duration: 0.5, delay: index * 0.1 },
                                 whileHover: { scale: 1.02, y: -6 }
                             } : {})}
-                            className="bg-white dark:bg-background p-5 md:p-8 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-center md:items-start gap-6 group border border-gray-100 dark:border-border-light transition-colors duration-300 shadow-sm motion-card-hover"
+                            className="bg-white p-5 md:p-8 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-center md:items-start gap-6 group border border-gray-100 transition-colors duration-300 shadow-sm motion-card-hover"
                         >
-                            <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 dark:bg-muted rounded-2xl flex items-center justify-center transition-all">
+                            <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl flex items-center justify-center transition-all">
                                 {item.logo_url && !brokenLogos.includes(item.id) ? (
                                     <img 
                                         src={getTransformedUrl(item.logo_url, 80, 75)} 
@@ -87,7 +87,7 @@ const Experiences = () => {
                             <div className="flex-1 w-full text-center md:text-left">
                                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 md:gap-4 mb-3">
                                     <div className="text-center md:text-left">
-                                        <h3 className="text-xl md:text-2xl font-bold text-[#0b3b75] dark:text-brand-gold tracking-tight uppercase leading-tight mb-1">
+                                        <h3 className="text-xl md:text-2xl font-bold text-[#0b3b75] tracking-tight uppercase leading-tight mb-1">
                                             <RenderInlineHtml html={position} />
                                         </h3>
                                         <p className="text-brand-gold font-bold uppercase tracking-wide text-xs">
@@ -95,11 +95,11 @@ const Experiences = () => {
                                         </p>
                                     </div>
                                     <div className="text-center md:text-right flex flex-col gap-1.5 md:min-w-[140px] pt-1">
-                                        <p className="text-[12px] font-bold text-gray-500 dark:text-foreground/70 flex items-center justify-center md:justify-end gap-1.5">
+                                        <p className="text-[12px] font-bold text-gray-500 flex items-center justify-center md:justify-end gap-1.5">
                                             <Calendar size={14} className="text-gray-400" /> <RenderInlineHtml html={item.start_date} /> - <RenderInlineHtml html={item.end_date || t('common.present')} />
                                         </p>
                                         {locationLabel && (
-                                            <p className="text-[11px] font-bold text-gray-400 dark:text-foreground/50 flex items-center justify-center md:justify-end gap-1.5 uppercase tracking-widest leading-tight">
+                                            <p className="text-[11px] font-bold text-gray-400 flex items-center justify-center md:justify-end gap-1.5 uppercase tracking-widest leading-tight">
                                                 <MapPin size={12} className="text-gray-300" /> <RenderInlineHtml html={locationLabel} />
                                             </p>
                                         )}
@@ -109,10 +109,10 @@ const Experiences = () => {
                                     <StructuredDetails
                                         items={detailItems}
                                         className="space-y-4 text-left"
-                                        titleClassName="text-lg md:text-xl font-bold text-[#0b3b75] dark:text-brand-gold leading-tight"
-                                        textClassName="text-gray-700 dark:text-foreground/80 text-sm md:text-base leading-8 break-words"
-                                        pairLabelClassName="text-gray-800 dark:text-foreground font-semibold"
-                                        pairValueClassName="text-gray-700 dark:text-foreground/80 text-sm md:text-base leading-8 break-words"
+                                        titleClassName="text-lg md:text-xl font-bold text-[#0b3b75]  leading-tight"
+                                        textClassName="text-gray-700  text-sm md:text-base leading-8 break-words"
+                                        pairLabelClassName="text-gray-800  font-semibold"
+                                        pairValueClassName="text-gray-700  text-sm md:text-base leading-8 break-words"
                                         valueStackClassName="space-y-2"
                                     />
                                 )}
@@ -129,7 +129,7 @@ const Experiences = () => {
                 {trainings.length > 0 && (
                     <>
                         <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('experiences.trainingKicker')}</span>
-                        <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-12 text-gray-900 dark:text-foreground tracking-tight">{t('experiences.trainingTitleMain')} <span className="text-[#0b3b75] dark:text-brand-gold font-black">{t('experiences.trainingTitleAccent')}</span></h2>
+                        <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-12 text-gray-900 tracking-tight">{t('experiences.trainingTitleMain')} <span className="text-[#0b3b75] font-black">{t('experiences.trainingTitleAccent')}</span></h2>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
                             {trainings.map((item, index) => (
@@ -150,30 +150,30 @@ const Experiences = () => {
                                         transition: { duration: 0.4, delay: index * 0.05 },
                                         whileHover: { scale: 1.02, y: -6 }
                                     } : {})}
-                                    className="bg-white dark:bg-background p-5 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 dark:border-border-light transition-colors duration-300 shadow-sm group flex flex-col sm:flex-row gap-5 items-center sm:items-start motion-card-hover"
+                                    className="bg-white p-5 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 transition-colors duration-300 shadow-sm group flex flex-col sm:flex-row gap-5 items-center sm:items-start motion-card-hover"
                                 >
-                                    <div className="p-4 bg-brand-blue/5 text-brand-blue dark:text-brand-gold rounded-2xl group-hover:bg-brand-blue dark:group-hover:bg-brand-gold group-hover:text-white dark:group-hover:text-[#0b3b75] transition-colors">
+                                    <div className="p-4 bg-brand-blue/5 text-brand-blue rounded-2xl group-hover:bg-brand-blue group-hover:text-white transition-colors">
                                         <Award size={24} />
                                     </div>
                                     <div className="text-center sm:text-left w-full">
-                                        <h3 className="text-lg font-bold text-[#0b3b75] dark:text-brand-gold mb-1 uppercase tracking-tight leading-tight">
+                                        <h3 className="text-lg font-bold text-[#0b3b75] mb-1 uppercase tracking-tight leading-tight">
                                             <RenderInlineHtml html={title} />
                                         </h3>
                                         <p className="text-brand-gold font-semibold text-sm mb-3 uppercase tracking-wide">
                                             <RenderInlineHtml html={topic} />
                                         </p>
                                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2">
-                                            <span className="text-[11px] font-bold text-gray-500 dark:text-foreground/70 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> <RenderInlineHtml html={dateText} /></span>
-                                            <span className="text-[11px] font-bold text-gray-500 dark:text-foreground/70 uppercase tracking-widest flex items-center gap-1.5"><GraduationCap size={12} className="text-gray-400" /> <RenderInlineHtml html={instructor} /></span>
+                                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> <RenderInlineHtml html={dateText} /></span>
+                                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><GraduationCap size={12} className="text-gray-400" /> <RenderInlineHtml html={instructor} /></span>
                                         </div>
                                         {detailItems.length > 0 && (
                                             <StructuredDetails
                                                 items={detailItems}
                                                 className="space-y-3 text-left mt-4"
-                                                titleClassName="text-base md:text-lg font-bold text-[#0b3b75] dark:text-brand-gold leading-tight"
-                                                textClassName="text-gray-700 dark:text-foreground/80 text-sm md:text-base leading-7 break-words"
-                                                pairLabelClassName="text-gray-800 dark:text-foreground font-semibold"
-                                                pairValueClassName="text-gray-700 dark:text-foreground/80 text-sm md:text-base leading-7 break-words"
+                                                titleClassName="text-base md:text-lg font-bold text-[#0b3b75]  leading-tight"
+                                                textClassName="text-gray-700  text-sm md:text-base leading-7 break-words"
+                                                pairLabelClassName="text-gray-800  font-semibold"
+                                                pairValueClassName="text-gray-700  text-sm md:text-base leading-7 break-words"
                                                 valueStackClassName="space-y-2"
                                             />
                                         )}
@@ -189,8 +189,8 @@ const Experiences = () => {
                 {/* Skills Section */}
                 {skills.length > 0 && (
                     <>
-                        <span className="text-brand-blue dark:text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('experiences.skillsKicker')}</span>
-                        <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-12 text-gray-900 dark:text-foreground tracking-tight">{t('experiences.skillsTitleMain')} <span className="text-brand-gold font-black">{t('experiences.skillsTitleAccent')}</span></h2>
+                        <span className="text-brand-blue font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('experiences.skillsKicker')}</span>
+                        <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-12 text-gray-900 tracking-tight">{t('experiences.skillsTitleMain')} <span className="text-brand-gold font-black">{t('experiences.skillsTitleAccent')}</span></h2>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             {skills.map((item, index) => (
@@ -216,26 +216,26 @@ const Experiences = () => {
                                         transition: { duration: 0.5, delay: index * 0.1 },
                                         whileHover: { scale: 1.02, y: -6 }
                                     } : {})}
-                                    className="bg-white dark:bg-background p-6 md:p-8 rounded-2xl md:rounded-3xl text-gray-900 dark:text-foreground border border-gray-100 dark:border-border-light shadow-sm transition-colors duration-300 motion-card-hover"
+                                    className="bg-white p-6 md:p-8 rounded-2xl md:rounded-3xl text-gray-900 border border-gray-100 shadow-sm transition-colors duration-300 motion-card-hover"
                                 >
-                                    <h3 className="text-lg font-black uppercase tracking-[0.15em] text-[#0b3b75] dark:text-brand-gold mb-5 border-b border-gray-100 dark:border-border-light pb-3 text-center md:text-left">
+                                    <h3 className="text-lg font-black uppercase tracking-[0.15em] text-[#0b3b75] mb-5 border-b border-gray-100 pb-3 text-center md:text-left">
                                         <RenderInlineHtml html={category} />
                                     </h3>
                                     {detailItems.length > 0 ? (
                                         <StructuredDetails
                                             items={detailItems}
                                             className="space-y-3 text-left"
-                                            titleClassName="text-base md:text-lg font-bold text-[#0b3b75] dark:text-brand-gold leading-tight"
-                                            textClassName="text-gray-700 dark:text-foreground/80 text-sm md:text-base leading-7 break-words flex items-start gap-2"
-                                            pairLabelClassName="text-gray-800 dark:text-foreground font-semibold"
-                                            pairValueClassName="text-gray-700 dark:text-foreground/80 text-sm md:text-base leading-7 break-words"
+                                            titleClassName="text-base md:text-lg font-bold text-[#0b3b75]  leading-tight"
+                                            textClassName="text-gray-700  text-sm md:text-base leading-7 break-words flex items-start gap-2"
+                                            pairLabelClassName="text-gray-800  font-semibold"
+                                            pairValueClassName="text-gray-700  text-sm md:text-base leading-7 break-words"
                                             valueStackClassName="space-y-2"
                                             layoutClassName="flex flex-col gap-1 w-full"
                                         />
                                     ) : (
                                         <div className="flex flex-wrap justify-center md:justify-start gap-2.5">
                                             {localizedItemsText.split(',').map((skill, si) => (
-                                                <span key={si} className="bg-[#fcfaf7] dark:bg-muted border border-gray-200 dark:border-border-light hover:border-[#ceb079] px-4 py-2 rounded-xl text-sm font-semibold tracking-wide transition-all flex items-center gap-2 text-gray-700 dark:text-foreground/80">
+                                                <span key={si} className="bg-[#fcfaf7] border border-gray-200 hover:border-[#ceb079] px-4 py-2 rounded-xl text-sm font-semibold tracking-wide transition-all flex items-center gap-2 text-gray-700">
                                                     <CheckCircle2 size={14} className="text-[#ceb079]" /> {skill.trim()}
                                                 </span>
                                             ))}

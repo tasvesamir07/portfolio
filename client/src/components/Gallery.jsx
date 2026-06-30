@@ -84,23 +84,23 @@ const Gallery = () => {
 
     if (visibleImages.length === 0) {
         return (
-            <section id="gallery" className="py-16 md:py-24 bg-[#fcfaf7] dark:bg-background min-h-[60vh] flex items-center justify-center">
+            <section id="gallery" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('gallery.kicker')}</span>
-                    <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-4 text-gray-900 dark:text-foreground tracking-tight">{t('gallery.titleMain')} <span className="text-brand-blue dark:text-brand-gold font-black">{t('gallery.titleAccent')}</span></h2>
-                    <p className="text-gray-500 dark:text-foreground/70 font-medium">{noDataLabel}</p>
+                    <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-4 text-gray-900 tracking-tight">{t('gallery.titleMain')} <span className="text-brand-blue font-black">{t('gallery.titleAccent')}</span></h2>
+                    <p className="text-gray-500 font-medium">{noDataLabel}</p>
                 </div>
             </section>
         );
     }
 
     return (
-        <section id="gallery" className="overflow-hidden bg-[#fcfaf7] dark:bg-background py-14 sm:py-16 md:py-24">
+        <section id="gallery" className="overflow-hidden bg-[#fcfaf7] py-14 sm:py-16 md:py-24">
             <div className="mx-auto max-w-7xl px-4 sm:px-6">
                 <div className="mx-auto max-w-3xl text-center">
                     <span className="mb-4 block text-sm font-bold uppercase tracking-[0.28em] text-brand-gold">{t('gallery.kicker')}</span>
-                    <h2 className="mb-10 text-4xl font-black tracking-tight text-gray-900 dark:text-foreground sm:text-5xl md:mb-16 md:text-7xl">
-                        {t('gallery.titleMain')} <span className="text-brand-blue dark:text-brand-gold">{t('gallery.titleAccent')}</span>
+                    <h2 className="mb-10 text-4xl font-black tracking-tight text-gray-900 sm:text-5xl md:mb-16 md:text-7xl">
+                        {t('gallery.titleMain')} <span className="text-brand-blue">{t('gallery.titleAccent')}</span>
                     </h2>
                 </div>
                 
@@ -109,8 +109,8 @@ const Gallery = () => {
                         onClick={() => handleCategoryChange('all')}
                         className={`min-w-[74px] rounded-full border px-5 py-2.5 text-sm font-bold transition-all sm:min-w-[92px] sm:px-7 sm:text-base ${
                             activeCategory === 'all'
-                                ? 'border-brand-blue bg-brand-blue text-white dark:border-brand-gold dark:bg-brand-gold dark:text-[#0b3b75] shadow-lg shadow-brand-blue/20 dark:shadow-brand-gold/20'
-                                : 'border-gray-200 bg-white text-gray-600 dark:border-border-light dark:bg-muted dark:text-foreground/80 hover:border-brand-blue/20 hover:bg-white hover:text-brand-blue dark:hover:bg-background dark:hover:text-brand-gold'
+                                ? 'border-brand-blue bg-brand-blue text-white    shadow-lg shadow-brand-blue/20 '
+                                : 'border-gray-200 bg-white text-gray-600    hover:border-brand-blue/20 hover:bg-white hover:text-brand-blue  '
                         }`}
                         title={t('common.all') || 'All'}
                     >
@@ -124,8 +124,8 @@ const Gallery = () => {
                                 onClick={() => handleCategoryChange(cat.name)}
                                 className={`max-w-full rounded-full border px-5 py-2.5 text-sm font-bold transition-all sm:px-7 sm:text-base ${
                                     activeCategory === cat.name
-                                        ? 'border-brand-blue bg-brand-blue text-white dark:border-brand-gold dark:bg-brand-gold dark:text-[#0b3b75] shadow-lg shadow-brand-blue/20 dark:shadow-brand-gold/20'
-                                        : 'border-gray-200 bg-white text-gray-600 dark:border-border-light dark:bg-muted dark:text-foreground/80 hover:border-brand-blue/20 hover:bg-white hover:text-brand-blue dark:hover:bg-background dark:hover:text-brand-gold'
+                                        ? 'border-brand-blue bg-brand-blue text-white    shadow-lg shadow-brand-blue/20 '
+                                        : 'border-gray-200 bg-white text-gray-600    hover:border-brand-blue/20 hover:bg-white hover:text-brand-blue  '
                                 }`}
                                 title={localizedName}
                             >
@@ -158,7 +158,7 @@ const Gallery = () => {
                                     transition: { duration: 0.28, ease: 'easeOut' },
                                     whileHover: { scale: 1.02, y: -6 }
                                 } : {})}
-                                className={`group relative min-h-0 cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/90 dark:border-border-light bg-slate-200 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[2rem] motion-card-hover ${cardLayout}`}
+                                className={`group relative min-h-0 cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/90  bg-slate-200 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[2rem] motion-card-hover ${cardLayout}`}
                                 onClick={() => setSelectedImage(img)}
                                 style={{ contentVisibility: 'auto', containIntrinsicSize: '300px' }}
                             >

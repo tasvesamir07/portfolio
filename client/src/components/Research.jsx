@@ -70,9 +70,9 @@ const Research = () => {
                                     transition: { duration: 0.6 },
                                     whileHover: { scale: 1.02, y: -6 }
                                 } : {})}
-                                className="bg-white dark:bg-background rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-gray-100 dark:border-border-light group flex flex-col md:flex-row transition-colors duration-300 shadow-xl shadow-gray-200/20 motion-card-hover"
+                                className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-gray-100 group flex flex-col md:flex-row transition-colors duration-300 shadow-xl shadow-gray-200/20 motion-card-hover"
                             >
-                                <div className="w-full md:w-2/5 h-48 sm:h-64 md:h-full relative overflow-hidden bg-gray-50 dark:bg-muted flex-shrink-0">
+                                <div className="w-full md:w-2/5 h-48 sm:h-64 md:h-full relative overflow-hidden bg-gray-50 flex-shrink-0">
                                     {item.image_url && !brokenImages.includes(item.id) ? (
                                         <img 
                                             src={getTransformedUrl(item.image_url, 480, 75)} 
@@ -94,23 +94,23 @@ const Research = () => {
                                 </div>
                                 <div className="p-6 md:p-10 flex flex-col justify-center flex-1">
                                     <div className="flex flex-wrap items-center gap-3 mb-3">
-                                        <span className="px-3 py-1 bg-brand-blue/5 dark:bg-brand-gold/10 text-brand-blue dark:text-brand-gold text-[10px] font-black uppercase tracking-widest rounded-full border border-brand-blue/10 dark:border-brand-gold/20">
+                                        <span className="px-3 py-1 bg-brand-blue/5 text-brand-blue text-[10px] font-black uppercase tracking-widest rounded-full border border-brand-blue/10">
                                             <RenderInlineHtml html={status || t('research.projectFallback')} />
                                         </span>
-                                        <span className="text-[11px] font-bold text-gray-400 dark:text-foreground/50 uppercase tracking-widest">
+                                        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                                             <RenderInlineHtml html={dateText} />
                                         </span>
                                     </div>
-                                    <h3 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-foreground mb-4 group-hover:text-brand-blue dark:group-hover:text-brand-gold transition-colors uppercase leading-tight">
+                                    <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-4 group-hover:text-brand-blue transition-colors uppercase leading-tight">
                                         <RenderInlineHtml html={title} />
                                     </h3>
                                     <StructuredDetails
                                         items={detailItems}
                                         className="space-y-4 mb-6"
-                                        titleClassName="text-lg font-bold text-gray-900 dark:text-brand-gold leading-tight"
-                                        textClassName="text-gray-600 dark:text-foreground/80 leading-7 text-base break-words"
-                                        pairLabelClassName="text-gray-800 dark:text-foreground font-semibold"
-                                        pairValueClassName="text-gray-600 dark:text-foreground/80 leading-7 text-base break-words"
+                                        titleClassName="text-lg font-bold text-gray-900  leading-tight"
+                                        textClassName="text-gray-600  leading-7 text-base break-words"
+                                        pairLabelClassName="text-gray-800  font-semibold"
+                                        pairValueClassName="text-gray-600  leading-7 text-base break-words"
                                     />
                                     <div className="mt-auto flex flex-wrap gap-4 items-center">
                                         {item.link && (
@@ -118,7 +118,7 @@ const Research = () => {
                                                 href={item.link} 
                                                 target="_blank" 
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 text-brand-blue dark:text-brand-gold font-bold hover:gap-3 transition-all uppercase tracking-widest text-[11px] border-b-2 border-brand-blue/20 dark:border-brand-gold/20 pb-1"
+                                                className="inline-flex items-center gap-2 text-brand-blue font-bold hover:gap-3 transition-all uppercase tracking-widest text-[11px] border-b-2 border-brand-blue/20 pb-1"
                                             >
                                                 {t('research.viewProject')} <ArrowRight size={14} />
                                             </a>

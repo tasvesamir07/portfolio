@@ -12,13 +12,6 @@ const AdminMessages = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
-    const [notice, setNotice] = useState(null);
-
-    useEffect(() => {
-        if (!notice) return undefined;
-        const timer = setTimeout(() => setNotice(null), 2600);
-        return () => clearTimeout(timer);
-    }, [notice]);
 
     const openConfirmModal = (title, message, onConfirm, type = 'danger') => {
         setConfirmModal({ isOpen: true, title, message, onConfirm, type });
@@ -69,12 +62,6 @@ const AdminMessages = () => {
 
     return (
         <div>
-            {notice && (
-                <div className="fixed right-5 top-5 z-[80] rounded-xl border border-brand-gold/20 bg-brand-gold/[0.03] px-4 py-3 text-sm font-semibold text-brand-gold shadow-lg">
-                    {notice.message}
-                </div>
-            )}
-
             {!isEditing ? (
                 <div>
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">

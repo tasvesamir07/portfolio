@@ -7,6 +7,20 @@ import { I18nProvider } from './i18n/I18nContext.jsx'
 import { SiteAlertProvider } from './components/SiteAlertProvider.jsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import interWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
+import * as Sentry from '@sentry/react';
+
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration(),
+    ],
+    tracesSampleRate: 1.0,
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
+  });
+}
 
 if (typeof window !== 'undefined') {
   const link = document.createElement('link');

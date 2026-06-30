@@ -56,7 +56,7 @@ describe('Client Integration Tests', () => {
         it('transforms Supabase image URLs correctly', () => {
             expect(getTransformedUrl('', 400)).toBe('');
             expect(getTransformedUrl('https://example.com/pic.jpg', 400)).toBe('https://example.com/pic.jpg');
-            expect(getTransformedUrl('https://xyz.supabase.co/storage/v1/pic.jpg', 400)).toBe('https://xyz.supabase.co/storage/v1/pic.jpg?width=400&quality=75');
+            expect(getTransformedUrl('https://xyz.supabase.co/storage/v1/pic.jpg', 400)).toBe('https://xyz.supabase.co/storage/v1/pic.jpg?width=400&quality=75&format=webp');
         });
 
         it('builds srcset and sizes for images', () => {
@@ -64,8 +64,8 @@ describe('Client Integration Tests', () => {
             expect(buildSrcSet('https://example.com/pic.jpg')).toBeUndefined();
             
             const srcSet = buildSrcSet('https://xyz.supabase.co/pic.jpg', [400, 800]);
-            expect(srcSet).toContain('?width=400&quality=75 400w');
-            expect(srcSet).toContain('?width=800&quality=75 800w');
+            expect(srcSet).toContain('?width=400&quality=75&format=webp 400w');
+            expect(srcSet).toContain('?width=800&quality=75&format=webp 800w');
 
             expect(buildSizes()).toBe('(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw');
         });

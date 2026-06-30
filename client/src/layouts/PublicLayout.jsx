@@ -62,10 +62,10 @@ const PublicLayout = () => {
     }, [language, queryClient]);
 
     return (
-        <div className="min-h-screen flex flex-col dark:bg-background">
+        <div className="min-h-screen flex flex-col">
             <a
                 href="#main-content"
-                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-6 focus:py-3 focus:bg-white dark:focus:bg-slate-900 focus:text-[#0b3b75] dark:focus:text-brand-gold focus:font-bold focus:rounded-lg focus:shadow-xl focus:outline-2 focus:outline-[#ceb079]"
+                className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[9999] focus:px-6 focus:py-3 focus:bg-white focus:text-[#0b3b75] focus:font-bold focus:rounded-lg focus:shadow-xl focus:outline-2 focus:outline-[#ceb079]"
             >
                 Skip to main content
             </a>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
-import { getSocialIcon } from '../utils/socialIcons';
+import { getSocialIcon, availableSocialPlatforms } from '../utils/socialIcons';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 
 const Hero = ({ data, socialLinks = [] }) => {
@@ -49,6 +49,10 @@ const Hero = ({ data, socialLinks = [] }) => {
                     <div className="flex flex-wrap justify-center items-center gap-3 mt-4">
                         {socialLinks.map((link, idx) => {
                             const IconComponent = getSocialIcon(link.icon_name || link.platform);
+                            const platformConfig = availableSocialPlatforms.find(
+                                p => p.id === (link.icon_name || '').toLowerCase().replace(/[\s-_]/g, '')
+                            );
+                            const defaultColor = platformConfig ? platformConfig.color : '#0b3b75';
                             return (
                                 <a 
                                     key={idx}
@@ -62,7 +66,8 @@ const Hero = ({ data, socialLinks = [] }) => {
                                     <div className="absolute inset-0 bg-gradient-to-tr from-gray-100 to-white opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                     <IconComponent 
                                         size={22} 
-                                        className={`relative z-10 text-[#0b3b75] ${(link.color_class || '').replace('hover:', 'group-hover:')} transition-colors`} 
+                                        style={{ color: defaultColor }}
+                                        className="relative z-10 transition-transform duration-200 group-hover:scale-110" 
                                     />
                                 </a>
                             );

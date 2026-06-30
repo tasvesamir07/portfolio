@@ -2,6 +2,15 @@ if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
     require('dotenv').config();
 }
 
+const Sentry = require('@sentry/node');
+
+if (process.env.SENTRY_DSN) {
+    Sentry.init({
+        dsn: process.env.SENTRY_DSN,
+        tracesSampleRate: 1.0,
+    });
+}
+
 // Startup security check
 if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
     console.error('FATAL ERROR: JWT_SECRET environment variable is not set in production.');
@@ -427,6 +436,10 @@ if (process.env.ERROR_WEBHOOK_URL) {
 
     process.on('uncaughtException', (err) => notifyServerCrash(err, 'Uncaught Exception'));
     process.on('unhandledRejection', (reason) => notifyServerCrash(reason, 'Unhandled Rejection'));
+}
+
+if (process.env.SENTRY_DSN) {
+    Sentry.setupExpressErrorHandler(app);
 }
 
 module.exports = app;

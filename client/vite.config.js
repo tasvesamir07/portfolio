@@ -39,6 +39,9 @@ export default defineConfig({
           if (id.includes('@tiptap') || id.includes('prosemirror')) return 'editor';
           if (id.includes('framer-motion')) return 'motion';
           if (id.includes('lucide-react')) return 'icons';
+          if (id.includes('react-icons')) return 'react-icons';
+          if (id.includes('@tanstack/react-query')) return 'react-query';
+          if (id.includes('axios')) return 'axios';
           if (id.includes('react-router-dom')) return 'router';
           if (id.includes('react-dom') || id.includes('/react/')) return 'react-vendor';
         },
