@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node10",
+    "esModuleInterop": true,
+    "strict": true,
+    "outDir": "./dist",
+    "rootDir": ".",
+    "declaration": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "server.js",
+    "db.js",
+    "translate.js",
+    "upload.js",
+    "api/**/*.ts",
+    "api/**/*.js",
+    "middleware/**/*.ts",
+    "middleware/**/*.js",
+    "routes/**/*.ts",
+    "routes/**/*.js",
+    "utils/**/*.ts",
+    "utils/**/*.js",
+    "scripts/**/*.ts",
+    "types/**/*.ts"
+  ],
+  "exclude": ["node_modules", "tests", "coverage", "scratch", "dist"]
+}

@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import viteCompression from 'vite-plugin-compression';
 import { analyzer } from 'vite-bundle-analyzer';
+import checker from 'vite-plugin-checker';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,9 +13,15 @@ const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),
+    checker({ typescript: true, overlay: false }),
     viteCompression({ algorithm: 'brotliCompress', ext: '.br' }),
     analyzer({ analyzerMode: 'static', fileName: 'bundle-report' }),
     {
