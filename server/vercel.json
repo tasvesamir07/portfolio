@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "buildCommand": "npx tsc",
   "functions": {
     "api/[...all].js": {
       "maxDuration": 60
