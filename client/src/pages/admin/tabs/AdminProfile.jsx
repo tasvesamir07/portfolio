@@ -5,6 +5,7 @@ import { clearTranslationCache } from '../../../i18n/translator';
 import { storeSessionToken } from '../../../utils/authSession';
 import { Field } from '../components/AdminSharedComponents';
 import StickySaveBar from '../components/StickySaveBar';
+import { showSiteAlert } from '../../../utils/siteAlerts';
 
 const PROFILE_OTP_REGEX = /^\d{0,6}$/;
 
@@ -13,17 +14,10 @@ const AdminProfile = () => {
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
-    const [notice, setNotice] = useState(null);
     const [saveError, setSaveError] = useState('');
     const [saving, setSaving] = useState(false);
 
     const headerRef = useRef(null);
-
-    useEffect(() => {
-        if (!notice) return undefined;
-        const timer = setTimeout(() => setNotice(null), 2600);
-        return () => clearTimeout(timer);
-    }, [notice]);
 
     useEffect(() => {
         if (!saveError) return undefined;
@@ -154,7 +148,7 @@ const AdminProfile = () => {
                     otp: '',
                     otp_recipient: res.data?.recipientEmail || email
                 }));
-                setNotice({ type: 'success', message: res.data?.message || 'OTP sent successfully.' });
+                showSiteAlert({ type: 'success', message: res.data?.message || 'OTP sent successfully.' });
                 return;
             }
 
@@ -173,7 +167,7 @@ const AdminProfile = () => {
             }
             setDraftAvailable(false);
             setIsEditing(false);
-            setNotice({ type: 'success', message: res.data?.message || 'Profile updated successfully.' });
+            showSiteAlert({ type: 'success', message: res.data?.message || 'Profile updated successfully.' });
             clearTranslationCache();
             clearResponseCache();
             fetchData();
@@ -199,12 +193,6 @@ const AdminProfile = () => {
 
     return (
         <div>
-            {notice && (
-                <div className="fixed right-5 top-5 z-[80] rounded-xl border border-brand-gold/20 bg-brand-gold/[0.03] px-4 py-3 text-sm font-semibold text-brand-gold shadow-lg">
-                    {notice.message}
-                </div>
-            )}
-
             {!isEditing ? (
                 <div>
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
@@ -284,9 +272,11 @@ const AdminProfile = () => {
                                     type="button" 
                                     onClick={() => {
                                         if (draftData) {
-                                            setFormData(draftData);
+                                            const restored = { ...draftData };
+                                            if (content?.id) restored.id = content.id;
+                                            setFormData(restored);
                                             setDraftAvailable(false);
-                                            setNotice({ type: 'success', message: 'Restored unsaved draft.' });
+                                            showSiteAlert({ type: 'success', message: 'Restored unsaved draft.' });
                                         }
                                     }}
                                     className="bg-brand-gold text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-brand-gold/90 transition-colors"
@@ -298,7 +288,7 @@ const AdminProfile = () => {
                                     onClick={() => {
                                         localStorage.removeItem(autosaveKey);
                                         setDraftAvailable(false);
-                                        setNotice({ type: 'info', message: 'Draft discarded.' });
+                                        showSiteAlert({ type: 'info', message: 'Draft discarded.' });
                                     }}
                                     className="border border-brand-gold/30 text-brand-gold text-xs px-3 py-1.5 rounded font-bold hover:bg-brand-gold/5 transition-colors"
                                 >

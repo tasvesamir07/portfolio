@@ -23,7 +23,6 @@ const AdminGallery = () => {
     const [categories, setCategories] = useState([]);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
-    const [notice, setNotice] = useState(null);
     const [saveError, setSaveError] = useState('');
     const [saving, setSaving] = useState(false);
     const [initialData, setInitialData] = useState({});
@@ -46,12 +45,6 @@ const AdminGallery = () => {
     }, [formData, isEditing, initialData, autosaveKey]);
 
     const headerRef = useRef(null);
-
-    useEffect(() => {
-        if (!notice) return undefined;
-        const timer = setTimeout(() => setNotice(null), 2600);
-        return () => clearTimeout(timer);
-    }, [notice]);
 
     useEffect(() => {
         if (!saveError) return undefined;
@@ -195,7 +188,7 @@ const AdminGallery = () => {
                 }
 
                 if (failedUploads.length) {
-                    setNotice({
+                    showSiteAlert({
                         type: 'success',
                         message: `${successfulCount} image${successfulCount === 1 ? '' : 's'} saved. ${failedUploads.length} failed.`
                     });
@@ -205,7 +198,7 @@ const AdminGallery = () => {
                         localStorage.removeItem(autosaveKey);
                     }
                     setDraftAvailable(false);
-                    setNotice({
+                    showSiteAlert({
                         type: 'success',
                         message: `${successfulCount} gallery image${successfulCount === 1 ? '' : 's'} saved successfully.`
                     });
@@ -222,7 +215,7 @@ const AdminGallery = () => {
                 }
                 setDraftAvailable(false);
                 setIsEditing(false);
-                setNotice({ type: 'success', message: 'Saved successfully.' });
+                showSiteAlert({ type: 'success', message: 'Saved successfully.' });
             }
 
             clearTranslationCache();
@@ -295,12 +288,6 @@ const AdminGallery = () => {
 
     return (
         <div>
-            {notice && (
-                <div className="fixed right-5 top-5 z-[80] rounded-xl border border-brand-gold/20 bg-brand-gold/[0.03] px-4 py-3 text-sm font-semibold text-brand-gold shadow-lg">
-                    {notice.message}
-                </div>
-            )}
-
             {!isEditing ? (
                 <div>
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
@@ -439,9 +426,11 @@ const AdminGallery = () => {
                                     type="button" 
                                     onClick={() => {
                                         if (draftData) {
-                                            setFormData(draftData);
+                                            const restored = { ...draftData };
+                                            if (initialData?.id) restored.id = initialData.id;
+                                            setFormData(restored);
                                             setDraftAvailable(false);
-                                            setNotice({ type: 'success', message: 'Restored unsaved draft.' });
+                                            showSiteAlert({ type: 'success', message: 'Restored unsaved draft.' });
                                         }
                                     }}
                                     className="bg-brand-gold text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-brand-gold/90 transition-colors"
@@ -453,7 +442,7 @@ const AdminGallery = () => {
                                     onClick={() => {
                                         localStorage.removeItem(autosaveKey);
                                         setDraftAvailable(false);
-                                        setNotice({ type: 'info', message: 'Draft discarded.' });
+                                        showSiteAlert({ type: 'info', message: 'Draft discarded.' });
                                     }}
                                     className="border border-brand-gold/30 text-brand-gold text-xs px-3 py-1.5 rounded font-bold hover:bg-brand-gold/5 transition-colors"
                                 >

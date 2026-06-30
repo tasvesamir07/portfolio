@@ -27,19 +27,12 @@ export const AdminCrudLayout = ({
     const [formData, setFormData] = useState({});
     const [initialData, setInitialData] = useState({});
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
-    const [notice, setNotice] = useState(null);
     const [saveError, setSaveError] = useState('');
     const [saving, setSaving] = useState(false);
     const [draftAvailable, setDraftAvailable] = useState(false);
     const [draftData, setDraftData] = useState(null);
 
     const headerRef = useRef(null);
-
-    useEffect(() => {
-        if (!notice) return undefined;
-        const timer = setTimeout(() => setNotice(null), 2600);
-        return () => clearTimeout(timer);
-    }, [notice]);
 
     useEffect(() => {
         if (!saveError) return undefined;
@@ -109,9 +102,11 @@ export const AdminCrudLayout = ({
 
     const handleRestoreDraft = () => {
         if (draftData) {
-            setFormData(draftData);
+            const restored = { ...draftData };
+            if (initialData?.id) restored.id = initialData.id;
+            setFormData(restored);
             setDraftAvailable(false);
-            setNotice({ type: 'success', message: 'Restored unsaved draft.' });
+            showSiteAlert({ type: 'success', message: 'Restored unsaved draft.' });
         }
     };
 
@@ -120,7 +115,7 @@ export const AdminCrudLayout = ({
             localStorage.removeItem(autosaveKey);
         }
         setDraftAvailable(false);
-        setNotice({ type: 'info', message: 'Draft discarded.' });
+        showSiteAlert({ type: 'info', message: 'Draft discarded.' });
     };
 
     const handleSave = async (e) => {
@@ -141,7 +136,7 @@ export const AdminCrudLayout = ({
             }
             setDraftAvailable(false);
             setIsEditing(false);
-            setNotice({ type: 'success', message: 'Saved successfully.' });
+            showSiteAlert({ type: 'success', message: 'Saved successfully.' });
             clearTranslationCache();
             clearResponseCache();
             fetchData();
@@ -213,12 +208,6 @@ export const AdminCrudLayout = ({
 
     return (
         <div>
-            {notice && (
-                <div className="fixed right-5 top-5 z-[80] rounded-xl border border-brand-gold/20 bg-brand-gold/[0.03] px-4 py-3 text-sm font-semibold text-brand-gold shadow-lg">
-                    {notice.message}
-                </div>
-            )}
-
             {!isEditing ? (
                 <div>
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
