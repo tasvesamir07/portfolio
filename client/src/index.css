@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 
 @theme {
   --color-background: var(--background);
@@ -28,18 +26,6 @@
     --accent-secondary: #ceb079;
     --muted: #f3f4f6;
     --border-light: #e5e7eb;
-  }
-
-  .dark {
-    color-scheme: dark;
-    --background: #0f172a;
-    --foreground: #f1f5f9;
-    --brand-blue: #60a5fa;
-    --brand-gold: #ceb079;
-    --accent-primary: #ceb079;
-    --accent-secondary: #334155;
-    --muted: #1e293b;
-    --border-light: #475569;
   }
 
   .about-highlight-text {

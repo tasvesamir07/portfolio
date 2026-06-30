@@ -5,7 +5,6 @@ import '@fontsource-variable/inter/index.css'
 import App from './App.jsx'
 import { I18nProvider } from './i18n/I18nContext.jsx'
 import { SiteAlertProvider } from './components/SiteAlertProvider.jsx'
-import { ThemeProvider } from './context/ThemeContext.jsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import interWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
 
@@ -41,9 +40,7 @@ createRoot(document.getElementById('root')).render(
     <SiteAlertProvider>
       <QueryClientProvider client={queryClient}>
         <I18nProvider>
-          <ThemeProvider>
-            <App />
-          </ThemeProvider>
+          <App />
         </I18nProvider>
       </QueryClientProvider>
     </SiteAlertProvider>

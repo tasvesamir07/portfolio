@@ -4,7 +4,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { I18nProvider } from '../i18n/I18nContext';
 import Navbar from './Navbar';
-import { ThemeProvider } from '../context/ThemeContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import api from '../api';
 
@@ -39,9 +38,7 @@ describe('Navbar Component', () => {
             <QueryClientProvider client={queryClient}>
                 <MemoryRouter>
                     <I18nProvider>
-                        <ThemeProvider>
-                            <Navbar />
-                        </ThemeProvider>
+                        <Navbar />
                     </I18nProvider>
                 </MemoryRouter>
             </QueryClientProvider>
