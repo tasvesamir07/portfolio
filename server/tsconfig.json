@@ -15,18 +15,15 @@
     "ignoreDeprecations": "6.0"
   },
   "include": [
-    "server.js",
-    "db.js",
-    "translate.js",
-    "upload.js",
+    "server.ts",
+    "db.ts",
+    "translate.ts",
+    "upload.ts",
+    "auth.ts",
     "api/**/*.ts",
-    "api/**/*.js",
     "middleware/**/*.ts",
-    "middleware/**/*.js",
     "routes/**/*.ts",
-    "routes/**/*.js",
     "utils/**/*.ts",
-    "utils/**/*.js",
     "scripts/**/*.ts",
     "types/**/*.ts"
   ],
