@@ -12,6 +12,7 @@ import { usePublicPageData } from '../hooks/useSiteName';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
+import LanguageTransitionOverlay from '../components/LanguageTransitionOverlay';
 
 const PublicLayout = () => {
     usePublicPageData();
@@ -86,6 +87,7 @@ const PublicLayout = () => {
             <Footer />
             <BackToTop />
             <SWUpdateBanner />
+            <LanguageTransitionOverlay />
         </div>
     );
 };

@@ -8,6 +8,24 @@ const languageCodes = {
     ko: 'KO'
 };
 
+const warmServerCache = (lang) => {
+    const paths = [
+        '/academics', 
+        '/publications', 
+        '/research', 
+        '/research-interests', 
+        '/experiences-trainings-skills'
+    ];
+    paths.forEach(path => {
+        fetch(`/api/v1${path}`, {
+            headers: { 
+                'x-translate-language': lang, 
+                'x-skip-client-cache': '1' 
+            }
+        }).catch(() => {});
+    });
+};
+
 const LanguageSwitcher = ({ className = '', fullWidth = false }) => {
     const { language, setLanguage, t, languages } = useI18n();
     const [isOpen, setIsOpen] = useState(false);
@@ -91,6 +109,8 @@ const LanguageSwitcher = ({ className = '', fullWidth = false }) => {
                                 key={item.code}
                                 type="button"
                                 onClick={() => handleSelect(item.code)}
+                                onMouseEnter={() => !isActive && warmServerCache(item.code)}
+                                onPointerEnter={() => !isActive && warmServerCache(item.code)}
                                 role="option"
                                 aria-selected={isActive}
                                 className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
