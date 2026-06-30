@@ -9,18 +9,18 @@ const SiteAlertContext = createContext({ showAlert: showSiteAlert });
 const alertStyles = {
     success: {
         icon: CheckCircle2,
-        wrapper: 'border-emerald-200 bg-white text-emerald-900 shadow-emerald-900/10 dark:bg-slate-900 dark:border-emerald-900/30 dark:text-emerald-300',
-        badge: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400'
+        wrapper: 'border-emerald-200 bg-white text-emerald-900 shadow-emerald-900/10',
+        badge: 'bg-emerald-50 text-emerald-600'
     },
     error: {
         icon: AlertCircle,
-        wrapper: 'border-red-200 bg-white text-red-900 shadow-red-900/10 dark:bg-slate-900 dark:border-red-900/30 dark:text-red-300',
-        badge: 'bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400'
+        wrapper: 'border-red-200 bg-white text-red-900 shadow-red-900/10',
+        badge: 'bg-red-50 text-red-600'
     },
     info: {
         icon: Info,
-        wrapper: 'border-blue-200 bg-white text-blue-900 shadow-blue-900/10 dark:bg-slate-900 dark:border-blue-900/30 dark:text-blue-300',
-        badge: 'bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400'
+        wrapper: 'border-blue-200 bg-white text-blue-900 shadow-blue-900/10',
+        badge: 'bg-blue-50 text-blue-600'
     }
 };
 
@@ -99,14 +99,14 @@ export const SiteAlertProvider = ({ children }) => {
                                         {alert.title && (
                                             <div className="mb-1 text-sm font-bold">{alert.title}</div>
                                         )}
-                                        <div className="text-sm font-medium leading-relaxed text-gray-700 dark:text-foreground/80">
+                                        <div className="text-sm font-medium leading-relaxed text-gray-700">
                                             {alert.message}
                                         </div>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setAlerts((current) => current.filter((item) => item.id !== alert.id))}
-                                        className="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-800 dark:hover:text-gray-200"
+                                        className="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                     >
                                         <X size={16} />
                                     </button>
