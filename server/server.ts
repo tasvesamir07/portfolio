@@ -247,9 +247,6 @@ v1Router.get('/page', async (req: Request, res: Response) => {
         }
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         const localized = localizeDataObject(result.rows[0], language);
-        if (Object.keys(result.rows[0]).some((k: string) => k.endsWith(`_${language}`))) {
-            res.locals.dataLocalized = true;
-        }
         res.json(localized);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

@@ -18,9 +18,6 @@ router.get('/', async (req: Request, res: Response) => {
             : await db.query('SELECT id, title, slug, show_in_nav FROM pages ORDER BY id ASC');
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         const localized = localizeDataObject(result.rows, language);
-        if (result.rows[0] && Object.keys(result.rows[0]).some((k: string) => k.endsWith(`_${language}`))) {
-            res.locals.dataLocalized = true;
-        }
         res.json(localized);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -48,9 +45,6 @@ router.get('/page', async (req: Request, res: Response) => {
         }
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         const localized = localizeDataObject(result.rows[0], language);
-        if (Object.keys(result.rows[0]).some((k: string) => k.endsWith(`_${language}`))) {
-            res.locals.dataLocalized = true;
-        }
         res.json(localized);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -66,9 +60,6 @@ router.get('/:slug', async (req: Request, res: Response) => {
         }
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         const localized = localizeDataObject(result.rows[0], language);
-        if (Object.keys(result.rows[0]).some((k: string) => k.endsWith(`_${language}`))) {
-            res.locals.dataLocalized = true;
-        }
         res.json(localized);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

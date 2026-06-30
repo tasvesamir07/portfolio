@@ -13,7 +13,7 @@ export const createStructuredItem = (type = 'pair') => ({
 export const normalizeStructuredText = (value = '') =>
     value
         .replace(/\u00a0/g, ' ')
-        .replace(/\s+/g, ' ')
+        .replace(/[ \t]+/g, ' ')
         .trim();
 
 export const escapeStructuredHtml = (value = '') =>
