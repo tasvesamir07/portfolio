@@ -14,7 +14,7 @@ const warmServerCache = (lang) => {
         '/publications', 
         '/research', 
         '/research-interests', 
-        '/experiences-trainings-skills'
+        '/page-data?resources=experiences,trainings,skills'
     ];
     paths.forEach(path => {
         fetch(`/api/v1${path}`, {
