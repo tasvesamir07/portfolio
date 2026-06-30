@@ -9,11 +9,9 @@
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "allowJs": true,
-    "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] },
+    "paths": { "@/*": ["./src/*"] },
     "types": ["vite/client"],
-    "noEmit": true,
-    "ignoreDeprecations": "6.0"
+    "noEmit": true
   },
   "include": ["src"],
   "exclude": ["node_modules"]
