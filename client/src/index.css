@@ -32,14 +32,14 @@
 
   .dark {
     color-scheme: dark;
-    --background: #0b111e;
-    --foreground: #f3f4f6;
-    --brand-blue: #092040;
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+    --brand-blue: #60a5fa;
     --brand-gold: #ceb079;
     --accent-primary: #ceb079;
-    --accent-secondary: #0b111e;
+    --accent-secondary: #334155;
     --muted: #1e293b;
-    --border-light: #334155;
+    --border-light: #475569;
   }
 
   .about-highlight-text {
