@@ -11,7 +11,6 @@ import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
-import { useSiteIdentity } from '../hooks/useSiteName';
 
 import PublicationsSkeleton from '../pages/skeletons/PublicationsSkeleton';
 
@@ -25,7 +24,6 @@ const Publications = () => {
     const prefersReduced = useReducedMotion();
     const [brokenThumbnails, setBrokenThumbnails] = useState([]);
     const { language, t } = useI18n();
-    const { authorNames } = useSiteIdentity();
     const noDataLabel = getNoDataLabel(language);
 
     const { data: publications = [], isLoading } = useQuery({
@@ -47,47 +45,6 @@ const Publications = () => {
             </div>
          </section>
     );
-
-    const getAuthorPattern = () => {
-        if (!authorNames || authorNames === 'Portfolio') return /(?!)/; // no match until identity is known
-        const parts = authorNames.split(/\s+/).filter(Boolean).map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        return new RegExp(parts.join('|'), 'i');
-    };
-
-    const renderAuthors = (authorsStr) => {
-        if (!authorsStr) return t('common.notAvailable');
-
-        const authorArray = authorsStr.split(',');
-        const authorPattern = getAuthorPattern();
-        return (
-            <>
-                {authorArray.map((name, idx) => {
-                    const trimmed = name.trim();
-                    if (!trimmed) return null;
-                    const isMainAuthor = authorPattern.test(trimmed);
-                    const searchUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent(trimmed)}`;
-
-                    return (
-                        <React.Fragment key={idx}>
-                            {idx > 0 && <span className="text-gray-500 dark:text-foreground/50">, </span>}
-                            <a
-                                href={searchUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`hover:underline transition-colors ${
-                                    isMainAuthor 
-                                        ? 'font-bold text-[#c2410c] hover:text-[#9a3412] decoration-[#c2410c]/40' 
-                                        : 'text-gray-700 dark:text-foreground/80 hover:text-brand-blue dark:hover:text-brand-gold'
-                                }`}
-                            >
-                                <RenderInlineHtml html={trimmed} />
-                            </a>
-                        </React.Fragment>
-                    );
-                })}
-            </>
-        );
-    };
 
     return (
         <section id="publications" className="py-16 md:py-24 bg-white dark:bg-background">
@@ -241,8 +198,8 @@ const Publications = () => {
                                                 {!isFieldEmpty(authors) && (
                                                     <p className="leading-relaxed">
                                                         <span className="font-bold text-gray-900 dark:text-foreground">{t('publications.authors')}:</span>{' '}
-                                                        <span className="text-gray-600 dark:text-foreground/80 font-medium">
-                                                            {renderAuthors(authors)}
+                                                        <span className="text-gray-600 dark:text-foreground/80 font-medium [&_p]:inline [&_div]:inline [&_a]:text-[#3a96b7] [&_a]:dark:text-[#5bc0be] [&_a]:hover:underline [&_a]:font-semibold">
+                                                            <RenderInlineHtml html={authors} />
                                                         </span>
                                                     </p>
                                                 )}
