@@ -3,7 +3,7 @@ import { expireSessionAndRedirect, getStoredToken } from './utils/authSession';
 const STORAGE_KEY = 'portfolio-language';
 const LANGUAGE_HEADER = 'X-Translate-Language';
 const MAX_CACHED_GETS = 120;
-const API_RESPONSE_CACHE_VERSION = 'v5';
+const API_RESPONSE_CACHE_VERSION = 'v6';
 
 const getResponseCache = new Map();
 const pendingGetRequests = new Map();

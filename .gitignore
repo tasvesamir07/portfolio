@@ -44,6 +44,9 @@ Thumbs.db
 **/.tmp/
 **/.antigravity/
 
+# Runtime translation cache (auto-generated)
+**/.translation-cache.json
+
 *.md
 *.sql
 !server/migrations/*.sql

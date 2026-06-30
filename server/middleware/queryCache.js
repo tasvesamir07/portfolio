@@ -27,7 +27,7 @@ const REDIS_TTL_SECS = 24 * 60 * 60; // Store in Redis for 24 hours
 const getCacheKey = (req) => {
     const lang = req.headers['x-translate-language'] || 'en';
     const url = req.originalUrl || req.url;
-    return `api_cache::${lang}::${url}`;
+    return `api_cache_v6::${lang}::${url}`;
 };
 
 const generateETag = (body) => {
@@ -121,7 +121,7 @@ const queryCacheMiddleware = async (req, res, next) => {
         try {
             memoryCache.clear();
             if (redis) {
-                const keys = await redis.keys('api_cache::*');
+                const keys = await redis.keys('api_cache_v6::*');
                 if (keys && keys.length > 0) {
                     await Promise.all(keys.map(k => redis.del(k)));
                 }

@@ -18,8 +18,8 @@ if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
 }
 
 const CHUNK_SIZES = {
-  'en': { 'bn': 280, 'ko': 150 },   // source → target max chars
-  'bn': { 'en': 400, 'ko': 150 },
+  'en': { 'bn': 280, 'ko': 250 },   // source → target max chars
+  'bn': { 'en': 400, 'ko': 250 },
   'ko': { 'en': 280, 'bn': 200 },
 };
 
@@ -41,7 +41,7 @@ let translator = null;
 const translationCache = new Map();
 const MAX_CACHE_ENTRIES = 6000;
 const CHUNK_CONCURRENCY = 8;
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const GOOGLE_TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
 const BANGLA_REGEX = /[\u0980-\u09FF]/;
 const HANGUL_REGEX = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]/;
@@ -309,7 +309,7 @@ const chunkTokens = (tokens, maxChars) => {
     return chunks;
 };
 
-const chunkWithOverlap = (text, maxChars) => {
+const chunkWithOverlap = (text, maxChars, enableOverlap = true) => {
     const tokens = tokenizeSemantically(text);
     const chunks = chunkTokens(tokens, maxChars);
     
@@ -318,7 +318,7 @@ const chunkWithOverlap = (text, maxChars) => {
         const currentChunkTokens = chunks[i];
         let overlapPrefix = null;
         
-        if (i > 0) {
+        if (enableOverlap && i > 0) {
             const prevChunkTokens = chunks[i - 1];
             let lastNonSepIdx = -1;
             for (let j = prevChunkTokens.length - 1; j >= 0; j--) {
@@ -333,7 +333,7 @@ const chunkWithOverlap = (text, maxChars) => {
         }
         
         let chunkText = currentChunkTokens.map(t => t.text).join('');
-        if (overlapPrefix) {
+        if (enableOverlap && overlapPrefix) {
             chunkText = overlapPrefix + " " + chunkText;
         }
         
@@ -363,10 +363,6 @@ const stripPrefix = (text, prefix) => {
     const cleanPrefix = prefix.trim();
     if (cleanText.startsWith(cleanPrefix)) {
         return cleanText.slice(cleanPrefix.length).trim();
-    }
-    const index = cleanText.indexOf(cleanPrefix);
-    if (index >= 0) {
-        return cleanText.slice(index + cleanPrefix.length).trim();
     }
     return cleanText;
 };
@@ -434,6 +430,10 @@ const looksLikeBrokenTranslation = (translated = '', original = '', targetLangua
     }
 
     if (targetLanguage === 'ko' && BANGLA_REGEX.test(originalTrimmed) && BANGLA_REGEX.test(normalized)) {
+        return true;
+    }
+
+    if (targetLanguage === 'ko' && LATIN_REGEX.test(normalized) && !HANGUL_REGEX.test(normalized)) {
         return true;
     }
 
@@ -676,7 +676,8 @@ const translateText = async (text = '', language = 'en') => {
     try {
         const { text: protectedText, map: glossaryMap } = protectGlossary(text, sourceLanguage, targetLanguage);
         const maxChars = getMaxChunkSize(sourceLanguage, targetLanguage);
-        const chunks = chunkWithOverlap(protectedText, maxChars);
+        const useOverlap = sourceLanguage !== 'ko' && targetLanguage !== 'ko';
+        const chunks = chunkWithOverlap(protectedText, maxChars, useOverlap);
         
         let resolved;
         if (chunks.length === 1) {
