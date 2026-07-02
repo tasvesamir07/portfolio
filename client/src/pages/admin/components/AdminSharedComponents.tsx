@@ -146,7 +146,6 @@ export const createHighlightItem = (type = 'pair') => ({
 export const normalizeHighlightText = (value = '') =>
     value
         .replace(/\u00a0/g, ' ')
-        .replace(/\s+/g, ' ')
         .trim();
 
 export const escapeHtml = (value = '') =>
@@ -270,8 +269,7 @@ export const normalizeInlineRichText = (html = '') => {
         .join('')
         .replace(/\u200B/g, '')
         .replace(/(?:<br>\s*){3,}/g, '<br><br>')
-        .replace(/^(?:<br>\s*)+|(?:<br>\s*)+$/g, '')
-        .trim();
+        .replace(/^(?:<br>\s*)+|(?:<br>\s*)+$/g, '');
 
     return normalized;
 };
@@ -280,13 +278,6 @@ export const normalizeAboutRichText = (html = '') => {
     if (!html || typeof window === 'undefined') return html;
 
     const doc = new DOMParser().parseFromString(html, 'text/html');
-
-    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
-    let textNode = walker.nextNode();
-    while (textNode) {
-        textNode.textContent = (textNode.textContent || '').replace(/\u00a0/g, ' ');
-        textNode = walker.nextNode();
-    }
 
     doc.body.querySelectorAll('*').forEach((element) => {
         element.style.removeProperty('font-size');
@@ -303,7 +294,6 @@ export const normalizeAboutRichText = (html = '') => {
     });
 
     return doc.body.innerHTML
-        .replace(/&nbsp;/gi, ' ')
         .replace(/<p>\s*<\/p>\s*(<p>\s*<\/p>\s*){2,}/gi, '<p><br></p><p><br></p>');
 };
 
