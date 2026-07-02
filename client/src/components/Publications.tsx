@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink, Download } from 'lucide-react';
+import { ExternalLink, Download, BookOpen } from 'lucide-react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api';
@@ -60,7 +60,7 @@ const Publications = () => {
                 </h2>
                 <div className="w-32 h-[1px] bg-gray-200 mx-auto mb-16" />
                 
-                <div className="flex flex-col gap-8 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 gap-6 md:gap-9 max-w-7xl mx-auto w-full">
                     {publications.map((item) => {
                         let detailItems = parseStructuredItems(getLocalizedFirstField(item, ['details_json'], language, ''));
                         const title = getLocalizedField(item, 'title', language, item.title);
@@ -113,13 +113,13 @@ const Publications = () => {
                                     transition: { duration: 0.6 },
                                     whileHover: { scale: 1.02, y: -6 }
                                 } : {})}
-                                className="group bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm motion-card-hover flex flex-col justify-between"
+                                className="group bg-white p-6 md:p-9 rounded-2xl md:rounded-3xl border border-gray-100 transition-all duration-300 shadow-sm motion-card-hover flex flex-col justify-between"
                                 style={{ contentVisibility: 'auto', containIntrinsicSize: '200px' }}
                             >
                                 <div className="flex-grow flex flex-col justify-start">
                                     {/* Header Section: Image + Meta */}
                                     <div className="flex flex-col sm:flex-row gap-6 mb-2">
-                                        {item.thumbnail_url && !brokenThumbnails.includes(item.id) && (
+                                        {item.thumbnail_url && !brokenThumbnails.includes(item.id) ? (
                                             <div className="w-full sm:w-44 sm:h-56 h-48 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200/60 shrink-0 shadow-sm">
                                                 <OptimizedImage 
                                                     src={item.thumbnail_url}
@@ -128,13 +128,17 @@ const Publications = () => {
                                                     height={240}
                                                     sizes="(max-width: 640px) 100vw, 180px"
                                                     loading="lazy"
-                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                    className="w-full h-full object-cover"
                                                     onError={() => setBrokenThumbnails((prev) => [...prev, item.id])}
                                                 />
                                             </div>
+                                        ) : (
+                                            <div className="w-full sm:w-44 sm:h-56 h-48 overflow-hidden rounded-xl bg-[#2d8da8]/5 flex items-center justify-center border border-[#2d8da8]/10 shrink-0 shadow-sm">
+                                                <BookOpen className="w-12 h-12 text-[#2d8da8]" strokeWidth={1.5} />
+                                            </div>
                                         )}
                                         <div className="text-left flex-grow flex flex-col justify-center">
-                                            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug mb-4">
+                                            <h3 className="text-xl sm:text-2xl font-black text-gray-900 leading-snug mb-4">
                                                 {titleLink ? (
                                                     <a href={titleLink} target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-[#2d8da8] transition-colors">
                                                         <RenderInlineHtml html={title} />
