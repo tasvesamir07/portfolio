@@ -45,9 +45,17 @@ const queryClient = new QueryClient({
 })
 
 if (typeof window !== 'undefined') {
-  window.addEventListener('portfolio:mutation', () => {
-    queryClient.invalidateQueries();
-  });
+  window.addEventListener('portfolio:mutation', ((event: CustomEvent) => {
+    const url = event.detail?.url || '';
+    if (url.includes('/gallery')) {
+      queryClient.invalidateQueries({ queryKey: ['gallery'] });
+      queryClient.invalidateQueries({ queryKey: ['gallery-categories'] });
+    } else if (url.includes('/about') || url.includes('/page-data')) {
+      queryClient.invalidateQueries({ queryKey: ['page-data'] });
+    } else {
+      queryClient.invalidateQueries();  // fallback: invalidate all
+    }
+  }) as EventListener);
 }
 
 createRoot(document.getElementById('root')).render(

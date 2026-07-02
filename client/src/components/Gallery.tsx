@@ -39,7 +39,8 @@ const Gallery = () => {
         queryFn: async () => {
             const res = await api.get('/gallery');
             return Array.isArray(res.data) ? res.data : [];
-        }
+        },
+        staleTime: 30_000,
     });
 
     const { data: categories = [], isLoading: categoriesLoading } = useQuery({
@@ -47,7 +48,8 @@ const Gallery = () => {
         queryFn: async () => {
             const res = await api.get('/gallery-categories');
             return Array.isArray(res.data) ? res.data : [];
-        }
+        },
+        staleTime: 30_000,
     });
 
     const loading = imagesLoading || categoriesLoading;
@@ -56,10 +58,7 @@ const Gallery = () => {
     const noDataLabel = getNoDataLabel(language);
 
 
-    const visibleImages = useMemo(
-        () => translatedImages.filter((img) => !brokenImageIds.includes(img.id)),
-        [translatedImages, brokenImageIds]
-    );
+    const visibleImages = translatedImages;
 
     const usedCategories = useMemo(
         () => translatedCategories.filter((cat) => visibleImages.some((img) => img.category === cat.name)),
@@ -163,22 +162,28 @@ const Gallery = () => {
                                 onClick={() => setSelectedImage(img)}
                                 style={{ contentVisibility: 'auto', containIntrinsicSize: '300px' }}
                             >
-                                <OptimizedImage 
-                                    src={img.image_url} 
-                                    alt={localizedCaption ? localizedCaption.replace(/<[^>]*>/g, '') : ''}
-                                    width={600}
-                                    height={450}
-                                    breakpoints={[300, 600, 900]}
-                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                    loading="lazy"
-                                    onError={() => {
-                                        setBrokenImageIds((current) => current.includes(img.id) ? current : [...current, img.id]);
-                                        if (selectedImage?.id === img.id) {
-                                            setSelectedImage(null);
-                                        }
-                                    }}
-                                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
-                                />
+                                {brokenImageIds.includes(img.id) ? (
+                                    <div className="h-full w-full bg-slate-200 flex items-center justify-center text-gray-400">
+                                        <span className="text-xs uppercase font-bold tracking-wider">Image unavailable</span>
+                                    </div>
+                                ) : (
+                                    <OptimizedImage 
+                                        src={img.image_url} 
+                                        alt={localizedCaption ? localizedCaption.replace(/<[^>]*>/g, '') : ''}
+                                        width={600}
+                                        height={450}
+                                        breakpoints={[300, 600, 900]}
+                                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                        loading="lazy"
+                                        onError={() => {
+                                            setBrokenImageIds((current) => current.includes(img.id) ? current : [...current, img.id]);
+                                            if (selectedImage?.id === img.id) {
+                                                setSelectedImage(null);
+                                            }
+                                        }}
+                                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
+                                    />
+                                )}
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#0f172ae6] via-[#0f172a33] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                                 <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-2 p-3 opacity-0 translate-y-3 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 sm:p-4 md:p-5">
                                     <span className="w-fit rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-blue backdrop-blur">
@@ -204,10 +209,13 @@ const Gallery = () => {
                             animate: { opacity: 1 },
                             exit: { opacity: 0 }
                         } : {})}
-                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-xl"
+                        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 p-4 backdrop-blur-xl"
                         onClick={() => setSelectedImage(null)}
                     >
-                        <button className="absolute right-4 top-4 rounded-full p-2 text-white hover:bg-white/10 sm:right-8 sm:top-8">
+                        <button 
+                            className="absolute right-4 top-4 rounded-full p-2 text-white hover:bg-white/10 sm:right-8 sm:top-8 z-[10000] cursor-pointer"
+                            onClick={() => setSelectedImage(null)}
+                        >
                             <X size={32} />
                         </button>
                         <motion.div

@@ -47,7 +47,7 @@ const Research = () => {
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('research.kicker')}</span>
                 <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('research.titleMain')} <span className="text-brand-blue font-black">{t('research.titleAccent')}</span></h2>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div className="grid grid-cols-1 gap-10 max-w-7xl mx-auto w-full">
                     {research.map((item, index) => {
                         // Merge both structured data and legacy description to prevent content being hidden
                         const structuredData = getLocalizedField(item, 'details_json', language, '');

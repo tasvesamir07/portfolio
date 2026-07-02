@@ -70,10 +70,10 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
   return (
     <picture>
-      {avifSrcSet && <source srcSet={avifSrcSet} type="image/avif" sizes={sizes} />}
       {webpSrcSet && <source srcSet={webpSrcSet} type="image/webp" sizes={sizes} />}
+      {avifSrcSet && <source srcSet={avifSrcSet} type="image/avif" sizes={sizes} />}
       <img
-        src={fallbackSrc}
+        src={fallbackSrc || ''}
         alt={alt}
         width={width}
         height={height}
