@@ -35,7 +35,7 @@ const getCacheKey = (req: Request): string => {
     const lang = req.headers['x-translate-language'] || 'en';
     const cleanUrl = url.replace(/[\s\r\n]/g, '');
     const cleanLang = String(lang).replace(/[\s\r\n]/g, '');
-    return `api_cache_v6::${cleanLang}::${cleanUrl}`;
+    return `api_cache_v7::${cleanLang}::${cleanUrl}`;
 };
 
 const generateETag = (data: unknown): string => {
@@ -118,7 +118,7 @@ const queryCacheMiddleware = async (req: Request, res: Response, next: NextFunct
         try {
             memoryCache.clear();
             if (redis) {
-                const keys = await redis.keys('api_cache_v6::*');
+                const keys = await redis.keys('api_cache_v7::*');
                 if (keys && keys.length > 0) {
                     await Promise.all((keys as string[]).map((k: string) => redis.del(k)));
                 }
