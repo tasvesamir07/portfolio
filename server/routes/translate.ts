@@ -112,6 +112,11 @@ router.post('/run-batch', authenticateToken, async (req: Request, res: Response)
         const current = total - missingTexts.length;
 
         if (missingTexts.length === 0) {
+            const { clearResponseCache } = require('../middleware/autoTranslate');
+            const { clearRedisResponseCache } = require('../translate');
+            clearResponseCache(lang);
+            await clearRedisResponseCache(lang);
+
             res.json({
                 lang,
                 current: total,
@@ -125,12 +130,20 @@ router.post('/run-batch', authenticateToken, async (req: Request, res: Response)
         const batch = missingTexts.slice(0, batchSize);
         await translateTexts(batch, lang);
 
+        const done = missingTexts.length - batch.length === 0;
+        if (done) {
+            const { clearResponseCache } = require('../middleware/autoTranslate');
+            const { clearRedisResponseCache } = require('../translate');
+            clearResponseCache(lang);
+            await clearRedisResponseCache(lang);
+        }
+
         res.json({
             lang,
             current: current + batch.length,
             total,
             remaining: missingTexts.length - batch.length,
-            done: missingTexts.length - batch.length === 0
+            done
         });
     } catch (err: any) {
         console.error('[Auto-Translate Run-Batch] Error:', err.message);

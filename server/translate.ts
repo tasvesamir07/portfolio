@@ -1022,7 +1022,7 @@ const translateTexts = async (texts: string[] = [], language = 'en'): Promise<st
         const sourceLanguage = detectSourceLanguage(text, targetLanguage);
         if (sourceLanguage === targetLanguage) return text;
 
-        const cached = cacheReaders[sourceLanguage]?.(text);
+        const cached = await readCachedTranslation(text, targetLanguage, sourceLanguage);
         return decodeHtmlEntities(cached != null ? cached : text);
     }));
 };

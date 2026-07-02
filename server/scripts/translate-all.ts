@@ -178,7 +178,7 @@ const main = async () => {
     const args = process.argv.slice(2);
     const force = args.includes('--force');
     const langArg = args.find(a => a.startsWith('--lang='));
-    const targetLanguages = langArg ? [langArg.split('=')[1]] : ['bn', 'ko'];
+    const targetLanguages = langArg ? [langArg.split('=')[1]] : ['en', 'bn', 'ko'];
 
     for (const lang of targetLanguages) {
         console.log(`\n[Translate-All] Starting extraction of translatable strings for language: ${lang}...`);
