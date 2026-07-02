@@ -23,6 +23,9 @@ const TranslateAllButton = () => {
                     const res = await api.post('/translate/run-batch', { lang, batchSize: 200 });
                     setProgress(res.data);
                     done = res.data.done;
+
+                    // Smooth delay to guarantee visibility of progress steps and states
+                    await new Promise(resolve => setTimeout(resolve, 600));
                 }
             }
 

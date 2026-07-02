@@ -23,16 +23,38 @@ const LanguageTransitionOverlay = () => {
     const [phase, setPhase] = useState('hidden');
     const changeRef = useRef(null);
     const prevLangRef = useRef(language);
+    const [isChanging, setIsChanging] = useState(false);
 
-    // Detect language change → start entrance
+    // Detect language change
     useEffect(() => {
         if (prevLangRef.current === language) return;
         prevLangRef.current = language;
-        changeRef.current = Date.now();
-        setPhase('entering');
-        const enteringTimeout = setTimeout(() => setPhase('visible'), 300);
-        return () => clearTimeout(enteringTimeout);
+        setIsChanging(true);
     }, [language]);
+
+    // Delayed entrance if fetching is active
+    useEffect(() => {
+        if (!isChanging) return;
+
+        if (fetchCount === 0) {
+            setIsChanging(false);
+            setPhase('hidden');
+            return;
+        }
+
+        const delayTimeout = setTimeout(() => {
+            if (fetchCount > 0) {
+                changeRef.current = Date.now();
+                setPhase('entering');
+                const enteringTimeout = setTimeout(() => setPhase('visible'), 200);
+                return () => clearTimeout(enteringTimeout);
+            } else {
+                setIsChanging(false);
+            }
+        }, 150);
+
+        return () => clearTimeout(delayTimeout);
+    }, [isChanging, fetchCount]);
 
     // Check if it's safe to exit
     useEffect(() => {
@@ -42,6 +64,7 @@ const LanguageTransitionOverlay = () => {
             const elapsed = Date.now() - (changeRef.current || 0);
             if (elapsed >= MIN_DISPLAY_MS && fetchCount === 0) {
                 setPhase('exiting');
+                setIsChanging(false);
                 const exitingTimeout = setTimeout(() => setPhase('hidden'), 400);
                 return () => clearTimeout(exitingTimeout);
             }
