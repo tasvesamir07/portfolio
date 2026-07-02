@@ -117,9 +117,8 @@ const Publications = () => {
                                 style={{ contentVisibility: 'auto', containIntrinsicSize: '200px' }}
                             >
                                 <div className="flex-grow flex flex-col justify-start">
-                                    {/* Header Section: Image + Meta */}
                                     <div className="flex flex-col sm:flex-row gap-6 mb-2">
-                                        {item.thumbnail_url && !brokenThumbnails.includes(item.id) ? (
+                                        {item.thumbnail_url && !brokenThumbnails.includes(item.id) && (
                                             <div className="w-full sm:w-44 sm:h-56 h-48 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200/60 shrink-0 shadow-sm">
                                                 <OptimizedImage 
                                                     src={item.thumbnail_url}
@@ -131,10 +130,6 @@ const Publications = () => {
                                                     className="w-full h-full object-cover"
                                                     onError={() => setBrokenThumbnails((prev) => [...prev, item.id])}
                                                 />
-                                            </div>
-                                        ) : (
-                                            <div className="w-full sm:w-44 sm:h-56 h-48 overflow-hidden rounded-xl bg-[#2d8da8]/5 flex items-center justify-center border border-[#2d8da8]/10 shrink-0 shadow-sm">
-                                                <BookOpen className="w-12 h-12 text-[#2d8da8]" strokeWidth={1.5} />
                                             </div>
                                         )}
                                         <div className="text-left flex-grow flex flex-col justify-center">

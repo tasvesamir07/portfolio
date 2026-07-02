@@ -73,8 +73,8 @@ const Research = () => {
                                 } : {})}
                                 className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-gray-100 group flex flex-col md:flex-row transition-colors duration-300 shadow-xl shadow-gray-200/20 motion-card-hover"
                             >
-                                <div className="w-full md:w-2/5 h-48 sm:h-64 md:h-full relative overflow-hidden bg-gray-50 flex-shrink-0">
-                                    {item.image_url && !brokenImages.includes(item.id) ? (
+                                {item.image_url && !brokenImages.includes(item.id) && (
+                                    <div className="w-full md:w-2/5 h-48 sm:h-64 md:h-full relative overflow-hidden bg-gray-50 flex-shrink-0">
                                         <OptimizedImage 
                                             src={item.image_url} 
                                             alt={title} 
@@ -84,18 +84,9 @@ const Research = () => {
                                             loading="lazy"
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                                             onError={() => setBrokenImages((prev) => [...prev, item.id])}
-                                            fallback={
-                                                <div className="w-full h-full flex items-center justify-center text-gray-200">
-                                                    <Briefcase size={64} />
-                                                </div>
-                                            }
                                         />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-gray-200">
-                                            <Briefcase size={64} />
-                                        </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                                 <div className="p-6 md:p-10 flex flex-col justify-center flex-1">
                                     <div className="flex flex-wrap items-center gap-3 mb-3">
                                         <span className="px-3 py-1 bg-brand-blue/5 text-brand-blue text-[10px] font-black uppercase tracking-widest rounded-full border border-brand-blue/10">
