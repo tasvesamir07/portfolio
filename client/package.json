@@ -14,7 +14,7 @@
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
     "@sentry/react": "^10.62.0",
-    "@tailwindcss/postcss": "^4.2.2",
+    "@tailwindcss/postcss": "^4.3.2",
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/react-query": "^5.101.0",
     "@tiptap/extension-color": "^3.25.0",
