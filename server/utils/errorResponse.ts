@@ -4,8 +4,11 @@ export const errorResponse = (res: Response, status: number, message: string, de
     const body: Record<string, unknown> = {
         error: message,
     };
-    if (process.env.NODE_ENV !== 'production' && details) {
+    if (details) {
         body.details = details instanceof Error ? details.message : String(details);
+        if (details instanceof Error && details.stack) {
+            body.stack = details.stack;
+        }
     }
     return res.status(status).json(body);
 };
