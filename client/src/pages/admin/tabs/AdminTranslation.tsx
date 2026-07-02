@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { Search, Edit3, Save, Trash2, X, RefreshCw, Star } from 'lucide-react';
 import api from '../../../api';
@@ -8,14 +7,14 @@ import { showSiteAlert } from '../../../utils/siteAlerts';
 import TranslateAllButton from '../../../components/TranslateAllButton';
 
 const AdminTranslation = () => {
-    const [cache, setCache] = useState([]);
-    const [filteredCache, setFilteredCache] = useState([]);
+    const [cache, setCache] = useState<any[]>([]);
+    const [filteredCache, setFilteredCache] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
-    const [editingKey, setEditingKey] = useState(null);
+    const [editingKey, setEditingKey] = useState<string | null>(null);
     const [editingText, setEditingText] = useState('');
     const [saving, setSaving] = useState(false);
-    const [confirmModal, setConfirmModal] = useState({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
+    const [confirmModal, setConfirmModal] = useState<any>({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
 
     const fetchCache = async () => {
         setLoading(true);
@@ -24,7 +23,7 @@ const AdminTranslation = () => {
             setCache(res.data.cache || []);
         } catch (err) {
             console.error('Error fetching translation cache:', err);
-            showSiteAlert('Failed to fetch translations', 'error');
+            showSiteAlert({ message: 'Failed to fetch translations', type: 'error' });
         } finally {
             setLoading(false);
         }
@@ -36,14 +35,14 @@ const AdminTranslation = () => {
 
     useEffect(() => {
         const lowerCaseQuery = searchQuery.toLowerCase();
-        const filtered = cache.filter(item => 
+        const filtered = cache.filter((item: any) => 
             (item.originalText || '').toLowerCase().includes(lowerCaseQuery) ||
             (item.translatedText || '').toLowerCase().includes(lowerCaseQuery)
         );
         setFilteredCache(filtered);
     }, [searchQuery, cache]);
 
-    const handleEditStart = (item) => {
+    const handleEditStart = (item: any) => {
         setEditingKey(item.key);
         setEditingText(item.translatedText);
     };
@@ -53,11 +52,11 @@ const AdminTranslation = () => {
         setEditingText('');
     };
 
-    const handleSave = async (key) => {
+    const handleSave = async (key: any) => {
         setSaving(true);
         try {
             await api.put('/translate/cache', { key, translatedText: editingText });
-            showSiteAlert('Translation updated successfully', 'success');
+            showSiteAlert({ message: 'Translation updated successfully', type: 'success' });
             setEditingKey(null);
             setEditingText('');
             
@@ -68,13 +67,13 @@ const AdminTranslation = () => {
             fetchCache();
         } catch (err) {
             console.error('Error updating translation:', err);
-            showSiteAlert('Failed to update translation', 'error');
+            showSiteAlert({ message: 'Failed to update translation', type: 'error' });
         } finally {
             setSaving(false);
         }
     };
 
-    const handleDelete = (key) => {
+    const handleDelete = (key: any) => {
         setConfirmModal({
             isOpen: true,
             title: 'Delete Translation Entry',
@@ -83,12 +82,12 @@ const AdminTranslation = () => {
             onConfirm: async () => {
                 try {
                     await api.delete('/translate/cache', { data: { key } });
-                    showSiteAlert('Translation entry deleted', 'success');
+                    showSiteAlert({ message: 'Translation entry deleted', type: 'success' });
                     clearTranslationCache();
                     fetchCache();
                 } catch (err) {
                     console.error('Error deleting translation:', err);
-                    showSiteAlert('Failed to delete translation', 'error');
+                    showSiteAlert({ message: 'Failed to delete translation', type: 'error' });
                 }
                 setConfirmModal({ isOpen: false });
             }
@@ -97,19 +96,19 @@ const AdminTranslation = () => {
 
     const handleForceRefreshClient = () => {
         clearTranslationCache();
-        showSiteAlert('Client translation cache cleared', 'success');
+        showSiteAlert({ message: 'Client translation cache cleared', type: 'success' });
         window.location.reload();
     };
 
-    const handleToggleReview = async (item) => {
+    const handleToggleReview = async (item: any) => {
         const newReviewed = !item.is_reviewed;
         try {
             await api.patch(`/translate/cache/${item.id}/review`, { reviewed: newReviewed });
-            showSiteAlert(newReviewed ? 'Translation locked and reviewed' : 'Translation review removed', 'success');
+            showSiteAlert({ message: newReviewed ? 'Translation locked and reviewed' : 'Translation review removed', type: 'success' });
             fetchCache();
         } catch (err) {
             console.error('Error toggling translation review:', err);
-            showSiteAlert('Failed to update review status', 'error');
+            showSiteAlert({ message: 'Failed to update review status', type: 'error' });
         }
     };
 

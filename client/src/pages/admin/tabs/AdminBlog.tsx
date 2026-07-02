@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import {
     Field,
@@ -12,15 +11,15 @@ import {
     serializeStructuredItems,
     buildStructuredPreview
 } from '../../../utils/structuredItems';
-import AdminCrudLayout from '../components/AdminCrudLayout';
+import { AdminCrudLayout } from '../components/AdminCrudLayout';
 
 const AdminBlog = () => {
-    const buildLegacyStructuredItems = (record = {}) => {
+    const buildLegacyStructuredItems = (record: any = {}) => {
         if (!record.content) return [];
         return parseStructuredItems(record.content);
     };
 
-    const prepareFormData = (record = {}) => {
+    const prepareFormData = (record: any = {}) => {
         const hasSavedStructuredJson =
             typeof record.details_json === 'string' && record.details_json.trim().startsWith('[');
 
@@ -36,7 +35,7 @@ const AdminBlog = () => {
         };
     };
 
-    const preparePayloadData = (formData) => {
+    const preparePayloadData = (formData: any) => {
         const structuredItems = formData.structured_items || [];
         const payload = {
             ...formData,
@@ -50,7 +49,7 @@ const AdminBlog = () => {
         return payload;
     };
 
-    const getAdminDetailsPreview = (item = {}) => {
+    const getAdminDetailsPreview = (item: any = {}) => {
         const structuredPreview = buildStructuredPreview(item.details_json || '');
         return structuredPreview || item.content || item.slug || 'No details';
     };
@@ -60,7 +59,7 @@ const AdminBlog = () => {
         { header: 'Details', className: 'max-w-md' }
     ];
 
-    const renderRowCells = (item) => (
+    const renderRowCells = (item: any) => (
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
@@ -75,13 +74,13 @@ const AdminBlog = () => {
         </>
     );
 
-    const renderFormFields = (formData, setFormData) => (
+    const renderFormFields = (formData: any, setFormData: any) => (
         <div className="grid grid-cols-1 gap-4">
             <Field label="Page Title">
                 <InlineFormatEditor
                     value={formData.title || ''}
                     onChange={(nextTitle) => {
-                        setFormData((prev) => ({
+                        setFormData((prev: any) => ({
                             ...prev,
                             title: nextTitle,
                             slug: !prev.id && (!prev.slug || prev.slug === slugify(prev.title || ''))

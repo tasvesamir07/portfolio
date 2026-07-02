@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import {
     Field,
@@ -12,15 +11,15 @@ import {
     serializeStructuredItems,
     buildStructuredPreview
 } from '../../../utils/structuredItems';
-import AdminCrudLayout from '../components/AdminCrudLayout';
+import { AdminCrudLayout } from '../components/AdminCrudLayout';
 
 const AdminResearch = () => {
-    const buildLegacyStructuredItems = (record = {}) => {
+    const buildLegacyStructuredItems = (record: any = {}) => {
         if (!record.description) return [];
         return parseStructuredItems(record.description);
     };
 
-    const prepareFormData = (record = {}) => {
+    const prepareFormData = (record: any = {}) => {
         const hasSavedStructuredJson =
             typeof record.details_json === 'string' && record.details_json.trim().startsWith('[');
 
@@ -35,7 +34,7 @@ const AdminResearch = () => {
         };
     };
 
-    const preparePayloadData = (formData) => {
+    const preparePayloadData = (formData: any) => {
         const structuredItems = formData.structured_items || [];
         const payload = {
             ...formData,
@@ -52,7 +51,7 @@ const AdminResearch = () => {
         return payload;
     };
 
-    const getAdminDetailsPreview = (item = {}) => {
+    const getAdminDetailsPreview = (item: any = {}) => {
         const structuredPreview = buildStructuredPreview(item.details_json || '');
         return structuredPreview || item.description || item.status || item.title || 'No details';
     };
@@ -62,7 +61,7 @@ const AdminResearch = () => {
         { header: 'Details', className: 'max-w-md' }
     ];
 
-    const renderRowCells = (item) => (
+    const renderRowCells = (item: any) => (
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
@@ -77,7 +76,7 @@ const AdminResearch = () => {
         </>
     );
 
-    const renderFormFields = (formData, setFormData) => (
+    const renderFormFields = (formData: any, setFormData: any) => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <Field label="Research Project Title">
                  <InlineFormatEditor value={formData.title || ''} onChange={val => setFormData({...formData, title: val})} />

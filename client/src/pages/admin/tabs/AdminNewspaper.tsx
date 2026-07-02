@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import {
     Field,
@@ -6,11 +5,12 @@ import {
     decodeHtmlPreview,
     InlineFormatEditor
 } from '../components/AdminSharedComponents';
-import AdminCrudLayout from '../components/AdminCrudLayout';
+import { AdminCrudLayout } from '../components/AdminCrudLayout';
 import { RenderInlineHtml } from '../../../utils/htmlRenderer';
+import OptimizedImage from '../../../components/OptimizedImage';
 
 const AdminNewspaper = () => {
-    const prepareFormData = (record = {}) => ({
+    const prepareFormData = (record: any = {}) => ({
         ...record,
         title: record.title || '',
         short_description: record.short_description || '',
@@ -18,7 +18,7 @@ const AdminNewspaper = () => {
         link_url: record.link_url || ''
     });
 
-    const preparePayloadData = (formData) => {
+    const preparePayloadData = (formData: any) => {
         if (formData.link_url) {
             try {
                 new URL(formData.link_url);
@@ -41,14 +41,16 @@ const AdminNewspaper = () => {
         { header: 'Short Description' }
     ];
 
-    const renderRowCells = (item) => (
+    const renderRowCells = (item: any) => (
         <>
             <td className="py-4 px-6">
                 {item.image_url ? (
-                    <img 
+                    <OptimizedImage 
                         src={item.image_url} 
                         alt={decodeHtmlPreview(item.title)} 
-                        className="w-12 h-12 object-cover rounded-md border border-gray-100" 
+                        className="w-12 h-12 object-cover rounded-md border border-gray-100"
+                        width={48}
+                        height={48}
                     />
                 ) : (
                     <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs font-bold uppercase">No image</div>
@@ -67,7 +69,7 @@ const AdminNewspaper = () => {
         </>
     );
 
-    const renderFormFields = (formData, setFormData) => (
+    const renderFormFields = (formData: any, setFormData: any) => (
         <div className="grid grid-cols-1 gap-6">
             <div className="border-b pb-4">
                 <h3 className="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">English (Primary)</h3>

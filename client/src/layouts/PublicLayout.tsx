@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { Suspense, useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -35,7 +34,7 @@ const PublicLayout = () => {
     }, []);
 
     useEffect(() => {
-        const prefetchData = (key, endpoint) =>
+        const prefetchData = (key: string, endpoint: string) =>
             queryClient.prefetchQuery({
                 queryKey: [key, language],
                 queryFn: async () => {

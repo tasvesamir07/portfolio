@@ -50,8 +50,9 @@ router.get('/', async (req: Request, res: Response) => {
                             }
                         });
                         results.push({ endpoint, lang, status: response.status });
-                    } catch (err: any) {
-                        results.push({ endpoint, lang, error: err.message });
+                    } catch (err: unknown) {
+                        const message = err instanceof Error ? err.message : String(err);
+                        results.push({ endpoint, lang, error: message });
                     }
                 })());
             }
@@ -59,8 +60,9 @@ router.get('/', async (req: Request, res: Response) => {
 
         await Promise.all(requests);
         res.json({ message: 'Pre-warm complete', results });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        res.status(500).json({ error: message });
     }
 });
 

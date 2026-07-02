@@ -1,4 +1,5 @@
 import React, { type HTMLAttributes } from 'react';
+import DOMPurify from 'dompurify';
 
 export const cleanHtmlInline = (html = ''): string => {
   if (!html) return '';
@@ -20,10 +21,20 @@ interface RenderInlineHtmlProps extends HTMLAttributes<HTMLSpanElement> {
 export const RenderInlineHtml = ({ html = '', className = '', ...props }: RenderInlineHtmlProps) => {
   const cleaned = cleanHtmlInline(html);
   if (!cleaned) return null;
+  
+  const sanitized = DOMPurify.sanitize(cleaned);
+  const withRel = sanitized.replace(
+    /<a\s+(?=[^>]*target="_blank")[^>]*>/gi,
+    (match) => {
+      if (/rel\s*=/i.test(match)) return match;
+      return match.replace('>', ' rel="noopener noreferrer">');
+    }
+  );
+
   return (
     <span
       className={className}
-      dangerouslySetInnerHTML={{ __html: cleaned }}
+      dangerouslySetInnerHTML={{ __html: withRel }}
       {...props}
     />
   );

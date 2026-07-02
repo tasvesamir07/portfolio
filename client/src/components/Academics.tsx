@@ -1,11 +1,10 @@
-// @ts-nocheck
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Calendar } from 'lucide-react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api';
-import StructuredDetails from './StructuredDetails';
+import StructuredDetails, { type StructuredItem } from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
@@ -17,7 +16,7 @@ import AcademicsSkeleton from '../pages/skeletons/AcademicsSkeleton';
 
 const Academics = () => {
     const prefersReduced = useReducedMotion();
-    const [brokenLogos, setBrokenLogos] = useState([]);
+    const [brokenLogos, setBrokenLogos] = useState<any[]>([]);
     const { language, t } = useI18n();
     const noDataLabel = getNoDataLabel(language);
 
@@ -45,7 +44,7 @@ const Academics = () => {
             <section id="academics" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('academics.kicker')}</span>
-                    <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-4 text-gray-900 tracking-tight">{t('academics.titleMain')} {t('academics.titleAccent') ? <span className="text-brand-gold font-black">{t('academics.titleAccent')}</span> : null}</h2>
+                    <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-4 text-gray-900 tracking-tight">{t('academics.titleMain')} {t('academics.titleAccent') ? <span className="text-brand-gold font-black">{t('academics.titleAccent')}</span> : null}</h1>
                     <p className="text-gray-500 font-medium">{noDataLabel}</p>
                 </div>
             </section>
@@ -56,7 +55,7 @@ const Academics = () => {
         <section id="academics" className="py-16 md:py-24 bg-[#fcfaf7]">
             <div className="max-w-7xl mx-auto px-6">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('academics.kicker')}</span>
-                <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('academics.titleMain')} {t('academics.titleAccent') ? <span className="text-brand-gold font-black">{t('academics.titleAccent')}</span> : null}</h2>
+                <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('academics.titleMain')} {t('academics.titleAccent') ? <span className="text-brand-gold font-black">{t('academics.titleAccent')}</span> : null}</h1>
                 <div className="flex flex-col gap-10">
                     {academics.map((item, index) => (
                         (() => {
@@ -68,12 +67,12 @@ const Academics = () => {
                             const primaryTitle = degree || institution;
                             const institutionText = institution && institution !== degree ? institution : '';
                             const timelineText = [item.start_year, item.end_year].filter(Boolean).join(' - ');
-                            const fallbackItems = [];
+                            const fallbackItems: StructuredItem[] = [];
                             const parsedLabels = new Set(
                                 parsedItems
                                     .filter((detailItem) => detailItem.type === 'pair')
                                     .map((detailItem) => normalizeText(detailItem.title))
-                            );
+                             );
                             const hasMatchingInstitutionText = parsedItems.some(
                                 (detailItem) => detailItem.type === 'text' && normalizeText(detailItem.text) === normalizeText(institutionText)
                             );
@@ -98,7 +97,7 @@ const Academics = () => {
                                 });
                             }
 
-                            const detailItems = [...parsedItems, ...fallbackItems].filter((detailItem) => {
+                            const detailItems: StructuredItem[] = [...parsedItems, ...fallbackItems].filter((detailItem) => {
                                 if (detailItem.type === 'title') {
                                     return normalizeText(detailItem.title) !== normalizeText(primaryTitle);
                                 }
@@ -182,4 +181,4 @@ const Academics = () => {
     );
 };
 
-export default Academics;
+export default React.memo(Academics);

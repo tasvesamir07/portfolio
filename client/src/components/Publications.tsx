@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink, Download, BookOpen } from 'lucide-react';
@@ -15,7 +15,7 @@ import OptimizedImage from './OptimizedImage';
 
 import PublicationsSkeleton from '../pages/skeletons/PublicationsSkeleton';
 
-const isFieldEmpty = (html) => {
+const isFieldEmpty = (html: any) => {
     if (!html) return true;
     const clean = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
     return clean === '' || clean.toLowerCase() === 'n/a';
@@ -23,7 +23,7 @@ const isFieldEmpty = (html) => {
 
 const Publications = () => {
     const prefersReduced = useReducedMotion();
-    const [brokenThumbnails, setBrokenThumbnails] = useState([]);
+    const [brokenThumbnails, setBrokenThumbnails] = useState<any[]>([]);
     const { language, t } = useI18n();
     const noDataLabel = getNoDataLabel(language);
 
@@ -41,7 +41,7 @@ const Publications = () => {
          <section id="publications" className="py-16 md:py-24 bg-white min-h-[60vh] flex items-center justify-center">
             <div className="max-w-5xl mx-auto px-6 text-center">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('publications.kicker')}</span>
-                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('publications.emptyTitleMain')} <span className="text-brand-blue">{t('publications.emptyTitleAccent')}</span> {t('publications.emptyTitleSuffix')}</h2>
+                <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('publications.emptyTitleMain')} <span className="text-brand-blue">{t('publications.emptyTitleAccent')}</span> {t('publications.emptyTitleSuffix')}</h1>
                 <p className="text-gray-500 font-medium">{noDataLabel}</p>
             </div>
          </section>
@@ -51,18 +51,18 @@ const Publications = () => {
         <section id="publications" className="py-16 md:py-24 bg-white">
             <div className="max-w-7xl mx-auto px-6">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-xs sm:text-sm">{t('publications.kicker')}</span>
-                <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif text-center mb-6 text-[#8c2626] tracking-tight animate-none">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-center mb-6 text-[#8c2626] tracking-tight animate-none">
                     {language === 'en' ? (
                         <>Recent <span className="text-brand-blue font-sans font-black">Publications</span></>
                     ) : (
                         <>{t('publications.titleMain')} <span className="text-brand-blue font-sans font-black">{t('publications.titleAccent')}</span></>
                     )}
-                </h2>
+                </h1>
                 <div className="w-32 h-[1px] bg-gray-200 mx-auto mb-16" />
                 
                 <div className="grid grid-cols-1 gap-6 md:gap-9 max-w-7xl mx-auto w-full">
                     {publications.map((item) => {
-                        let detailItems = parseStructuredItems(getLocalizedFirstField(item, ['details_json'], language, ''));
+                        let detailItems: any[] = parseStructuredItems(getLocalizedFirstField(item, ['details_json'], language, ''));
                         const title = getLocalizedField(item, 'title', language, item.title);
                         const journalName = getLocalizedField(item, 'journal_name', language, item.journal_name);
                         const authors = getLocalizedField(item, 'authors', language, item.authors);
@@ -70,7 +70,7 @@ const Publications = () => {
                         const methods = getLocalizedField(item, 'methods', language, item.methods);
  
                         if (!detailItems.length) {
-                            const legacyItems = [];
+                            const legacyItems: any[] = [];
  
                             if (introduction) {
                                 legacyItems.push({
@@ -255,4 +255,4 @@ const Publications = () => {
     );
 };
 
-export default Publications;
+export default React.memo(Publications);

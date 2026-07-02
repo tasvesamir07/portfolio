@@ -21,9 +21,23 @@ export const useSeo = ({ title, description, ogImage, ogType = 'website' }: SeoP
   }, [title]);
 };
 
+import { useSiteIdentity } from './useSiteName';
+
 export const SEO = ({ title, description, ogImage, ogType = 'website' }: SeoProps) => {
   const cleanTitle = title ? stripHtml(title) : '';
   const cleanDesc = description ? stripHtml(description) : '';
+  
+  // Safely default to site identity logoUrl if not provided
+  let logoUrl = '';
+  try {
+    const identity = useSiteIdentity();
+    logoUrl = identity.logoUrl || '';
+  } catch (e) {
+    // Fail silently if context is missing in some stories/tests
+  }
+  
+  const finalOgImage = ogImage || logoUrl;
+  const canonicalUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
 
   return (
     <Helmet>
@@ -31,8 +45,9 @@ export const SEO = ({ title, description, ogImage, ogType = 'website' }: SeoProp
       {cleanTitle && <meta property="og:title" content={cleanTitle} />}
       {cleanDesc && <meta name="description" content={cleanDesc} />}
       {cleanDesc && <meta property="og:description" content={cleanDesc} />}
-      {ogImage && <meta property="og:image" content={ogImage} />}
+      {finalOgImage && <meta property="og:image" content={finalOgImage} />}
       <meta property="og:type" content={ogType} />
+      {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
     </Helmet>
   );
 };

@@ -1,10 +1,11 @@
-// @ts-nocheck
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Save } from 'lucide-react';
 import { useReducedMotion } from '../../../hooks/useReducedMotion';
 
-const StickySaveBar = ({ formId, saving, onCancel, saveLabel, isDirty = false }) => {
+const StickySaveBar = ({ formId, saving, onCancel, saveLabel, isDirty = false }: {
+  formId?: string; saving?: boolean; onCancel?: () => void; saveLabel?: string; isDirty?: boolean
+}) => {
     const prefersReduced = useReducedMotion();
     return (
         <AnimatePresence>

@@ -1,4 +1,5 @@
 import fs = require('fs');
+const logger = require('./utils/logger');
 import path = require('path');
 import crypto = require('crypto');
 const { Redis } = require('@upstash/redis');
@@ -11,12 +12,12 @@ if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
             url: process.env.UPSTASH_REDIS_URL,
             token: process.env.UPSTASH_REDIS_TOKEN
         });
-        console.log('[Auto-Translate] Upstash Redis client initialized successfully.');
-    } catch (e: any) {
-        console.error('[Auto-Translate] Failed to initialize Upstash Redis:', e.message);
+        logger.info('[Auto-Translate] Upstash Redis client initialized successfully.');
+    } catch (e: unknown) {
+        logger.error({ err: e }, '[Auto-Translate] Failed to initialize Upstash Redis:', (e instanceof Error ? e.message : String(e)));
     }
 } else {
-    console.warn('[Auto-Translate] Upstash Redis credentials not set. Falling back to local/memory cache.');
+    logger.warn('[Auto-Translate] Upstash Redis credentials not set. Falling back to local/memory cache.');
 }
 
 
@@ -36,8 +37,8 @@ try {
     if (fs.existsSync(glossaryPath)) {
         glossary = JSON.parse(fs.readFileSync(glossaryPath, 'utf-8'));
     }
-} catch (e: any) {
-    console.warn('[Auto-Translate] Failed to load glossary:', e.message);
+} catch (e: unknown) {
+    logger.warn('[Auto-Translate] Failed to load glossary:', (e instanceof Error ? e.message : String(e)));
 }
 
 let translator: any = null;
@@ -64,10 +65,10 @@ if (!process.env.UPSTASH_REDIS_URL || !process.env.UPSTASH_REDIS_TOKEN) {
                     translationCache.set(k, v);
                 }
             });
-            console.log(`[Auto-Translate] Loaded ${translationCache.size} persistent cache entries from disk.`);
+            logger.info(`[Auto-Translate] Loaded ${translationCache.size} persistent cache entries from disk.`);
         }
-    } catch (e: any) {
-        console.warn('[Auto-Translate] Failed to load persistent translation cache:', e.message);
+    } catch (e: unknown) {
+        logger.warn('[Auto-Translate] Failed to load persistent translation cache:', (e instanceof Error ? e.message : String(e)));
     }
 }
 
@@ -84,8 +85,8 @@ const saveCacheToDisk = debounce(() => {
     try {
         const obj = Object.fromEntries(translationCache);
         fs.writeFileSync(CACHE_FILE, JSON.stringify(obj, null, 2), 'utf-8');
-    } catch (e: any) {
-        console.warn('[Auto-Translate] Failed to save translation cache to disk:', e.message);
+    } catch (e: unknown) {
+        logger.warn('[Auto-Translate] Failed to save translation cache to disk:', (e instanceof Error ? e.message : String(e)));
     }
 }, 5000);
 
@@ -453,7 +454,7 @@ const handleRateLimit = async () => {
     rateLimitState.consecutive429s++;
     const idx = Math.min(rateLimitState.consecutive429s - 1, backoffSchedule.length - 1);
     const waitMs = backoffSchedule[idx] + Math.random() * 1000; // jitter
-    console.warn(`[Auto-Translate] Rate limited (429). Pausing translation workers and backing off for ${Math.round(waitMs)}ms.`);
+    logger.warn(`[Auto-Translate] Rate limited (429). Pausing translation workers and backing off for ${Math.round(waitMs)}ms.`);
     await new Promise(resolve => setTimeout(resolve, waitMs));
     rateLimitState.isPaused = false;
 };
@@ -512,8 +513,8 @@ const translateWithFallbacks = async (text = '', sourceLanguage = 'auto', target
         if (!looksLikeBrokenTranslation(translated, text, targetLanguage)) {
             return translated;
         }
-    } catch (error: any) {
-        console.warn('Google endpoint translation failed:', error.message);
+    } catch (error: unknown) {
+        logger.warn('Google endpoint translation failed:', (error instanceof Error ? error.message : String(error)));
     }
 
     await waitIfRateLimited();
@@ -522,9 +523,9 @@ const translateWithFallbacks = async (text = '', sourceLanguage = 'auto', target
         const translated = await translate(text, { from: sourceLanguage, to: targetLanguage });
         rateLimitState.consecutive429s = 0; // reset on success
         return translated || text;
-    } catch (error: any) {
-        console.warn('Google library translation failed:', error.message);
-        if (error.message?.includes('429') || error.status === 429) {
+    } catch (error: unknown) {
+        logger.warn('Google library translation failed:', (error as any).message || String(error));
+        if (((error as any).message || String(error))?.includes('429') || (error as any).status === 429) {
             await handleRateLimit();
         }
         return text;
@@ -618,8 +619,8 @@ const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLan
             trimCache();
             return postProcessTranslation(dbValue, targetLanguage);
         }
-    } catch (e: any) {
-        console.warn('[Auto-Translate] Postgres translation lookup failed:', e.message);
+    } catch (e: unknown) {
+        logger.warn('[Auto-Translate] Postgres translation lookup failed:', (e instanceof Error ? e.message : String(e)));
     }
 
     // 3. Check Redis (fallback)
@@ -634,13 +635,13 @@ const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLan
                     const hash = getHash(text, normTarget);
                     const isHtml = HTML_REGEX.test(text);
                     await saveTranslationToDB(hash, text, normTarget, value as string, isHtml);
-                } catch (dbErr: any) {
-                    console.warn('[Auto-Translate] Failed to backport Redis hit to Postgres:', dbErr.message);
+                } catch (dbErr: unknown) {
+                    logger.warn('[Auto-Translate] Failed to backport Redis hit to Postgres:', (dbErr instanceof Error ? dbErr.message : String(dbErr)));
                 }
                 return postProcessTranslation(value as string, targetLanguage);
             }
-        } catch (e: any) {
-            console.warn('[Auto-Translate] Redis get failed:', e.message);
+        } catch (e: unknown) {
+            logger.warn('[Auto-Translate] Redis get failed:', (e instanceof Error ? e.message : String(e)));
         }
     }
 
@@ -713,8 +714,8 @@ const readCachedTranslations = async (texts: string[], targetLanguage: string, s
                     }
                 });
             }
-        } catch (e: any) {
-            console.warn('[Auto-Translate] Postgres batch lookup failed:', e.message);
+        } catch (e: unknown) {
+            logger.warn('[Auto-Translate] Postgres batch lookup failed:', (e instanceof Error ? e.message : String(e)));
         }
     }
 
@@ -735,13 +736,13 @@ const readCachedTranslations = async (texts: string[], targetLanguage: string, s
                         const hash = getHash(text, normTarget);
                         const isHtml = HTML_REGEX.test(text);
                         await saveTranslationToDB(hash, text, normTarget, value as string, isHtml);
-                    } catch (dbErr: any) {
-                        console.warn('[Auto-Translate] Failed to backport Redis batch hit to Postgres:', dbErr.message);
+                    } catch (dbErr: unknown) {
+                        logger.warn('[Auto-Translate] Failed to backport Redis batch hit to Postgres:', (dbErr instanceof Error ? dbErr.message : String(dbErr)));
                     }
                 }
             }
-        } catch (e: any) {
-            console.warn('[Auto-Translate] Redis mget failed:', e.message);
+        } catch (e: unknown) {
+            logger.warn('[Auto-Translate] Redis mget failed:', (e instanceof Error ? e.message : String(e)));
         }
     }
 
@@ -760,8 +761,8 @@ const writeCachedTranslation = async (text = '', targetLanguage = 'en', sourceLa
         const hash = getHash(text, normTarget);
         const isHtml = HTML_REGEX.test(text);
         await saveTranslationToDB(hash, text, normTarget, translated, isHtml);
-    } catch (e: any) {
-        console.warn('[Auto-Translate] Failed to save translation to Postgres:', e.message);
+    } catch (e: unknown) {
+        logger.warn('[Auto-Translate] Failed to save translation to Postgres:', (e instanceof Error ? e.message : String(e)));
     }
 
     if (!redis) {
@@ -769,8 +770,8 @@ const writeCachedTranslation = async (text = '', targetLanguage = 'en', sourceLa
     } else {
         try {
             await redis.set(key, translated, { ex: 604800 });
-        } catch (e: any) {
-            console.warn('[Auto-Translate] Redis set failed:', e.message);
+        } catch (e: unknown) {
+            logger.warn('[Auto-Translate] Redis set failed:', (e instanceof Error ? e.message : String(e)));
         }
     }
 };
@@ -801,8 +802,8 @@ const translateOverlapPrefixes = async (chunks: ChunkWithOverlap[], sourceLangua
         prefixes.forEach((prefix, index) => {
             prefixMap.set(prefix, translations[index] || prefix);
         });
-    } catch (err: any) {
-        console.warn(`[Auto-Translate] Batch translation of overlap prefixes failed: ${err.message}. Prefix stripping may be degraded.`);
+    } catch (err: unknown) {
+        logger.warn(`[Auto-Translate] Batch translation of overlap prefixes failed: ${(err instanceof Error ? err.message : String(err))}. Prefix stripping may be degraded.`);
     }
 
     return prefixMap;
@@ -905,11 +906,11 @@ const translateText = async (text = '', language = 'en'): Promise<string> => {
                         resolved = assembledFragments.join(' ');
                         resolved = restoreGlossary(resolved, glossaryMap);
                     } else {
-                        console.warn(`[Auto-Translate] Batch length mismatch (${translatedFragments.length} vs ${chunks.length}). Retrying individually.`);
+                        logger.warn(`[Auto-Translate] Batch length mismatch (${translatedFragments.length} vs ${chunks.length}). Retrying individually.`);
                         resolved = await translateChunksIndividually(chunks, sourceLanguage, targetLanguage, glossaryMap);
                     }
-                } catch (err: any) {
-                    console.warn(`[Auto-Translate] Batch translation failed: ${err.message}. Retrying individually.`);
+                } catch (err: unknown) {
+                    logger.warn(`[Auto-Translate] Batch translation failed: ${(err instanceof Error ? err.message : String(err))}. Retrying individually.`);
                     resolved = await translateChunksIndividually(chunks, sourceLanguage, targetLanguage, glossaryMap);
                 }
             } else {
@@ -922,8 +923,8 @@ const translateText = async (text = '', language = 'en'): Promise<string> => {
         }
 
         return postProcessTranslation(decodeHtmlEntities(resolved), targetLanguage);
-    } catch (error: any) {
-        console.error(`Translation proxy failed:`, error.message);
+    } catch (error: unknown) {
+        logger.error({ err: error }, `Translation proxy failed:`, (error as any).message || String(error));
         return text;
     }
 };
@@ -1008,8 +1009,8 @@ const translateTexts = async (texts: string[] = [], language = 'en'): Promise<st
                         } else {
                             await Promise.all(batch.map(t => translateText(t, language)));
                         }
-                    } catch (err: any) {
-                        console.warn(`[Auto-Translate] Batch translateTexts failed: ${err.message}. Falling back to individual.`);
+                    } catch (err: unknown) {
+                        logger.warn(`[Auto-Translate] Batch translateTexts failed: ${(err instanceof Error ? err.message : String(err))}. Falling back to individual.`);
                         await Promise.all(batch.map(t => translateText(t, language)));
                     }
                 }
@@ -1046,8 +1047,8 @@ const getAllCachedTranslations = async (): Promise<Array<{ key: string; id: numb
                 is_reviewed: !!row.is_reviewed
             };
         });
-    } catch (e: any) {
-        console.error('[Auto-Translate] Failed to query all translations from database:', e.message);
+    } catch (e: unknown) {
+        logger.error({ err: e }, '[Auto-Translate] Failed to query all translations from database:', (e instanceof Error ? e.message : String(e)));
         return [];
     }
 };
@@ -1071,11 +1072,11 @@ const updateCachedTranslation = async (keyOrId: string, translatedText: string):
                 [translatedText, id]
             );
             translationCache.clear();
-        } catch (e: any) {
-            console.error('[Auto-Translate] Failed to update translation in Postgres:', e.message);
+        } catch (e: unknown) {
+            logger.error({ err: e }, '[Auto-Translate] Failed to update translation in Postgres:', (e instanceof Error ? e.message : String(e)));
         }
     } else {
-        console.warn('[Auto-Translate] Update key was not numeric:', keyOrId);
+        logger.warn('[Auto-Translate] Update key was not numeric:', keyOrId);
     }
 };
 
@@ -1095,11 +1096,11 @@ const deleteCachedTranslation = async (keyOrId: string): Promise<void> => {
         try {
             await db.query('DELETE FROM translations WHERE id = $1', [id]);
             translationCache.clear();
-        } catch (e: any) {
-            console.error('[Auto-Translate] Failed to delete translation in Postgres:', e.message);
+        } catch (e: unknown) {
+            logger.error({ err: e }, '[Auto-Translate] Failed to delete translation in Postgres:', (e instanceof Error ? e.message : String(e)));
         }
     } else {
-        console.warn('[Auto-Translate] Delete key was not numeric:', keyOrId);
+        logger.warn('[Auto-Translate] Delete key was not numeric:', keyOrId);
     }
 };
 
@@ -1118,8 +1119,8 @@ const clearRedisResponseCache = async (language?: string): Promise<void> => {
         if (keys && keys.length > 0) {
             await redis.del(...keys);
         }
-    } catch (e: any) {
-        console.warn('[Auto-Translate] Failed to clear Redis response cache:', e.message);
+    } catch (e: unknown) {
+        logger.warn('[Auto-Translate] Failed to clear Redis response cache:', (e instanceof Error ? e.message : String(e)));
     }
 };
 

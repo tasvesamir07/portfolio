@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+const { errorResponse } = require('../utils/errorResponse');
+const logger = require('../utils/logger');
 const validate = require('../middleware/validation');
 const { pagesSchema } = require('../utils/validation');
 const express = require('express');
@@ -19,8 +21,8 @@ router.get('/', async (req: Request, res: Response) => {
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         const localized = localizeDataObject(result.rows, language);
         res.json(localized);
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -46,8 +48,8 @@ router.get('/page', async (req: Request, res: Response) => {
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         const localized = localizeDataObject(result.rows[0], language);
         res.json(localized);
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -61,8 +63,8 @@ router.get('/:slug', async (req: Request, res: Response) => {
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         const localized = localizeDataObject(result.rows[0], language);
         res.json(localized);
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -75,10 +77,10 @@ router.post('/', authenticateToken, validate(pagesSchema), async (req: Request, 
         );
         sitemapCache.invalidate();
         const { translateOnSave } = require('../utils/translateOnSave');
-        translateOnSave('pages', req.body).catch(console.error);
+        translateOnSave('pages', req.body).catch((err: any) => logger.error({ err }, 'Translation background error'));
         res.status(201).json(result.rows[0]);
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -91,10 +93,10 @@ router.put('/:id', authenticateToken, validate(pagesSchema), async (req: Request
         );
         sitemapCache.invalidate();
         const { translateOnSave } = require('../utils/translateOnSave');
-        translateOnSave('pages', req.body).catch(console.error);
+        translateOnSave('pages', req.body).catch((err: any) => logger.error({ err }, 'Translation background error'));
         res.json(result.rows[0]);
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -103,8 +105,8 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
         await db.query('DELETE FROM pages WHERE id = $1', [req.params.id]);
         sitemapCache.invalidate();
         res.sendStatus(204);
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 

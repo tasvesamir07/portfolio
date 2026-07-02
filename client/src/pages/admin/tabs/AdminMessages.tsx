@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { Trash2, Eye } from 'lucide-react';
 import api, { clearResponseCache } from '../../../api';
@@ -8,13 +7,13 @@ import { showSiteAlert } from '../../../utils/siteAlerts';
 import { decodeHtmlPreview } from '../components/AdminSharedComponents';
 
 const AdminMessages = () => {
-    const [content, setContent] = useState([]);
+    const [content, setContent] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({});
-    const [confirmModal, setConfirmModal] = useState({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
+    const [formData, setFormData] = useState<any>({});
+    const [confirmModal, setConfirmModal] = useState<any>({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
 
-    const openConfirmModal = (title, message, onConfirm, type = 'danger') => {
+    const openConfirmModal = (title: string, message: string, onConfirm: any, type = 'danger') => {
         setConfirmModal({ isOpen: true, title, message, onConfirm, type });
     };
 
@@ -34,12 +33,12 @@ const AdminMessages = () => {
         fetchData();
     }, []);
 
-    const openEditor = (record = {}) => {
+    const openEditor = (record: any = {}) => {
         setFormData(record);
         setIsEditing(true);
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id: any) => {
         openConfirmModal(
             'Confirm Deletion',
             'Are you sure you want to delete this message? This action cannot be undone.',
@@ -82,7 +81,7 @@ const AdminMessages = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {content.map((item, idx) => (
+                                {content.map((item: any, idx: number) => (
                                     <tr key={item.id || idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
                                         <td className="py-4 px-6">
                                             <div className="font-bold text-gray-900 text-base leading-tight">
@@ -108,7 +107,7 @@ const AdminMessages = () => {
                                 ))}
                                 {content.length === 0 && (
                                     <tr>
-                                        <td colSpan="3" className="py-16 text-center text-gray-400 font-medium text-sm">No records found.</td>
+                                        <td colSpan={3} className="py-16 text-center text-gray-400 font-medium text-sm">No records found.</td>
                                     </tr>
                                 )}
                             </tbody>

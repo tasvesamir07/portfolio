@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Briefcase, ExternalLink, ArrowRight } from 'lucide-react';
@@ -17,7 +17,7 @@ import ResearchSkeleton from '../pages/skeletons/ResearchSkeleton';
 
 const Research = () => {
     const prefersReduced = useReducedMotion();
-    const [brokenImages, setBrokenImages] = useState([]);
+    const [brokenImages, setBrokenImages] = useState<any[]>([]);
     const { language, t } = useI18n();
     const noDataLabel = getNoDataLabel(language);
 
@@ -35,7 +35,7 @@ const Research = () => {
          <section id="research" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
             <div className="max-w-7xl mx-auto px-6 text-center">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('research.kicker')}</span>
-                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('research.emptyTitleMain')} <span className="text-brand-blue">{t('research.emptyTitleAccent')}</span> {t('research.emptyTitleSuffix')}</h2>
+                <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('research.emptyTitleMain')} <span className="text-brand-blue">{t('research.emptyTitleAccent')}</span> {t('research.emptyTitleSuffix')}</h1>
                 <p className="text-gray-500 font-medium">{noDataLabel}</p>
             </div>
          </section>
@@ -45,7 +45,7 @@ const Research = () => {
         <section id="research" className="py-16 md:py-24 bg-[#fcfaf7]">
             <div className="max-w-7xl mx-auto px-6">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('research.kicker')}</span>
-                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('research.titleMain')} <span className="text-brand-blue font-black">{t('research.titleAccent')}</span></h2>
+                <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('research.titleMain')} <span className="text-brand-blue font-black">{t('research.titleAccent')}</span></h1>
                 
                 <div className="grid grid-cols-1 gap-10 max-w-7xl mx-auto w-full">
                     {research.map((item, index) => {
@@ -139,4 +139,4 @@ const Research = () => {
     );
 };
 
-export default Research;
+export default React.memo(Research);

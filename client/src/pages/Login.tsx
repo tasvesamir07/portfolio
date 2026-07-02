@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Eye, EyeOff, Mail, KeyRound, ChevronLeft } from 'lucide-react';
@@ -23,7 +22,7 @@ const Login = () => {
 
     const navigate = useNavigate();
 
-    const handleLogin = async (e) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
@@ -31,14 +30,14 @@ const Login = () => {
             const res = await api.post('/admin-login', { identifier, password });
             storeSessionToken(res.data.token);
             navigate('/admin/dashboard');
-        } catch (err) {
+        } catch (err: any) {
             setError(err.response?.data?.message || 'Login failed');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleRequestOtp = async (e) => {
+    const handleRequestOtp = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
@@ -47,14 +46,14 @@ const Login = () => {
             const res = await api.post('/forgot-password', { email: resetEmail });
             setSuccess(res.data.message);
             setResetStep(2);
-        } catch (err) {
+        } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to send OTP');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleResetPassword = async (e) => {
+    const handleResetPassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (newPassword !== confirmPassword) {
             return setError('Passwords do not match');
@@ -75,7 +74,7 @@ const Login = () => {
                 setError('');
                 setPassword('');
             }, 3000);
-        } catch (err) {
+        } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to reset password');
         } finally {
             setLoading(false);
@@ -185,7 +184,7 @@ const Login = () => {
                                     <input 
                                         type="text" 
                                         required
-                                        maxLength="6"
+                                        maxLength={6}
                                         className="input font-mono text-center tracking-[0.5em] text-xl"
                                         placeholder="000000"
                                         value={otp}

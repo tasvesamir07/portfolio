@@ -1,13 +1,11 @@
-// @ts-nocheck
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import '@fontsource-variable/inter/index.css'
-import App from './App.jsx'
-import { I18nProvider } from './i18n/I18nContext.jsx'
-import { SiteAlertProvider } from './components/SiteAlertProvider.jsx'
+import App from './App'
+import { I18nProvider } from './i18n/I18nContext'
+import { SiteAlertProvider } from './components/SiteAlertProvider'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import interWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url'
 import * as Sentry from '@sentry/react';
 
 if (import.meta.env.VITE_SENTRY_DSN) {
@@ -21,16 +19,6 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
   });
-}
-
-if (typeof window !== 'undefined') {
-  const link = document.createElement('link');
-  link.rel = 'preload';
-  link.as = 'font';
-  link.type = 'font/woff2';
-  link.href = interWoff2;
-  link.crossOrigin = 'anonymous';
-  document.head.appendChild(link);
 }
 
 const queryClient = new QueryClient({
@@ -58,7 +46,7 @@ if (typeof window !== 'undefined') {
   }) as EventListener);
 }
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <SiteAlertProvider>
       <QueryClientProvider client={queryClient}>

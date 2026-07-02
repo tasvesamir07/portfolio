@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Send, CheckCircle, XCircle } from 'lucide-react';
@@ -11,7 +11,7 @@ export const ContactForm = () => {
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
     const [status, setStatus] = useState('idle'); // idle, sending, success, error
     const { t } = useI18n();
-    const timerRef = useRef(null);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         return () => {
@@ -21,7 +21,7 @@ export const ContactForm = () => {
         };
     }, []);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setStatus('sending');
         try {
@@ -90,7 +90,7 @@ export const ContactForm = () => {
             <div className="flex flex-col gap-2 text-left">
                 <label className="text-[11px] font-bold uppercase tracking-widest text-gray-500 ml-1">{t('contact.messageLabel')}</label>
                 <textarea 
-                    rows="6"
+                    rows={6}
                     className="input min-h-[150px]"
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
@@ -126,4 +126,4 @@ export const ContactForm = () => {
     );
 };
 
-export default ContactForm;
+export default React.memo(ContactForm);

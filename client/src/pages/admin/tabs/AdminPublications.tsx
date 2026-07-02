@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import {
     Field,
@@ -12,12 +11,12 @@ import {
     serializeStructuredItems,
     buildStructuredPreview
 } from '../../../utils/structuredItems';
-import AdminCrudLayout from '../components/AdminCrudLayout';
+import { AdminCrudLayout } from '../components/AdminCrudLayout';
 import { RenderInlineHtml } from '../../../utils/htmlRenderer';
 
 const AdminPublications = () => {
-    const buildLegacyStructuredItems = (record = {}) => {
-        const items = [];
+    const buildLegacyStructuredItems = (record: any = {}) => {
+        const items: any[] = [];
 
         if (record.introduction) {
             items.push({
@@ -28,7 +27,7 @@ const AdminPublications = () => {
                 text: ''
             });
 
-            parseStructuredItems(record.introduction).forEach((item, index) => {
+            parseStructuredItems(record.introduction).forEach((item: any, index: number) => {
                 items.push({
                     ...item,
                     id: `${Date.now()}-publication-introduction-${index}`
@@ -45,7 +44,7 @@ const AdminPublications = () => {
                 text: ''
             });
 
-            parseStructuredItems(record.methods).forEach((item, index) => {
+            parseStructuredItems(record.methods).forEach((item: any, index: number) => {
                 items.push({
                     ...item,
                     id: `${Date.now()}-publication-methods-${index}`
@@ -56,7 +55,7 @@ const AdminPublications = () => {
         return items;
     };
 
-    const prepareFormData = (record = {}) => {
+    const prepareFormData = (record: any = {}) => {
         const hasSavedStructuredJson =
             typeof record.details_json === 'string' && record.details_json.trim().startsWith('[');
 
@@ -71,8 +70,8 @@ const AdminPublications = () => {
         };
     };
 
-    const preparePayloadData = (formData) => {
-        const validateUrl = (url, fieldName) => {
+    const preparePayloadData = (formData: any) => {
+        const validateUrl = (url: any, fieldName: any) => {
             if (!url) return;
             try {
                 new URL(url);
@@ -106,7 +105,7 @@ const AdminPublications = () => {
         return payload;
     };
 
-    const getAdminDetailsPreview = (item = {}) => {
+    const getAdminDetailsPreview = (item: any = {}) => {
         const structuredPreview = buildStructuredPreview(item.details_json || '');
         return structuredPreview || item.introduction || item.methods || item.journal_name || 'No details';
     };
@@ -116,7 +115,7 @@ const AdminPublications = () => {
         { header: 'Details', className: 'max-w-md' }
     ];
 
-    const renderRowCells = (item) => (
+    const renderRowCells = (item: any) => (
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
@@ -131,7 +130,7 @@ const AdminPublications = () => {
         </>
     );
 
-    const renderFormFields = (formData, setFormData) => (
+    const renderFormFields = (formData: any, setFormData: any) => (
         <div className="grid grid-cols-1 gap-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Field label="Publication Title">

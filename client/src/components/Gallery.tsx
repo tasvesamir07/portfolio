@@ -1,5 +1,5 @@
-// @ts-nocheck
 import React, { useMemo, useState, useTransition } from 'react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -10,29 +10,18 @@ import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 import OptimizedImage from './OptimizedImage';
+import GalleryCard from './GalleryCard';
 
 import GallerySkeleton from '../pages/skeletons/GallerySkeleton';
-
-const getGalleryCardLayout = (index) => {
-    const layouts = [
-        'md:col-span-2 md:row-span-2',
-        'md:row-span-2',
-        '',
-        '',
-        'lg:row-span-2',
-        ''
-    ];
-
-    return layouts[index % layouts.length];
-};
 
 const Gallery = () => {
     const prefersReduced = useReducedMotion();
     const [activeCategory, setActiveCategory] = useState('all');
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [brokenImageIds, setBrokenImageIds] = useState([]);
+    const [selectedImage, setSelectedImage] = useState<any | null>(null);
+    const [brokenImageIds, setBrokenImageIds] = useState<string[]>([]);
     const [isPending, startTransition] = useTransition();
     const { language, t } = useI18n();
+    const containerRef = useFocusTrap(!!selectedImage);
 
     const { data: images = [], isLoading: imagesLoading } = useQuery({
         queryKey: ['gallery', language],
@@ -72,7 +61,7 @@ const Gallery = () => {
         [activeCategory, visibleImages]
     );
 
-    const handleCategoryChange = (nextCategory) => {
+    const handleCategoryChange = (nextCategory: string) => {
         startTransition(() => {
             setActiveCategory(nextCategory);
         });
@@ -87,7 +76,7 @@ const Gallery = () => {
             <section id="gallery" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('gallery.kicker')}</span>
-                    <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-4 text-gray-900 tracking-tight">{t('gallery.titleMain')} <span className="text-brand-blue font-black">{t('gallery.titleAccent')}</span></h2>
+                    <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-4 text-gray-900 tracking-tight">{t('gallery.titleMain')} <span className="text-brand-blue font-black">{t('gallery.titleAccent')}</span></h1>
                     <p className="text-gray-500 font-medium">{noDataLabel}</p>
                 </div>
             </section>
@@ -99,9 +88,9 @@ const Gallery = () => {
             <div className="mx-auto max-w-7xl px-4 sm:px-6">
                 <div className="mx-auto max-w-3xl text-center">
                     <span className="mb-4 block text-sm font-bold uppercase tracking-[0.28em] text-brand-gold">{t('gallery.kicker')}</span>
-                    <h2 className="mb-10 text-4xl font-black tracking-tight text-gray-900 sm:text-5xl md:mb-16 md:text-7xl">
+                    <h1 className="mb-10 text-4xl font-black tracking-tight text-gray-900 sm:text-5xl md:mb-16 md:text-7xl">
                         {t('gallery.titleMain')} <span className="text-brand-blue">{t('gallery.titleAccent')}</span>
-                    </h2>
+                    </h1>
                 </div>
                 
                 <div className="mx-auto mb-10 flex max-w-4xl flex-wrap items-center justify-center gap-3 md:mb-14">
@@ -142,60 +131,21 @@ const Gallery = () => {
                     className={`grid auto-rows-[150px] grid-cols-2 gap-4 transition-opacity duration-150 sm:auto-rows-[180px] sm:gap-5 md:grid-cols-3 md:auto-rows-[190px] lg:auto-rows-[220px] xl:grid-cols-4 ${isPending ? 'opacity-75' : 'opacity-100'}`}
                 >
                     <AnimatePresence mode="popLayout" initial={false}>
-                        {filteredImages.map((img, index) => {
-                            const localizedCaption = getLocalizedField(img, 'caption', language, img.caption);
-                            const localizedCategory = getLocalizedField(img, 'category', language, img.category);
-                            const cardLayout = getGalleryCardLayout(index);
-
-                            return (
-                            <motion.div
-                                layout={!prefersReduced}
+                        {filteredImages.map((img, index) => (
+                            <GalleryCard
                                 key={img.id}
-                                {...(!prefersReduced ? {
-                                    initial: { opacity: 0, y: 18, scale: 0.97 },
-                                    animate: { opacity: 1, y: 0, scale: 1 },
-                                    exit: { opacity: 0, y: 14, scale: 0.97 },
-                                    transition: { duration: 0.28, ease: 'easeOut' },
-                                    whileHover: { scale: 1.02, y: -6 }
-                                } : {})}
-                                className={`group relative min-h-0 cursor-pointer overflow-hidden rounded-[1.75rem] border border-white/90  bg-slate-200 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[2rem] motion-card-hover ${cardLayout}`}
+                                img={img}
+                                index={index}
+                                language={language}
+                                t={t}
                                 onClick={() => setSelectedImage(img)}
-                                style={{ contentVisibility: 'auto', containIntrinsicSize: '300px' }}
-                            >
-                                {brokenImageIds.includes(img.id) ? (
-                                    <div className="h-full w-full bg-slate-200 flex items-center justify-center text-gray-400">
-                                        <span className="text-xs uppercase font-bold tracking-wider">Image unavailable</span>
-                                    </div>
-                                ) : (
-                                    <OptimizedImage 
-                                        src={img.image_url} 
-                                        alt={localizedCaption ? localizedCaption.replace(/<[^>]*>/g, '') : ''}
-                                        width={600}
-                                        height={450}
-                                        breakpoints={[300, 600, 900]}
-                                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                                        loading="lazy"
-                                        onError={() => {
-                                            setBrokenImageIds((current) => current.includes(img.id) ? current : [...current, img.id]);
-                                            if (selectedImage?.id === img.id) {
-                                                setSelectedImage(null);
-                                            }
-                                        }}
-                                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
-                                    />
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#0f172ae6] via-[#0f172a33] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                                <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-2 p-3 opacity-0 translate-y-3 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 sm:p-4 md:p-5">
-                                    <span className="w-fit rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-brand-blue backdrop-blur">
-                                        {localizedCategory || t('nav.gallery')}
-                                    </span>
-                                    <p className="line-clamp-2 text-sm font-bold leading-tight text-white drop-shadow-[0_4px_14px_rgba(15,23,42,0.45)] sm:text-base md:text-lg">
-                                        {localizedCaption ? <RenderInlineHtml html={localizedCaption} /> : (localizedCategory || t('nav.gallery'))}
-                                    </p>
-                                </div>
-                            </motion.div>
-                            );
-                        })}
+                                prefersReduced={prefersReduced}
+                                brokenImageIds={brokenImageIds}
+                                setBrokenImageIds={setBrokenImageIds}
+                                setSelectedImage={setSelectedImage}
+                                selectedImage={selectedImage}
+                            />
+                        ))}
                     </AnimatePresence>
                 </motion.div>
             </div>
@@ -204,6 +154,7 @@ const Gallery = () => {
             <AnimatePresence>
                 {selectedImage && (
                     <motion.div 
+                        ref={containerRef}
                         {...(!prefersReduced ? {
                             initial: { opacity: 0 },
                             animate: { opacity: 1 },
@@ -211,10 +162,20 @@ const Gallery = () => {
                         } : {})}
                         className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 p-4 backdrop-blur-xl"
                         onClick={() => setSelectedImage(null)}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Gallery Image Lightbox"
+                        tabIndex={-1}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                                setSelectedImage(null);
+                            }
+                        }}
                     >
                         <button 
                             className="absolute right-4 top-4 rounded-full p-2 text-white hover:bg-white/10 sm:right-8 sm:top-8 z-[10000] cursor-pointer"
                             onClick={() => setSelectedImage(null)}
+                            aria-label="Close lightbox"
                         >
                             <X size={32} />
                         </button>
@@ -228,7 +189,7 @@ const Gallery = () => {
                         >
                             <OptimizedImage 
                                 src={selectedImage.image_url} 
-                                alt={(getLocalizedField(selectedImage, 'caption', language, selectedImage.caption) || '').replace(/<[^>]*>/g, '')} 
+                                alt={(getLocalizedField(selectedImage, 'caption', language, selectedImage.caption) || t('gallery.image') || 'Gallery image').replace(/<[^>]*>/g, '')} 
                                 width={1200}
                                 height={900}
                                 breakpoints={[600, 900, 1200, 1600]}
@@ -256,4 +217,4 @@ const Gallery = () => {
     );
 };
 
-export default Gallery;
+export default React.memo(Gallery);

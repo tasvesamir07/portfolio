@@ -69,7 +69,6 @@ describe('Server Routes Tests', () => {
     describe('publications route', () => {
         it('GET /api/v1/publications should return publications', async () => {
             db.query
-                .mockResolvedValueOnce({ rows: [{ total: '1' }] }) // count
                 .mockResolvedValueOnce({ rows: [{ id: 1, title: 'Paper 1' }] }); // select
             
             const res = await request(app)
@@ -82,7 +81,6 @@ describe('Server Routes Tests', () => {
         it('GET /api/v1/publications should support chunked streaming if rows >= 50', async () => {
             const mockRows = Array.from({ length: 55 }, (_, i) => ({ id: i, title: `Paper ${i}` }));
             db.query
-                .mockResolvedValueOnce({ rows: [{ total: '55' }] })
                 .mockResolvedValueOnce({ rows: mockRows });
 
             const res = await request(app)
@@ -98,7 +96,7 @@ describe('Server Routes Tests', () => {
                 .get('/api/v1/publications')
                 .set('Authorization', `Bearer ${validToken}`)
                 .expect(500);
-            expect(res.body.error).toBe('DB Fail');
+            expect(res.body.error).toBe('An internal error occurred.');
         });
 
         it('POST /api/v1/publications should insert a publication', async () => {
@@ -372,14 +370,15 @@ describe('Server Routes Tests', () => {
 
     describe('messages route', () => {
         it('POST /api/v1/messages should submit a message', async () => {
-            db.query.mockResolvedValueOnce({ rows: [] });
+            const mockMsg = { id: 1, name: 'Samir', email: 'samir@test.com', message: 'Hello!' };
+            db.query.mockResolvedValueOnce({ rows: [mockMsg] });
 
             const res = await request(app)
                 .post('/api/v1/messages')
                 .send({ name: 'Samir', email: 'samir@test.com', message: 'Hello!' })
                 .expect(201);
 
-            expect(res.body.message).toBe('Message sent successfully');
+            expect(res.body).toEqual(mockMsg);
         });
 
         it('GET /api/v1/messages should return messages if authorized', async () => {
@@ -405,14 +404,15 @@ describe('Server Routes Tests', () => {
 
     describe('anonymousMessages route', () => {
         it('POST /api/v1/anonymous-messages should submit a message', async () => {
-            db.query.mockResolvedValueOnce({ rows: [] });
+            const mockAnon = { id: 1, message: 'Secret message' };
+            db.query.mockResolvedValueOnce({ rows: [mockAnon] });
 
             const res = await request(app)
                 .post('/api/v1/anonymous-messages')
                 .send({ message: 'Secret message' })
                 .expect(201);
 
-            expect(res.body.success).toBe(true);
+            expect(res.body).toEqual(mockAnon);
         });
 
         it('POST /api/v1/anonymous-messages should fail on empty message', async () => {

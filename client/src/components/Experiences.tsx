@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Briefcase, Calendar, MapPin, GraduationCap, Award, CheckCircle2 } from 'lucide-react';
@@ -16,7 +16,7 @@ import ExperiencesSkeleton from '../pages/skeletons/ExperiencesSkeleton';
 
 const Experiences = () => {
     const prefersReduced = useReducedMotion();
-    const [brokenLogos, setBrokenLogos] = useState([]);
+    const [brokenLogos, setBrokenLogos] = useState<any[]>([]);
     const { language, t } = useI18n();
 
     const { data: pageData, isLoading } = useQuery({
@@ -38,10 +38,10 @@ const Experiences = () => {
             <div className="max-w-7xl mx-auto px-6">
                 {/* Work Experience Section */}
                 <span className="text-brand-blue font-bold uppercase tracking-widest mb-4 block text-center text-sm">{t('experiences.workKicker')}</span>
-                <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('experiences.workTitleMain')} <span className="text-brand-gold font-black">{t('experiences.workTitleAccent')}</span></h2>
+                <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{t('experiences.workTitleMain')} <span className="text-brand-gold font-black">{t('experiences.workTitleAccent')}</span></h1>
                 
                 <div className="flex flex-col gap-10 mb-24">
-                    {experiences.length > 0 ? experiences.map((item, index) => (
+                    {experiences.length > 0 ? experiences.map((item: any, index: number) => (
                         (() => {
                             // Combine both structured details and legacy description to ensure nothing is hidden
                             const structuredPart = getLocalizedField(item, 'details_json', language, '');
@@ -132,7 +132,7 @@ const Experiences = () => {
                         <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-12 text-gray-900 tracking-tight">{t('experiences.trainingTitleMain')} <span className="text-[#0b3b75] font-black">{t('experiences.trainingTitleAccent')}</span></h2>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
-                            {trainings.map((item, index) => (
+                            {trainings.map((item: any, index: number) => (
                                 (() => {
                                     const detailItems = parseStructuredItems(getLocalizedFirstField(item, ['details_json'], language, ''));
                                     const title = getLocalizedField(item, 'title', language, item.title);
@@ -193,7 +193,7 @@ const Experiences = () => {
                         <h2 className="text-3xl sm:text-4xl md:text-6xl font-bold text-center mb-10 md:mb-12 text-gray-900 tracking-tight">{t('experiences.skillsTitleMain')} <span className="text-brand-gold font-black">{t('experiences.skillsTitleAccent')}</span></h2>
                         
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {skills.map((item, index) => (
+                            {skills.map((item: any, index: number) => (
                                 (() => {
                                     const localizedItemsText = getLocalizedField(item, 'items', language, item.items || '');
                                     const detailItems = parseStructuredItems(
@@ -253,4 +253,4 @@ const Experiences = () => {
     );
 };
 
-export default Experiences;
+export default React.memo(Experiences);

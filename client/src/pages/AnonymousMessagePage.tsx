@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import AnonymousMessageForm from '../components/AnonymousMessageForm';
 import SEO from '../hooks/useSeo';

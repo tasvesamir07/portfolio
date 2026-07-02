@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+const { errorResponse } = require('../utils/errorResponse');
+const logger = require('../utils/logger');
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -56,9 +58,9 @@ router.get('/', async (req: Request, res: Response) => {
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Vary', 'Accept-Encoding, X-Translate-Language, x-translate-language');
         res.json(responseData);
-    } catch (err: any) {
-        console.error('Batch Page Data Error:', err);
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        logger.error({ err: err }, 'Batch Page Data Error:', err);
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 

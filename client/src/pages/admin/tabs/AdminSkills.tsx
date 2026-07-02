@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import {
     Field,
@@ -12,16 +11,16 @@ import {
     buildStructuredPreview,
     buildStructuredFallbackText
 } from '../../../utils/structuredItems';
-import AdminCrudLayout from '../components/AdminCrudLayout';
+import { AdminCrudLayout } from '../components/AdminCrudLayout';
 
 const AdminSkills = () => {
-    const buildLegacyStructuredItems = (record = {}) => {
+    const buildLegacyStructuredItems = (record: any = {}) => {
         if (!record.items) return [];
         return record.items
             .split(',')
-            .map((value) => value.trim())
+            .map((value: any) => value.trim())
             .filter(Boolean)
-            .map((value, index) => ({
+            .map((value: any, index: number) => ({
                 id: `${Date.now()}-skill-${index}`,
                 type: 'text',
                 title: '',
@@ -30,7 +29,7 @@ const AdminSkills = () => {
             }));
     };
 
-    const prepareFormData = (record = {}) => {
+    const prepareFormData = (record: any = {}) => {
         const hasSavedStructuredJson =
             typeof record.details_json === 'string' && record.details_json.trim().startsWith('[');
 
@@ -45,7 +44,7 @@ const AdminSkills = () => {
         };
     };
 
-    const preparePayloadData = (formData) => {
+    const preparePayloadData = (formData: any) => {
         const structuredItems = formData.structured_items || [];
         const payload = {
             ...formData,
@@ -57,7 +56,7 @@ const AdminSkills = () => {
         return payload;
     };
 
-    const getAdminDetailsPreview = (item = {}) => {
+    const getAdminDetailsPreview = (item: any = {}) => {
         const structuredPreview = buildStructuredPreview(item.details_json || '');
         return structuredPreview || item.items || item.category || 'No details';
     };
@@ -67,7 +66,7 @@ const AdminSkills = () => {
         { header: 'Skills / Details', className: 'max-w-md' }
     ];
 
-    const renderRowCells = (item) => (
+    const renderRowCells = (item: any) => (
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
@@ -82,7 +81,7 @@ const AdminSkills = () => {
         </>
     );
 
-    const renderFormFields = (formData, setFormData) => (
+    const renderFormFields = (formData: any, setFormData: any) => (
         <div className="grid grid-cols-1 gap-4">
              <Field label="Skill Category (e.g. Programming Languages)">
                  <InlineFormatEditor value={formData.category || ''} onChange={val => setFormData({...formData, category: val})} />

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import ResearchInterests from '../components/ResearchInterests';
 import SEO from '../hooks/useSeo';

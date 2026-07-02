@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { Languages, Loader2 } from 'lucide-react';
 import api from '../api';
@@ -29,12 +29,12 @@ const TranslateAllButton = () => {
                 }
             }
 
-            showSiteAlert('All translations completed successfully!', 'success');
+            showSiteAlert({ message: 'All translations completed successfully!', type: 'success' });
             clearTranslationCache();
             window.location.reload();
         } catch (err: any) {
             console.error('Batch translation failed:', err);
-            showSiteAlert('Failed to run batch translations', 'error');
+            showSiteAlert({ message: 'Failed to run batch translations', type: 'error' });
         } finally {
             setRunning(false);
         }

@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, CheckCircle, AlertCircle } from 'lucide-react';
@@ -14,7 +14,7 @@ const AnonymousMessageForm = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const { t } = useI18n();
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
         if (!message.trim()) {
@@ -31,7 +31,7 @@ const AnonymousMessageForm = () => {
             setStatus('success');
             setMessage('');
             setTimeout(() => setStatus('idle'), 5000);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error sending anonymous message:', err);
             setStatus('error');
             setErrorMessage(err.response?.data?.error || 'Failed to send message. Please try again.');
@@ -88,7 +88,7 @@ const AnonymousMessageForm = () => {
                                 value={website}
                                 onChange={(e) => setWebsite(e.target.value)}
                                 autoComplete="off"
-                                tabIndex="-1"
+                                tabIndex={-1}
                             />
                         </div>
 
@@ -98,7 +98,7 @@ const AnonymousMessageForm = () => {
                             </label>
                             <textarea 
                                 id="anon-message-input"
-                                rows="6"
+                                rows={6}
                                 className="input min-h-[160px] resize-none"
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
@@ -139,4 +139,4 @@ const AnonymousMessageForm = () => {
     );
 };
 
-export default AnonymousMessageForm;
+export default React.memo(AnonymousMessageForm);

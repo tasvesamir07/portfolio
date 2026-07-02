@@ -1,4 +1,5 @@
 import type { StructuredItem, StructuredItemType } from '../types';
+import DOMPurify from 'dompurify';
 
 const createId = (): string => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -85,7 +86,8 @@ export const sanitizeStructuredInlineHtml = (html = ''): string => {
     const tag = (node as Element).tagName.toLowerCase();
 
     const style = (node as Element).getAttribute('style');
-    const styleAttr = style ? ` style="${escapeStructuredHtml(style)}"` : '';
+    const sanitizedStyle = style ? (DOMPurify.sanitize(`<div style="${style}"></div>`).match(/style="([^"]*)"/)?.[1] || '') : '';
+    const styleAttr = sanitizedStyle ? ` style="${escapeStructuredHtml(sanitizedStyle)}"` : '';
 
     if (tag === 'span') {
       if (style) return `<span${styleAttr}>${children}</span>`;

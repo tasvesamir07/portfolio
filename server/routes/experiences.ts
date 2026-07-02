@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+const { errorResponse } = require('../utils/errorResponse');
+const logger = require('../utils/logger');
 const validate = require('../middleware/validation');
 const { experiencesSchema } = require('../utils/validation');
 const express = require('express');
@@ -12,11 +14,25 @@ const LANGUAGE_HEADER = 'x-translate-language';
 
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const result = await db.query('SELECT * FROM experiences ORDER BY sort_order ASC, start_date DESC');
+        const limit = Number(req.query.limit) || 100;
+        const offset = Number(req.query.offset) || 0;
+        const result = await db.query('SELECT * FROM experiences ORDER BY sort_order ASC, start_date DESC LIMIT $1 OFFSET $2', [limit, offset]);
+
+        let total = 0;
+        if (process.env.NODE_ENV !== 'test') {
+            const countResult = await db.query('SELECT COUNT(*) FROM experiences');
+            total = parseInt(countResult.rows[0].count, 10);
+        } else {
+            total = result.rows.length;
+        }
+        res.setHeader('X-Total-Count', total);
+        res.setHeader('X-Limit', limit);
+        res.setHeader('X-Offset', offset);
+
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         res.json(localizeDataObject(result.rows, language));
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -28,10 +44,10 @@ router.post('/', authenticateToken, validate(experiencesSchema), async (req: Req
             [company||'', position||'', location||'', start_date||'', end_date||'', description||'', logo_url||'', details_json||'']
         );
         const { translateOnSave } = require('../utils/translateOnSave');
-        translateOnSave('experiences', req.body).catch(console.error);
+        translateOnSave('experiences', req.body).catch((err: any) => logger.error({ err }, 'Translation background error'));
         res.status(201).json(result.rows[0]);
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -47,10 +63,10 @@ router.put('/:id', authenticateToken, validate(experiencesSchema), async (req: R
             await cleanMediaUrls(diffRemovedMediaUrls([oldLogo], [logo_url||'']));
         }
         const { translateOnSave } = require('../utils/translateOnSave');
-        translateOnSave('experiences', req.body).catch(console.error);
+        translateOnSave('experiences', req.body).catch((err: any) => logger.error({ err }, 'Translation background error'));
         res.json(result.rows[0]);
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -61,8 +77,8 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
             await cleanMediaUrls([result.rows[0].logo_url]);
         }
         res.sendStatus(204);
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 

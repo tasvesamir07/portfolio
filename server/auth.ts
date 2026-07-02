@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-
+const logger = require('./utils/logger');
 const jwt = require('jsonwebtoken');
 if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
     require('dotenv').config();
@@ -58,8 +58,8 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction): voi
 
                     try {
                         logAuditActivity(req, action, targetId, details);
-                    } catch (auditError: any) {
-                        console.error('Failed to log audit activity:', auditError.message);
+                    } catch (auditError: unknown) {
+                        logger.error({ err: auditError }, 'Failed to log audit activity:', (auditError instanceof Error ? auditError.message : String(auditError)));
                     }
                 }
             };

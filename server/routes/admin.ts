@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+const { errorResponse } = require('../utils/errorResponse');
+const logger = require('../utils/logger');
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
@@ -82,7 +84,7 @@ const getOtpMailer = () => {
 };
 
 const sendOtpEmail = async ({ to, username, otp, subject, title, body }: any) => {
-    console.log('[Email] Preparing to send OTP...');
+    logger.info('[Email] Preparing to send OTP...');
     try {
         const transporter = getOtpMailer();
         const sender = process.env.PURCHASE_EMAIL_USER;
@@ -104,9 +106,9 @@ const sendOtpEmail = async ({ to, username, otp, subject, title, body }: any) =>
                 </div>
             `
         });
-        console.log('[Email] Success');
-    } catch (err) {
-        console.error('[Email] Failed to send OTP:', err);
+        logger.info('[Email] Success');
+    } catch (err: unknown) {
+        logger.error({ err: err }, '[Email] Failed to send OTP:', String(err));
         throw err;
     }
 };
@@ -161,9 +163,9 @@ router.post('/admin-login', loginLimiter, validate(adminLoginSchema), async (req
         } else {
             res.status(401).json({ message: 'Invalid credentials' });
         }
-    } catch (err: any) {
-        console.error('Login Error:', err);
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        logger.error({ err: err }, 'Login Error:', err);
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -204,9 +206,9 @@ router.post('/forgot-password', loginLimiter, validate(forgotPasswordSchema), as
         });
 
         res.json({ message: `A 6-digit OTP was sent to ${email}.` });
-    } catch (err: any) {
-        console.error('Forgot Password Error:', err);
-        res.status(500).json({ message: 'Failed to send OTP.' });
+    } catch (err: unknown) {
+        logger.error({ err: err }, 'Forgot Password Error:', err);
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -261,9 +263,9 @@ router.post('/reset-password', loginLimiter, validate(resetPasswordSchema), asyn
         );
 
         res.json({ message: 'Password reset successfully. You can now log in.' });
-    } catch (err: any) {
-        console.error('Reset Password Error:', err);
-        res.status(500).json({ message: 'Failed to reset password.' });
+    } catch (err: unknown) {
+        logger.error({ err: err }, 'Reset Password Error:', err);
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -289,8 +291,8 @@ router.get('/profile', authenticateToken, async (req: Request, res: Response) =>
             return;
         }
         res.json(sanitizeUser(user));
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -383,9 +385,9 @@ router.post('/profile-otp', authenticateToken, loginLimiter, validate(profileOtp
             message: `A 6-digit OTP was sent to ${recipientEmail}. It expires in ${OTP_TTL_MINUTES} minutes.`,
             recipientEmail
         });
-    } catch (err: any) {
-        console.error('Profile OTP request failed:', err);
-        res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
+    } catch (err: unknown) {
+        logger.error({ err: err }, 'Profile OTP request failed:', err);
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -467,9 +469,9 @@ router.post('/profile-confirm', authenticateToken, validate(profileConfirmSchema
             token,
             user: sanitizeUser(updatedUser)
         });
-    } catch (err: any) {
-        console.error('Profile OTP confirm failed:', err);
-        res.status(500).json({ message: 'Failed to update profile.' });
+    } catch (err: unknown) {
+        logger.error({ err: err }, 'Profile OTP confirm failed:', err);
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -480,7 +482,7 @@ router.post('/upload', authenticateToken, (req: Request, res: Response) => {
                 res.status(413).json({ error: `File is too large. Maximum upload size is ${MAX_UPLOAD_SIZE_MB} MB.` });
                 return;
             }
-            res.status(400).json({ error: uploadErr.message || 'Upload failed.' });
+            res.status(400).json({ error: (uploadErr instanceof Error ? uploadErr.message : String(uploadErr)) || 'Upload failed.' });
             return;
         }
 
@@ -492,8 +494,8 @@ router.post('/upload', authenticateToken, (req: Request, res: Response) => {
             const filePath = await processFile((req as any).file);
             const fullUrl = filePath.startsWith('http') ? filePath : `${req.protocol}://${req.get('host')}${filePath}`;
             res.json({ url: fullUrl });
-        } catch (err: any) {
-            res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+        } catch (err: unknown) {
+            errorResponse(res, 500, 'An internal error occurred.', err);
         }
     });
 });

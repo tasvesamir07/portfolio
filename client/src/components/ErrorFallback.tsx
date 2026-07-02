@@ -1,9 +1,9 @@
-// @ts-nocheck
 import React, { useEffect } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 
-const ErrorFallback = ({ error, resetErrorBoundary }) => {
+const ErrorFallback = ({ error, resetErrorBoundary }: { error: unknown; resetErrorBoundary: () => void }) => {
   const { t } = useI18n();
+  const err = error as any;
 
   useEffect(() => {
     if (error) {
@@ -14,12 +14,12 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: error.message || String(error),
-          stack: error.stack,
+          message: err.message || String(error),
+          stack: err.stack,
           url,
           userAgent
         })
-      }).catch(err => console.error('Failed to report client error:', err));
+      }).catch((err: any) => console.error('Failed to report client error:', err));
     }
   }, [error]);
 
@@ -28,7 +28,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => {
       <h2 className="text-xl font-bold text-[#0b3b75] mb-2">
         {t('error.somethingWrong') || 'Something went wrong.'}
       </h2>
-      <p className="text-gray-600 mb-4 text-sm">{error?.message || 'Unknown error'}</p>
+      <p className="text-gray-600 mb-4 text-sm">{err?.message || 'Unknown error'}</p>
       <button
         onClick={resetErrorBoundary}
         className="rounded-lg bg-[#0b3b75] px-4 py-2 text-sm text-white font-semibold cursor-pointer hover:bg-black transition-colors"

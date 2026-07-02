@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -34,7 +33,7 @@ const DynamicPage = () => {
     const { language, t } = useI18n();
     const siteName = useSiteName();
 
-    const { data: page, isLoading, error } = useQuery({
+    const { data: page, isLoading, error } = useQuery<any>({
         queryKey: ['blog', slug, language],
         queryFn: async () => {
             let res;
@@ -42,7 +41,7 @@ const DynamicPage = () => {
                 res = await api.get('/page', {
                     params: { slug }
                 });
-            } catch (primaryError) {
+            } catch (primaryError: any) {
                 const status = primaryError?.response?.status;
                 if (status && status !== 400 && status !== 404) {
                     throw primaryError;
@@ -53,7 +52,7 @@ const DynamicPage = () => {
             }
             return res.data;
         },
-        retry: (failureCount, err) => {
+        retry: (failureCount, err: any) => {
             const status = err?.response?.status;
             if (status === 404 || status === 400) return false;
             return failureCount < 2;
@@ -61,9 +60,18 @@ const DynamicPage = () => {
     });
 
     // Hooks at top level to satisfy Rules of Hooks
-    const structuredItems = parseStructuredItems(getLocalizedFirstField(page, ['details_json'], language, ''));
-    const renderedContentRaw = normalizePageContent(getLocalizedField(page, 'content', language, page?.content || ''));
-    const pageTitleRaw = getLocalizedField(page, 'title', language, page?.title || '');
+    const structuredItems = React.useMemo(
+        () => parseStructuredItems(getLocalizedFirstField(page, ['details_json'], language, '')),
+        [page, language]
+    );
+    const renderedContentRaw = React.useMemo(
+        () => normalizePageContent(getLocalizedField(page, 'content', language, page?.content || '')),
+        [page, language]
+    );
+    const pageTitleRaw = React.useMemo(
+        () => getLocalizedField(page, 'title', language, page?.title || ''),
+        [page, language]
+    );
 
     if (isLoading) return (
         <div className="min-h-screen flex items-center justify-center pt-16 xl:pt-20">

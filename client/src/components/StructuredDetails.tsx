@@ -1,6 +1,24 @@
-// @ts-nocheck
 import React from 'react';
 import { cleanHtmlInline } from '../utils/htmlRenderer';
+
+export interface StructuredItem {
+    type: 'title' | 'text' | 'pair';
+    id?: string;
+    title?: string;
+    text?: string;
+    values?: string[];
+}
+
+interface StructuredDetailsProps {
+    items?: StructuredItem[];
+    className?: string;
+    titleClassName?: string;
+    textClassName?: string;
+    pairLabelClassName?: string;
+    pairValueClassName?: string;
+    valueStackClassName?: string;
+    layoutClassName?: string;
+}
 
 const StructuredDetails = ({
     items = [],
@@ -11,7 +29,7 @@ const StructuredDetails = ({
     pairValueClassName = 'text-gray-700  leading-8 break-words [&_a]:text-sky-500 [&_a]:underline [&_a]:underline-offset-4',
     valueStackClassName = 'space-y-2',
     layoutClassName = 'structured-details-grid'
-}) => {
+}: StructuredDetailsProps) => {
     if (!items.length) return null;
 
     // Strip space-y-4/space-y-3 from className since we use grid gaps on the outer container
@@ -35,7 +53,7 @@ const StructuredDetails = ({
                         <div
                             key={item.id || index}
                             className={`${textClassName} md:col-span-2`}
-                            dangerouslySetInnerHTML={{ __html: typeof item.text === 'string' ? item.text.replace(/&nbsp;|\u00A0/g, ' ') : item.text }}
+                            dangerouslySetInnerHTML={{ __html: typeof item.text === 'string' ? item.text.replace(/&nbsp;|\u00A0/g, ' ') : (item.text || '') }}
                         />
                     );
                 }
@@ -50,7 +68,7 @@ const StructuredDetails = ({
                                 <div
                                     key={`${item.id || index}-value-${valueIndex}`}
                                     className={pairValueClassName}
-                                    dangerouslySetInnerHTML={{ __html: typeof value === 'string' ? value.replace(/&nbsp;|\u00A0/g, ' ') : value }}
+                                    dangerouslySetInnerHTML={{ __html: typeof value === 'string' ? value.replace(/&nbsp;|\u00A0/g, ' ') : (value || '') }}
                                 />
                             ))}
                         </div>
@@ -68,7 +86,7 @@ const StructuredDetails = ({
                                 <div
                                     key={`${item.id || index}-value-${valueIndex}`}
                                     className={pairValueClassName}
-                                    dangerouslySetInnerHTML={{ __html: typeof value === 'string' ? value.replace(/&nbsp;|\u00A0/g, ' ') : value }}
+                                    dangerouslySetInnerHTML={{ __html: typeof value === 'string' ? value.replace(/&nbsp;|\u00A0/g, ' ') : (value || '') }}
                                 />
                             ))}
                         </div>

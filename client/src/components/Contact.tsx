@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import ContactForm from './ContactForm';

@@ -1,9 +1,10 @@
+import logger = require('./logger');
 const { deleteManagedMediaFiles } = require('../upload') as typeof import('../upload');
 
 export const cleanMediaUrls = async (urls: string[] = []): Promise<void> => {
     const failures: string[] = await deleteManagedMediaFiles(urls);
     if (failures.length) {
-        console.warn('Managed media cleanup warnings:', failures.join(' | '));
+        logger.warn({ failures }, 'Managed media cleanup warnings');
     }
 };
 

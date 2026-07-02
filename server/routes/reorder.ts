@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+const { errorResponse } = require('../utils/errorResponse');
+const logger = require('../utils/logger');
 const validate = require('../middleware/validation');
 const { reorderSchema } = require('../utils/validation');
 const express = require('express');
@@ -32,9 +34,9 @@ router.put('/:table', authenticateToken, validate(reorderSchema), async (req: Re
         } finally {
             client.release();
         }
-    } catch (err: any) {
-        console.error('Reorder Endpoint Error:', err);
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        logger.error({ err: err }, 'Reorder Endpoint Error:', err);
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 

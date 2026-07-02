@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+const logger = require('../utils/logger');
 const express = require('express');
 const router = express.Router();
 
@@ -8,16 +9,16 @@ router.post('/log', (req: Request, res: Response) => {
     const reqId = (req as any).id || 'N/A';
     const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
 
-    console.error('[Client-Error]', {
-        message,
-        stack,
-        url,
-        userAgent,
-        componentStack,
+    logger.error({
+        clientMessage: message,
+        clientStack: stack,
+        clientUrl: url,
+        clientUserAgent: userAgent,
+        clientComponentStack: componentStack,
         reqId,
         clientIp,
         timestamp: new Date().toISOString()
-    });
+    }, '[Client-Error]');
 
     const webhookUrl = process.env.ERROR_WEBHOOK_URL;
     if (webhookUrl) {
@@ -39,7 +40,7 @@ router.post('/log', (req: Request, res: Response) => {
                     timestamp: new Date().toISOString()
                 }]
             })
-        }).catch((err: Error) => console.error('[Error-Webhook] Failed to send client error to webhook:', err.message));
+        }).catch((err: Error) => logger.error({ err }, '[Error-Webhook] Failed to send client error to webhook'));
     }
 
     res.json({ success: true });

@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ChevronDown } from 'lucide-react';
@@ -9,7 +9,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { usePublicPageData } from '../hooks/useSiteName';
 import OptimizedImage from './OptimizedImage';
 
-const isBlogMenuLink = (link = {}, t) => {
+const isBlogMenuLink = (link: any = {}, t: any) => {
     const label = normalizeLabel(link.name);
     return (
         link.id === 'blog-menu'
@@ -19,7 +19,7 @@ const isBlogMenuLink = (link = {}, t) => {
     );
 };
 
-const isGalleryLink = (link = {}, t) => {
+const isGalleryLink = (link: any = {}, t: any) => {
     const label = normalizeLabel(link.name);
     return (
         label === 'gallery'
@@ -29,8 +29,8 @@ const isGalleryLink = (link = {}, t) => {
     );
 };
 
-const localizeLinkTree = (links, language, t) =>
-    links.map((link) => {
+const localizeLinkTree = (links: any[], language: any, t: any): any =>
+    links.map((link: any) => {
         const rawChildren = link.dropdown || link.dropdownItems;
         const normalizedChildren = Array.isArray(rawChildren) ? rawChildren : [];
         const isDropdown = !!(normalizedChildren.length > 0 || link.isDropdown);
@@ -62,7 +62,7 @@ const DEFAULT_NAV_LINKS = [
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [isDropdownOpen, setIsDropdownOpen] = useState(null);
+    const [isDropdownOpen, setIsDropdownOpen] = useState<number | null>(null);
     const [logoBroken, setLogoBroken] = useState(false);
     const location = useLocation();
     const { language, t } = useI18n();
@@ -71,9 +71,9 @@ const Navbar = () => {
     const menuContainerRef = useFocusTrap(isOpen, triggerRef);
 
     const { data: publicData } = usePublicPageData();
-    const about = publicData?.about || null;
+    const about = (publicData as any)?.about || null;
     const blogPages = useMemo(() => 
-        (publicData?.pages || []).filter((page) => page.show_in_nav),
+        ((publicData as any)?.pages || []).filter((page: any) => page.show_in_nav),
         [publicData?.pages]
     );
 
@@ -98,15 +98,15 @@ const Navbar = () => {
         };
     }, [isOpen]);
 
-    const isActive = (path) => {
+    const isActive = (path: any) => {
         if (!path || path === '#') return false;
         if (path === '/') return location.pathname === '/';
         return location.pathname === path;
     };
 
-    const baseNavLinks = about?.custom_nav?.length > 0 ? about.custom_nav : DEFAULT_NAV_LINKS;
+    const baseNavLinks = (about as any)?.custom_nav?.length > 0 ? (about as any).custom_nav : DEFAULT_NAV_LINKS;
 
-    const stripHtml = (str) => {
+    const stripHtml = (str: any) => {
         if (!str) return '';
         return str.replace(/<[^>]*>/g, '').replace(/&nbsp;|\u00A0/g, ' ').trim();
     };
@@ -115,18 +115,18 @@ const Navbar = () => {
     const brandLabel = localizedSiteName || localizedOwnerName || 'Portfolio';
 
     const activeNavLinks = useMemo(() => {
-        const normalizedLinks = baseNavLinks.map((link) => ({ ...link }));
+        const normalizedLinks = baseNavLinks.map((link: any) => ({ ...link }));
 
         const blogLink = {
             id: 'blog-menu',
             name: 'Blog', // Will be localized by localizeLinkTree
-            dropdown: blogPages.map((page) => ({
+            dropdown: blogPages.map((page: any) => ({
                 name: stripHtml(getLocalizedField(page, 'title', language, page.title)),
                 path: `/blog/${page.slug}`
             }))
         };
 
-        const existingBlogIndex = normalizedLinks.findIndex((link) => isBlogMenuLink(link, t));
+        const existingBlogIndex = normalizedLinks.findIndex((link: any) => isBlogMenuLink(link, t));
 
         if (blogPages.length > 0) {
             if (existingBlogIndex >= 0) {
@@ -136,7 +136,7 @@ const Navbar = () => {
                     dropdown: blogLink.dropdown
                 };
             } else {
-                const insertIndex = normalizedLinks.findIndex((link) => isGalleryLink(link, t));
+                const insertIndex = normalizedLinks.findIndex((link: any) => isGalleryLink(link, t));
                 if (insertIndex >= 0) {
                     normalizedLinks.splice(insertIndex, 0, blogLink);
                 } else {
@@ -152,10 +152,10 @@ const Navbar = () => {
     }, [baseNavLinks, blogPages, language, t]);
 
     const groupedNavLinks = useMemo(() => {
-        const moreItems = [];
-        const mainItems = [];
+        const moreItems: any[] = [];
+        const mainItems: any[] = [];
 
-        activeNavLinks.forEach((link) => {
+        activeNavLinks.forEach((link: any) => {
             const path = link.path || '';
             const normalizedName = normalizeLabel(link.name);
 
@@ -187,10 +187,10 @@ const Navbar = () => {
     }, [activeNavLinks, t]);
 
     const flatMobileLinks = useMemo(() => {
-        const flat = [];
-        activeNavLinks.forEach((link) => {
+        const flat: any[] = [];
+        activeNavLinks.forEach((link: any) => {
             if (link.dropdown) {
-                link.dropdown.forEach((subLink) => {
+                link.dropdown.forEach((subLink: any) => {
                     flat.push(subLink);
                 });
             } else {
@@ -213,7 +213,7 @@ const Navbar = () => {
                                     width={56}
                                     height={56}
                                     breakpoints={[56]}
-                                    fetchpriority="high"
+                                    fetchPriority="high"
                                     className="w-14 h-14 object-contain group-hover:scale-105 transition-transform"
                                     onError={() => setLogoBroken(true)}
                                 />
@@ -225,7 +225,7 @@ const Navbar = () => {
                             {(brandLabel || !about?.logo_url) && (
                                 <span className="text-lg sm:text-xl font-bold text-white tracking-tight truncate max-w-[150px] xs:max-w-xs sm:max-w-none">
                                     {brandLabel ? (
-                                        brandLabel.trim().split(' ').map((word, i) => (
+                                        brandLabel.trim().split(' ').map((word: any, i: number) => (
                                             <span key={i} className={i % 2 !== 0 ? 'text-[#ceb079]' : ''}>{word} </span>
                                         ))
                                     ) : (
@@ -236,7 +236,7 @@ const Navbar = () => {
                         </Link>
 
                         <div className="hidden xl:flex items-center gap-4 2xl:gap-8">
-                            {groupedNavLinks.map((link, idx) => (
+                            {groupedNavLinks.map((link: any, idx: number) => (
                                 link.dropdown ? (
                                     <div
                                         key={idx}
@@ -244,7 +244,7 @@ const Navbar = () => {
                                         onMouseEnter={() => setIsDropdownOpen(idx)}
                                         onMouseLeave={() => setIsDropdownOpen(null)}
                                     >
-                                        <button className={`flex items-center gap-1 whitespace-nowrap text-[13px] 2xl:text-[15px] font-bold tracking-tight transition-all hover:text-[#ceb079] ${(link.dropdown || []).some((entry) => isActive(entry.path)) ? 'text-[#ceb079]' : 'text-white'}`}>
+                                        <button className={`flex items-center gap-1 whitespace-nowrap text-[13px] 2xl:text-[15px] font-bold tracking-tight transition-all hover:text-[#ceb079] ${(link.dropdown || []).some((entry: any) => isActive(entry.path)) ? 'text-[#ceb079]' : 'text-white'}`}>
                                             {link.name}
                                             {link.dropdown && (
                                                 <ChevronDown size={16} className={`transition-transform duration-200 ${isDropdownOpen === idx ? 'rotate-180' : ''}`} />
@@ -252,7 +252,7 @@ const Navbar = () => {
                                         </button>
                                         <div className={`absolute top-full left-1/2 -translate-x-1/2 w-56 pt-4 transition-all duration-200 origin-top ${isDropdownOpen === idx ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'}`}>
                                             <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 flex flex-col">
-                                                {link.dropdown.map((subLink, subIndex) => (
+                                                {link.dropdown.map((subLink: any, subIndex: number) => (
                                                     <Link
                                                         key={subIndex}
                                                         to={subLink.path || '#'}
@@ -319,7 +319,7 @@ const Navbar = () => {
                                     width={40}
                                     height={40}
                                     breakpoints={[40]}
-                                    fetchpriority="high"
+                                    fetchPriority="high"
                                     className="w-10 h-10 object-contain"
                                     onError={() => setLogoBroken(true)}
                                 />
@@ -346,7 +346,7 @@ const Navbar = () => {
                             <LanguageSwitcher className="flex-1" fullWidth />
                         </div>
 
-                        {flatMobileLinks.map((link, idx) => (
+                        {flatMobileLinks.map((link: any, idx: number) => (
                             <Link
                                 key={idx}
                                 to={link.path || '#'}
@@ -377,4 +377,4 @@ const Navbar = () => {
     );
 };
 
-export default Navbar;
+export default React.memo(Navbar);

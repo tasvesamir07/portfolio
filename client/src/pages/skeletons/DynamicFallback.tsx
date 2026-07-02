@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import HomeSkeleton from './HomeSkeleton';
@@ -10,7 +9,7 @@ import ExperiencesSkeleton from './ExperiencesSkeleton';
 import ContactSkeleton from './ContactSkeleton';
 import ResearchInterestsSkeleton from './ResearchInterestsSkeleton';
 
-const pageSkeletons = {
+const pageSkeletons: Record<string, React.ComponentType> = {
   '/': HomeSkeleton,
   '/academics': AcademicsSkeleton,
   '/gallery': GallerySkeleton,

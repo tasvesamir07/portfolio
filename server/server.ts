@@ -1,4 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
+const { errorResponse } = require('./utils/errorResponse');
+const logger = require('./utils/logger');
 
 if (process.env.NODE_ENV !== 'production' && !process.env.CF_PAGES) {
     require('dotenv').config();
@@ -14,7 +16,7 @@ if (process.env.SENTRY_DSN) {
 }
 
 if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-    console.error('FATAL ERROR: JWT_SECRET environment variable is not set in production.');
+    logger.error('FATAL ERROR: JWT_SECRET environment variable is not set in production.');
     process.exit(1);
 }
 
@@ -141,13 +143,13 @@ const ensureCmsTables = async (): Promise<void> => {
     try {
         const { runMigrations } = require('./utils/migrator');
         await runMigrations();
-    } catch (err: any) {
-        console.error('Database migration failed on startup (non-fatal):', err.message);
+    } catch (err: unknown) {
+        logger.error({ err }, 'Database migration failed on startup (non-fatal):', (err as any).message || String(err));
     }
 };
 
-ensureCmsTables().catch((err: any) => {
-    console.error('Failed to ensure CMS tables:', err);
+ensureCmsTables().catch((err: unknown) => {
+    logger.error({ err }, 'Failed to ensure CMS tables:', (err as any).message || String(err));
 });
 
 const v1Router = express.Router();
@@ -170,10 +172,10 @@ v1Router.get('/health', async (req: Request, res: Response) => {
         await db.query('SELECT 1');
         health.checks.database.status = 'connected';
         health.checks.database.latencyMs = Date.now() - dbStart;
-    } catch (dbErr: any) {
+    } catch (dbErr: unknown) {
         health.status = 'error';
         health.checks.database.status = 'error';
-        health.checks.database.error = dbErr.message;
+        health.checks.database.error = (dbErr as any).message || String(dbErr);
     }
 
     try {
@@ -190,9 +192,9 @@ v1Router.get('/health', async (req: Request, res: Response) => {
         } else {
             health.checks.redis.status = 'not_configured';
         }
-    } catch (redisErr: any) {
+    } catch (redisErr: unknown) {
         health.checks.redis.status = 'error';
-        health.checks.redis.error = redisErr.message;
+        health.checks.redis.error = (redisErr as any).message || String(redisErr);
     }
 
     try {
@@ -203,8 +205,8 @@ v1Router.get('/health', async (req: Request, res: Response) => {
         if (stats.redisConnected) {
             health.checks.redis.status = 'connected';
         }
-    } catch (cacheErr: any) {
-        health.checks.cache.error = cacheErr.message;
+    } catch (cacheErr: unknown) {
+        health.checks.cache.error = (cacheErr as any).message || String(cacheErr);
     }
 
     res.status(health.status === 'ok' ? 200 : 500).json(health);
@@ -248,8 +250,8 @@ v1Router.get('/page', async (req: Request, res: Response) => {
         const language = req.headers[LANGUAGE_HEADER] || 'en';
         const localized = localizeDataObject(result.rows[0], language);
         res.json(localized);
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 v1Router.use('/trainings', require('./routes/trainings'));
@@ -257,8 +259,8 @@ v1Router.use('/skills', require('./routes/skills'));
 v1Router.use('/experiences', require('./routes/experiences'));
 v1Router.use('/prewarm', require('./routes/prewarm'));
 v1Router.use('/page-data', require('./routes/pageData'));
-v1Router.use('/messages', messageLimiter, require('./routes/messages'));
-v1Router.use('/anonymous-messages', anonymousLimiter, require('./routes/anonymousMessages'));
+v1Router.use('/messages', require('./routes/messages'));
+v1Router.use('/anonymous-messages', require('./routes/anonymousMessages'));
 v1Router.use('/reorder', require('./routes/reorder'));
 v1Router.use('/webhooks', require('./routes/webhooks'));
 
@@ -266,7 +268,7 @@ v1Router.get('/docs', (req: Request, res: Response) => {
     try {
         const spec = require('./docs/openapi.json');
         res.json(spec);
-    } catch (err: any) {
+    } catch (err: unknown) {
         res.status(500).json({ error: 'Failed to load API documentation' });
     }
 });
@@ -367,8 +369,8 @@ app.get('/sitemap.xml', async (req: Request, res: Response) => {
         sitemapCache.set(xml);
         res.setHeader('X-Cache', 'MISS-Sitemap');
         res.send(xml);
-    } catch (err: any) {
-        console.error('Error generating sitemap:', err);
+    } catch (err: unknown) {
+        logger.error({ err }, 'Error generating sitemap');
         res.status(500).send('Error generating sitemap');
     }
 });
@@ -382,24 +384,24 @@ Sitemap: ${baseUrl}/sitemap.xml`);
 });
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error('[Global-Error]', err.stack || err);
+    logger.error({ err }, '[Global-Error]');
     res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
 });
 
 app.use((req: Request, res: Response) => {
-    console.log(`[404-Unhandled] ${req.method} ${req.url}`);
+    logger.info({ method: req.method, url: req.url }, '[404-Unhandled]');
     res.status(404).json({ message: `Route ${req.method} ${req.url} not found on server.` });
 });
 
 if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test' && typeof process !== 'undefined' && (process as any).release && (process as any).release.name === 'node') {
     app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+        logger.info(`Server running on port ${PORT}`);
     });
 }
 
 if (process.env.ERROR_WEBHOOK_URL) {
     const notifyServerCrash = (error: any, type: string) => {
-        console.error(`[Server-Crash] ${type}:`, error);
+        logger.error({ err: error }, `[Server-Crash] ${type}:`, error);
         fetch(process.env.ERROR_WEBHOOK_URL!, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -414,7 +416,7 @@ if (process.env.ERROR_WEBHOOK_URL) {
                     timestamp: new Date().toISOString()
                 }]
             })
-        }).catch((err: Error) => console.error('[Error-Webhook] Failed to send server error to webhook:', err.message));
+        }).catch((err: Error) => logger.error({ err }, '[Error-Webhook] Failed to send server error to webhook:', err.message));
     };
 
     process.on('uncaughtException', (err: Error) => notifyServerCrash(err, 'Uncaught Exception'));

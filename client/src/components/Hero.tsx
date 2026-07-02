@@ -1,11 +1,16 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getSocialIcon, availableSocialPlatforms } from '../utils/socialIcons';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 
-const Hero = ({ data, socialLinks = [] }) => {
+interface HeroProps {
+    data: any;
+    socialLinks?: any[];
+}
+
+const Hero = ({ data, socialLinks = [] }: HeroProps) => {
     const { language, t } = useI18n();
 
     const name = getLocalizedField(data, 'name', language, data?.name);
@@ -13,7 +18,7 @@ const Hero = ({ data, socialLinks = [] }) => {
 
     if (!data) {
         return (
-            <section fetchpriority="high" className="w-full relative bg-[#0a2f5c] overflow-hidden flex flex-col items-center justify-center py-12 md:py-20 mt-16 xl:mt-20 border-b-4 border-brand-gold animate-pulse">
+            <section className="w-full relative bg-[#0a2f5c] overflow-hidden flex flex-col items-center justify-center py-12 md:py-20 mt-16 xl:mt-20 border-b-4 border-brand-gold animate-pulse">
                 <div className="max-w-5xl mx-auto px-6 relative z-10 w-full text-center">
                     <div className="flex flex-col items-center gap-6">
                         <div className="h-10 bg-white/10 rounded-lg w-64 xs:w-80 sm:w-96 md:w-[480px]"></div>
@@ -29,7 +34,7 @@ const Hero = ({ data, socialLinks = [] }) => {
     }
 
     return (
-        <section fetchpriority="high" className="w-full relative bg-gradient-to-br from-[#0a2f5c] to-[#12519e] overflow-hidden flex flex-col items-center justify-center py-12 md:py-20 mt-16 xl:mt-20 border-b-4 border-brand-gold">
+        <section className="w-full relative bg-gradient-to-br from-[#0a2f5c] to-[#12519e] overflow-hidden flex flex-col items-center justify-center py-12 md:py-20 mt-16 xl:mt-20 border-b-4 border-brand-gold">
             {/* Subtle tech background overlay */}
             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
             
@@ -80,4 +85,4 @@ const Hero = ({ data, socialLinks = [] }) => {
     );
 };
 
-export default Hero;
+export default React.memo(Hero);

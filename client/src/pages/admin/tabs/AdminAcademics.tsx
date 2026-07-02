@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import {
     Field,
@@ -12,10 +11,10 @@ import {
     serializeStructuredItems,
     buildStructuredPreview
 } from '../../../utils/structuredItems';
-import AdminCrudLayout from '../components/AdminCrudLayout';
+import { AdminCrudLayout } from '../components/AdminCrudLayout';
 
 const AdminAcademics = () => {
-    const buildLegacyStructuredItems = (record = {}) => {
+    const buildLegacyStructuredItems = (record: any = {}) => {
         const items = [];
         const timeline = [record.start_year, record.end_year].filter(Boolean).join(' - ');
 
@@ -49,11 +48,11 @@ const AdminAcademics = () => {
         return items;
     };
 
-    const prepareFormData = (record = {}) => {
+    const prepareFormData = (record: any = {}) => {
         const hasSavedStructuredJson =
             typeof record.details_json === 'string' && record.details_json.trim().startsWith('[');
 
-        let structuredItems = parseStructuredItems(record.details_json || '');
+        let structuredItems: any[] = parseStructuredItems(record.details_json || '');
         if (!structuredItems.length && !hasSavedStructuredJson) {
             structuredItems = buildLegacyStructuredItems(record);
         }
@@ -64,7 +63,7 @@ const AdminAcademics = () => {
         };
     };
 
-    const preparePayloadData = (formData) => {
+    const preparePayloadData = (formData: any) => {
         const structuredItems = formData.structured_items || [];
         const payload = {
             ...formData,
@@ -78,7 +77,7 @@ const AdminAcademics = () => {
         return payload;
     };
 
-    const getAdminDetailsPreview = (item = {}) => {
+    const getAdminDetailsPreview = (item: any = {}) => {
         const structuredPreview = buildStructuredPreview(item.details_json || '');
         return structuredPreview || item.details || item.degree || 'No details';
     };
@@ -88,7 +87,7 @@ const AdminAcademics = () => {
         { header: 'Details', className: 'max-w-md' }
     ];
 
-    const renderRowCells = (item) => (
+    const renderRowCells = (item: any) => (
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
@@ -103,7 +102,7 @@ const AdminAcademics = () => {
         </>
     );
 
-    const renderFormFields = (formData, setFormData) => (
+    const renderFormFields = (formData: any, setFormData: any) => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Institution Name">
                 <InlineFormatEditor value={formData.institution || ''} onChange={val => setFormData({...formData, institution: val})} />

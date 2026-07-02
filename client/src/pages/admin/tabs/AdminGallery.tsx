@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Edit3, Save, ArrowUp, ArrowDown, AlertCircle, X, ArrowLeft } from 'lucide-react';
 import api, { clearResponseCache } from '../../../api';
@@ -6,6 +5,7 @@ import { clearTranslationCache } from '../../../i18n/translator';
 import ConfirmModal from '../../../components/ConfirmModal';
 import { showSiteAlert } from '../../../utils/siteAlerts';
 import StickySaveBar from '../components/StickySaveBar';
+import OptimizedImage from '../../../components/OptimizedImage';
 import {
     Field,
     FileUploadField,
@@ -17,18 +17,18 @@ import {
 } from '../components/AdminSharedComponents';
 
 const AdminGallery = () => {
-    const [content, setContent] = useState([]);
+    const [content, setContent] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({});
-    const [categories, setCategories] = useState([]);
+    const [formData, setFormData] = useState<any>({});
+    const [categories, setCategories] = useState<any[]>([]);
     const [newCategoryName, setNewCategoryName] = useState('');
-    const [confirmModal, setConfirmModal] = useState({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
+    const [confirmModal, setConfirmModal] = useState<any>({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
     const [saveError, setSaveError] = useState('');
     const [saving, setSaving] = useState(false);
-    const [initialData, setInitialData] = useState({});
+    const [initialData, setInitialData] = useState<any>({});
     const [draftAvailable, setDraftAvailable] = useState(false);
-    const [draftData, setDraftData] = useState(null);
+    const [draftData, setDraftData] = useState<any>(null);
     const autosaveKey = 'autosave_gallery_form';
 
     // Autosave local storage save trigger
@@ -45,7 +45,7 @@ const AdminGallery = () => {
         return () => clearTimeout(timer);
     }, [formData, isEditing, initialData, autosaveKey]);
 
-    const headerRef = useRef(null);
+    const headerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!saveError) return undefined;
@@ -53,7 +53,7 @@ const AdminGallery = () => {
         return () => clearTimeout(timer);
     }, [saveError]);
 
-    const openConfirmModal = (title, message, onConfirm, type = 'danger') => {
+    const openConfirmModal = (title: string, message: string, onConfirm: any, type = 'danger') => {
         setConfirmModal({ isOpen: true, title, message, onConfirm, type });
     };
 
@@ -83,35 +83,35 @@ const AdminGallery = () => {
         fetchData();
     }, []);
 
-    const handleAddCategory = async (e) => {
+    const handleAddCategory = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newCategoryName.trim()) return;
         try {
-            const res = await api.post('/gallery-categories', { name: newCategoryName });
-            setCategories([...categories, res.data]);
-            setNewCategoryName('');
-            clearTranslationCache();
-            clearResponseCache();
-            showSiteAlert({ type: 'success', message: 'Category added successfully.' });
+             const res = await api.post('/gallery-categories', { name: newCategoryName });
+             setCategories([...categories, res.data]);
+             setNewCategoryName('');
+             clearTranslationCache();
+             clearResponseCache();
+             showSiteAlert({ type: 'success', message: 'Category added successfully.' });
         } catch (err) {
-            console.error('Error adding category:', err);
-            showSiteAlert({ type: 'error', message: 'Failed to add category.' });
+             console.error('Error adding category:', err);
+             showSiteAlert({ type: 'error', message: 'Failed to add category.' });
         }
     };
 
-    const handleDeleteCategory = async (id) => {
-        const category = categories.find(c => c.id === id);
+    const handleDeleteCategory = async (id: any) => {
+        const category = categories.find((c: any) => c.id === id);
         openConfirmModal(
             'Delete Category?',
             `Are you sure you want to delete "${category?.name}"? This will ALSO delete all images assigned to this category. This action cannot be undone.`,
             async () => {
                 try {
                     await api.delete(`/gallery-categories/${id}`);
-                    setCategories(categories.filter(c => c.id !== id));
+                    setCategories(categories.filter((c: any) => c.id !== id));
                     clearTranslationCache();
                     clearResponseCache();
                     fetchData();
-                } catch (err) {
+                } catch (err: any) {
                     console.error('Error deleting category:', err);
                     showSiteAlert({ type: 'error', message: err.response?.data?.message || err.message || 'Failed to delete category.' });
                 }
@@ -119,7 +119,7 @@ const AdminGallery = () => {
         );
     };
 
-    const openEditor = (record = {}) => {
+    const openEditor = (record: any = {}) => {
         setFormData(record);
         setInitialData(record);
         setIsEditing(true);
@@ -130,7 +130,7 @@ const AdminGallery = () => {
             const saved = localStorage.getItem(autosaveKey);
             if (saved) {
                 try {
-                    const { formData: savedForm, timestamp } = JSON.parse(saved);
+                    const { formData: savedForm } = JSON.parse(saved);
                     // Only prompt if draft is different from the currently loaded entity
                     if (JSON.stringify(savedForm) !== JSON.stringify(record)) {
                         setDraftAvailable(true);
@@ -143,7 +143,7 @@ const AdminGallery = () => {
         }
     };
 
-    const handleSave = async (e) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaveError('');
         setSaving(true);
@@ -159,9 +159,9 @@ const AdminGallery = () => {
                     throw new Error('Please select a category before saving gallery images.');
                 }
 
-                const results = [];
+                const results: any[] = [];
 
-                for (const file of formData.gallery_files) {
+                for (const file of formData.gallery_files as any[]) {
                     try {
                         const imageUrl = await uploadFileToMediaApi(file);
                         const payload = {
@@ -181,7 +181,7 @@ const AdminGallery = () => {
                     }
                 }
 
-                const failedUploads = results.filter((item) => !item.success);
+                const failedUploads = results.filter((item: any) => !item.success);
                 const successfulCount = results.length - failedUploads.length;
 
                 if (!successfulCount) {
@@ -193,7 +193,7 @@ const AdminGallery = () => {
                         type: 'success',
                         message: `${successfulCount} image${successfulCount === 1 ? '' : 's'} saved. ${failedUploads.length} failed.`
                     });
-                    setSaveError(failedUploads.map((item) => `${item.name}: ${item.error}`).join(' '));
+                    setSaveError(failedUploads.map((item: any) => `${item.name}: ${item.error}`).join(' '));
                 } else {
                     if (autosaveKey) {
                         localStorage.removeItem(autosaveKey);
@@ -222,7 +222,7 @@ const AdminGallery = () => {
             clearTranslationCache();
             clearResponseCache();
             fetchData();
-        } catch (err) {
+        } catch (err: any) {
             setSaveError(err.response?.data?.message || err.response?.data?.error || err.message);
         } finally {
             setSaving(false);
@@ -237,7 +237,7 @@ const AdminGallery = () => {
         setIsEditing(false);
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id: any) => {
         openConfirmModal(
             'Confirm Deletion',
             'Are you sure you want to delete this record? This action cannot be undone.',
@@ -255,19 +255,20 @@ const AdminGallery = () => {
         );
     };
 
-    const handleMove = async (index, direction) => {
+    const handleMove = async (index: number, direction: number) => {
         const newContent = [...content];
         const targetIndex = index + direction;
         
         if (targetIndex < 0 || targetIndex >= newContent.length) return;
         
         const temp = newContent[index];
+        if (!temp) return;
         newContent[index] = newContent[targetIndex];
         newContent[targetIndex] = temp;
         
         setContent(newContent);
         
-        const orders = newContent.map((item, idx) => ({
+        const orders = newContent.map((item: any, idx: number) => ({
             id: item.id,
             sort_order: idx
         }));
@@ -314,12 +315,18 @@ const AdminGallery = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {content.map((item, idx) => (
+                                {content.map((item: any, idx: number) => (
                                     <tr key={item.id || idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors group">
                                         <td className="py-4 px-6">
                                             <div className="flex items-center gap-3">
                                                 {item.image_url && (
-                                                    <img src={item.image_url} alt="" className="w-10 h-10 object-cover rounded" />
+                                                    <OptimizedImage 
+                                                        src={item.image_url} 
+                                                        alt="" 
+                                                        className="w-10 h-10 object-cover rounded" 
+                                                        width={40}
+                                                        height={40}
+                                                    />
                                                 )}
                                                 <div>
                                                     <div className="font-bold text-gray-900 text-base leading-tight">
@@ -365,7 +372,7 @@ const AdminGallery = () => {
                                 ))}
                                 {content.length === 0 && (
                                     <tr>
-                                        <td colSpan="3" className="py-16 text-center text-gray-400 font-medium text-sm">No records found.</td>
+                                        <td colSpan={3} className="py-16 text-center text-gray-400 font-medium text-sm">No records found.</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -388,7 +395,7 @@ const AdminGallery = () => {
                             </button>
                         </form>
                         <div className="flex flex-wrap gap-2">
-                            {categories.map(cat => (
+                            {categories.map((cat: any) => (
                                 <div key={cat.id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded border border-gray-200 group">
                                     <span className="text-xs font-bold text-gray-700">{cat.name}</span>
                                     <button 

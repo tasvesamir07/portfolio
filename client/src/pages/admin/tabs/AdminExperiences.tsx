@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import {
     Field,
@@ -14,10 +13,10 @@ import {
     serializeStructuredItems,
     buildStructuredPreview
 } from '../../../utils/structuredItems';
-import AdminCrudLayout from '../components/AdminCrudLayout';
+import { AdminCrudLayout } from '../components/AdminCrudLayout';
 
 const AdminExperiences = () => {
-    const buildLegacyStructuredItems = (record = {}) => {
+    const buildLegacyStructuredItems = (record: any = {}) => {
         if (record.description) {
             return parseStructuredItems(record.description);
         }
@@ -53,11 +52,11 @@ const AdminExperiences = () => {
         return items;
     };
 
-    const prepareFormData = (record = {}) => {
+    const prepareFormData = (record: any = {}) => {
         const hasSavedStructuredJson =
             typeof record.details_json === 'string' && record.details_json.trim().startsWith('[');
 
-        let structuredItems = parseStructuredItems(record.details_json || '');
+        let structuredItems: any[] = parseStructuredItems(record.details_json || '');
         if (!structuredItems.length && !hasSavedStructuredJson) {
             structuredItems = buildLegacyStructuredItems(record);
         }
@@ -68,7 +67,7 @@ const AdminExperiences = () => {
         };
     };
 
-    const preparePayloadData = (formData) => {
+    const preparePayloadData = (formData: any) => {
         const structuredItems = formData.structured_items || [];
         const payload = {
             ...formData,
@@ -84,7 +83,7 @@ const AdminExperiences = () => {
         return payload;
     };
 
-    const getAdminDetailsPreview = (item = {}) => {
+    const getAdminDetailsPreview = (item: any = {}) => {
         const structuredPreview = buildStructuredPreview(item.details_json || '');
         return structuredPreview || item.details || item.position || item.description || 'No details';
     };
@@ -94,7 +93,7 @@ const AdminExperiences = () => {
         { header: 'Details', className: 'max-w-md' }
     ];
 
-    const renderRowCells = (item) => (
+    const renderRowCells = (item: any) => (
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
@@ -109,7 +108,7 @@ const AdminExperiences = () => {
         </>
     );
 
-    const renderFormFields = (formData, setFormData) => (
+    const renderFormFields = (formData: any, setFormData: any) => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Company / Organization">
                 <InlineFormatEditor value={formData.company || ''} onChange={val => setFormData({...formData, company: val})} />
@@ -146,7 +145,7 @@ const AdminExperiences = () => {
                 <Field label="Legacy Description (Optional)">
                     <RichTextEditor
                         value={formData.description || ''}
-                        onChange={val => setFormData(prev => ({...prev, description: val}))}
+                        onChange={val => setFormData((prev: any) => ({...prev, description: val}))}
                     />
                 </Field>
             </div>

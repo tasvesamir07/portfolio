@@ -1,4 +1,5 @@
 import path = require('path');
+const logger = require('./utils/logger');
 import fs = require('fs');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
@@ -14,6 +15,13 @@ const upload = multer({
     storage,
     limits: {
         fileSize: MAX_UPLOAD_SIZE_BYTES
+    },
+    fileFilter: (req: any, file: any, cb: any) => {
+        const isAllowedMime = /^image\/(jpeg|jpg|png|webp|avif|tiff|gif)$/i.test(file.mimetype || '');
+        if (!isAllowedMime) {
+            return cb(new Error('Only image files (jpeg, png, webp, avif, tiff, gif) are allowed.'), false);
+        }
+        cb(null, true);
     }
 });
 
@@ -25,9 +33,10 @@ const checkBucketExists = async (supabase: any): Promise<void> => {
         if (!bucketExists) {
             throw new Error(`Storage bucket "${SUPABASE_BUCKET}" does not exist. Create it in the Supabase dashboard.`);
         }
-    } catch (err: any) {
-        if (err.message.includes('does not exist')) throw err;
-        console.error('[Upload] Bucket check error:', err.message);
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes('does not exist')) throw err;
+        logger.error({ err }, '[Upload] Bucket check error:', message);
     }
 };
 
@@ -64,8 +73,9 @@ const processFile = async (file: any): Promise<string> => {
             buffer = optimizedBuffer;
             contentType = 'image/avif';
             filename = `${Date.now()}-${fileBaseName}.avif`;
-        } catch (sharpError: any) {
-            console.warn('[Upload] Sharp processing failed, using original file buffer:', sharpError.message);
+        } catch (sharpError: unknown) {
+            const message = sharpError instanceof Error ? sharpError.message : String(sharpError);
+            logger.warn('[Upload] Sharp processing failed, using original file buffer:', message);
         }
     }
 
@@ -85,7 +95,7 @@ const processFile = async (file: any): Promise<string> => {
             });
 
         if (error) {
-            console.error(`[Upload] Supabase upload error:`, error.message);
+            logger.error({ err: error }, `[Upload] Supabase upload error:`, error.message);
             throw new Error(`Supabase upload error: ${error.message}`);
         }
 
@@ -105,7 +115,7 @@ const processFile = async (file: any): Promise<string> => {
         return `/uploads/${filename}`;
     }
 
-    console.error('[Upload] Failed: Supabase storage is not configured (missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY).');
+    logger.error('[Upload] Failed: Supabase storage is not configured (missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY).');
     throw new Error('File upload failed: Supabase storage is not configured.');
 };
 
@@ -174,8 +184,9 @@ const deleteManagedMediaFiles = async (fileUrls: string[] = []): Promise<string[
             if (fs.existsSync(localPath)) {
                 fs.unlinkSync(localPath);
             }
-        } catch (error: any) {
-            failures.push(`Local delete error for ${path.basename(localPath)}: ${error.message}`);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            failures.push(`Local delete error for ${path.basename(localPath)}: ${message}`);
         }
     });
 

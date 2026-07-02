@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 const optString = z.string().optional().nullable().or(z.literal(''));
-const reqString = z.string().optional().nullable().or(z.literal(''));
+const reqString = z.string().min(1, 'This field is required.');
 
 export const adminLoginSchema = z.object({
     identifier: z.string().min(1, 'Identifier is required.').optional(),

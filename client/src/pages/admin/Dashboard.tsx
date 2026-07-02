@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, Suspense, lazy } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { expireSessionAndRedirect, getStoredToken, isTokenExpired } from '../../utils/authSession';
@@ -82,26 +81,6 @@ const Dashboard = () => {
 
     return (
         <div className="max-w-6xl mx-auto py-8 px-4 text-gray-900 min-h-screen bg-gray-50/20">
-            <style>{`
-                .input {
-                    display: block;
-                    width: 100%;
-                    padding: 8px 12px;
-                    font-size: 14px;
-                    line-height: 1.5;
-                    color: #1f2937;
-                    background-color: #fff;
-                    background-clip: padding-box;
-                    border: 1px solid #d1d5db;
-                    border-radius: 4px;
-                    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
-                    outline: none;
-                }
-                .input:focus {
-                    border-color: #3b82f6;
-                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-                }
-            `}</style>
             
             <header className="flex flex-wrap justify-between items-center mb-10 gap-4 border-b pb-6">
                 <div className="text-left">

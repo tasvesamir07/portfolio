@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
@@ -25,12 +25,12 @@ const alertStyles = {
     }
 };
 
-export const SiteAlertProvider = ({ children }) => {
+export const SiteAlertProvider = ({ children }: { children: React.ReactNode }) => {
     const prefersReduced = useReducedMotion();
-    const [alerts, setAlerts] = useState([]);
+    const [alerts, setAlerts] = useState<any[]>([]);
 
     useEffect(() => {
-        const handleAlert = (event) => {
+        const handleAlert = (event: any) => {
             const detail = event.detail || {};
             const nextAlert = {
                 id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -40,7 +40,7 @@ export const SiteAlertProvider = ({ children }) => {
                 duration: typeof detail.duration === 'number' ? detail.duration : 3200
             };
 
-            setAlerts((current) => [...current.slice(-2), nextAlert]);
+            setAlerts((current: any[]) => [...current.slice(-2), nextAlert]);
         };
 
         window.addEventListener(SITE_ALERT_EVENT, handleAlert);
@@ -64,8 +64,8 @@ export const SiteAlertProvider = ({ children }) => {
     useEffect(() => {
         if (!alerts.length) return undefined;
 
-        const timers = alerts.map((alert) => setTimeout(() => {
-            setAlerts((current) => current.filter((item) => item.id !== alert.id));
+        const timers = alerts.map((alert: any) => setTimeout(() => {
+            setAlerts((current: any[]) => current.filter((item: any) => item.id !== alert.id));
         }, alert.duration));
 
         return () => timers.forEach(clearTimeout);
@@ -78,8 +78,8 @@ export const SiteAlertProvider = ({ children }) => {
             {children}
             <div aria-live="polite" aria-relevant="additions removals" className="pointer-events-none fixed right-4 top-4 z-[1000] flex w-[min(92vw,24rem)] flex-col gap-3">
                 <AnimatePresence>
-                    {alerts.map((alert) => {
-                        const style = alertStyles[alert.type] || alertStyles.info;
+                    {alerts.map((alert: any) => {
+                        const style = (alertStyles as any)[alert.type] || alertStyles.info;
                         const Icon = style.icon;
 
                         return (
@@ -106,7 +106,7 @@ export const SiteAlertProvider = ({ children }) => {
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => setAlerts((current) => current.filter((item) => item.id !== alert.id))}
+                                        onClick={() => setAlerts((current: any[]) => current.filter((item: any) => item.id !== alert.id))}
                                         className="rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                     >
                                         <X size={16} />

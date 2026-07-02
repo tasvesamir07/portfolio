@@ -1,15 +1,15 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Languages } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 
-const languageCodes = {
+const languageCodes: Record<string, string> = {
     en: 'EN',
     bn: 'BN',
     ko: 'KO'
 };
 
-const warmServerCache = (lang) => {
+const warmServerCache = (lang: string) => {
     const paths = [
         '/academics', 
         '/publications', 
@@ -30,19 +30,19 @@ const warmServerCache = (lang) => {
 const LanguageSwitcher = ({ className = '', fullWidth = false }) => {
     const { language, setLanguage, t, languages } = useI18n();
     const [isOpen, setIsOpen] = useState(false);
-    const containerRef = useRef(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const activeLanguage = languages.find((item) => item.code === language) || languages[0];
 
     useEffect(() => {
         if (!isOpen) return undefined;
 
-        const handlePointerDown = (event) => {
-            if (containerRef.current && !containerRef.current.contains(event.target)) {
+        const handlePointerDown = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
             }
         };
 
-        const handleEscape = (event) => {
+        const handleEscape = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 setIsOpen(false);
             }
@@ -57,8 +57,9 @@ const LanguageSwitcher = ({ className = '', fullWidth = false }) => {
         };
     }, [isOpen]);
 
-    const handleSelect = (nextLanguage) => {
-        setLanguage(nextLanguage);
+    const handleSelect = (nextLanguage: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setLanguage(nextLanguage as any);
         setIsOpen(false);
     };
 
@@ -77,7 +78,7 @@ const LanguageSwitcher = ({ className = '', fullWidth = false }) => {
             >
                 <span className="flex min-w-0 items-center gap-2.5">
                     <span className="rounded-md bg-white/12 px-2 py-1 text-[11px] font-black tracking-[0.14em] text-white" aria-hidden="true">
-                        {languageCodes[activeLanguage?.code] || 'EN'}
+                        {languageCodes[(activeLanguage?.code || 'en') as keyof typeof languageCodes] || 'EN'}
                     </span>
                     <span className="truncate">{activeLanguage?.label || 'English'}</span>
                 </span>
@@ -141,4 +142,4 @@ const LanguageSwitcher = ({ className = '', fullWidth = false }) => {
     );
 };
 
-export default LanguageSwitcher;
+export default React.memo(LanguageSwitcher);

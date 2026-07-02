@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit3, Save, AlertCircle, ArrowLeft } from 'lucide-react';
 import api, { clearResponseCache } from '../../../api';
@@ -19,14 +18,14 @@ import {
 } from '../components/AdminSharedComponents';
 
 const AdminAbout = () => {
-    const [content, setContent] = useState(null);
+    const [content, setContent] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({});
+    const [formData, setFormData] = useState<any>({});
     const [saveError, setSaveError] = useState('');
     const [saving, setSaving] = useState(false);
 
-    const headerRef = useRef(null);
+    const headerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!saveError) return undefined;
@@ -51,7 +50,7 @@ const AdminAbout = () => {
         fetchData();
     }, []);
 
-    const prepareAboutFormData = (about = {}) => ({
+    const prepareAboutFormData = (about: any = {}) => ({
         ...about,
         name: about.name || '',
         site_name: about.site_name || '',
@@ -61,9 +60,9 @@ const AdminAbout = () => {
         highlight_items: parseHighlightItems(about.sub_bio || '')
     });
 
-    const [initialData, setInitialData] = useState({});
+    const [initialData, setInitialData] = useState<any>({});
     const [draftAvailable, setDraftAvailable] = useState(false);
-    const [draftData, setDraftData] = useState(null);
+    const [draftData, setDraftData] = useState<any>(null);
     const autosaveKey = 'autosave_about_form';
 
     // Autosave local storage save trigger
@@ -80,7 +79,7 @@ const AdminAbout = () => {
         return () => clearTimeout(timer);
     }, [formData, isEditing, initialData, autosaveKey]);
 
-    const openEditor = (about) => {
+    const openEditor = (about: any) => {
         const prepared = prepareAboutFormData(about);
         setFormData(prepared);
         setInitialData(prepared);
@@ -92,7 +91,7 @@ const AdminAbout = () => {
             const saved = localStorage.getItem(autosaveKey);
             if (saved) {
                 try {
-                    const { formData: savedForm, timestamp } = JSON.parse(saved);
+                    const { formData: savedForm } = JSON.parse(saved);
                     // Only prompt if draft is different from the currently loaded entity
                     if (JSON.stringify(savedForm) !== JSON.stringify(prepared)) {
                         setDraftAvailable(true);
@@ -105,7 +104,7 @@ const AdminAbout = () => {
         }
     };
 
-    const handleSave = async (e) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaveError('');
         setSaving(true);
@@ -129,7 +128,7 @@ const AdminAbout = () => {
             clearTranslationCache();
             clearResponseCache();
             fetchData();
-        } catch (err) {
+        } catch (err: any) {
             setSaveError(err.response?.data?.message || err.response?.data?.error || err.message);
         } finally {
             setSaving(false);
@@ -199,7 +198,7 @@ const AdminAbout = () => {
                                     </tr>
                                 ) : (
                                     <tr>
-                                        <td colSpan="3" className="py-16 text-center text-gray-400 font-medium text-sm">No record found. Click Edit Biography to initialize.</td>
+                                        <td colSpan={3} className="py-16 text-center text-gray-400 font-medium text-sm">No record found. Click Edit Biography to initialize.</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -330,7 +329,7 @@ const AdminAbout = () => {
                                  <Field label="Detailed Biography">
                                      <RichTextEditor 
                                          value={formData.bio_text || ''} 
-                                         onChange={val => setFormData(prev => ({...prev, bio_text: val}))} 
+                                         onChange={val => setFormData((prev: any) => ({...prev, bio_text: val}))} 
                                          className="bg-white h-64 mb-12"
                                      />
                                  </Field>

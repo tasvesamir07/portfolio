@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Edit3, ArrowUp, ArrowDown, AlertCircle, ArrowLeft, Save } from 'lucide-react';
 import api, { clearResponseCache } from '../../../api';
@@ -7,11 +6,30 @@ import ConfirmModal from '../../../components/ConfirmModal';
 import { showSiteAlert } from '../../../utils/siteAlerts';
 import StickySaveBar from './StickySaveBar';
 
-const getEndpointWithId = (endpoint, id) => {
+const getEndpointWithId = (endpoint: string, id?: number | string) => {
     if (!id) return endpoint;
     const [base, query] = endpoint.split('?');
     return query ? `${base}/${id}?${query}` : `${base}/${id}`;
 };
+
+interface AdminCrudLayoutProps {
+    title: string;
+    entityName: string;
+    apiEndpoint: string;
+    reorderEndpoint?: string;
+    autosaveKey?: string;
+    columns?: any[];
+    renderRowCells: (record: any) => React.ReactNode;
+    renderFormFields: (
+        formData: any,
+        setFormData: any
+    ) => React.ReactNode;
+    prepareFormData?: (record: any) => any;
+    preparePayloadData?: (data: any) => any;
+    defaultNewRecord?: () => any;
+    manageCountText?: (count: number) => string;
+    addNewText?: string;
+}
 
 export const AdminCrudLayout = ({
     title,
@@ -22,24 +40,24 @@ export const AdminCrudLayout = ({
     columns = [],
     renderRowCells,
     renderFormFields,
-    prepareFormData = (record) => record,
-    preparePayloadData = (data) => data,
+    prepareFormData = (record: any) => record,
+    preparePayloadData = (data: any) => data,
     defaultNewRecord = () => ({}),
-    manageCountText = (count) => `Currently managing ${count} records.`,
+    manageCountText = (count: number) => `Currently managing ${count} records.`,
     addNewText = `Add New ${entityName}`
-}) => {
-    const [content, setContent] = useState([]);
+}: AdminCrudLayoutProps) => {
+    const [content, setContent] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({});
-    const [initialData, setInitialData] = useState({});
-    const [confirmModal, setConfirmModal] = useState({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
+    const [formData, setFormData] = useState<any>({});
+    const [initialData, setInitialData] = useState<any>({});
+    const [confirmModal, setConfirmModal] = useState<any>({ isOpen: false, onConfirm: null, title: '', message: '', type: 'danger' });
     const [saveError, setSaveError] = useState('');
     const [saving, setSaving] = useState(false);
     const [draftAvailable, setDraftAvailable] = useState(false);
-    const [draftData, setDraftData] = useState(null);
+    const [draftData, setDraftData] = useState<any>(null);
 
-    const headerRef = useRef(null);
+    const headerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!saveError) return undefined;
@@ -47,7 +65,7 @@ export const AdminCrudLayout = ({
         return () => clearTimeout(timer);
     }, [saveError]);
 
-    const openConfirmModal = (modalTitle, message, onConfirm, type = 'danger') => {
+    const openConfirmModal = (modalTitle: string, message: string, onConfirm: any, type = 'danger') => {
         setConfirmModal({ isOpen: true, title: modalTitle, message, onConfirm, type });
     };
 
@@ -82,7 +100,7 @@ export const AdminCrudLayout = ({
         return () => clearTimeout(timer);
     }, [formData, isEditing, initialData, autosaveKey]);
 
-    const openEditor = (record = {}) => {
+    const openEditor = (record: any = {}) => {
         const prepared = prepareFormData(record);
         setFormData(prepared);
         setInitialData(prepared);
@@ -94,7 +112,7 @@ export const AdminCrudLayout = ({
             const saved = localStorage.getItem(autosaveKey);
             if (saved) {
                 try {
-                    const { formData: savedForm, timestamp } = JSON.parse(saved);
+                    const { formData: savedForm } = JSON.parse(saved);
                     // Only prompt if draft is different from the currently loaded entity
                     if (JSON.stringify(savedForm) !== JSON.stringify(prepared)) {
                         setDraftAvailable(true);
@@ -125,7 +143,7 @@ export const AdminCrudLayout = ({
         showSiteAlert({ type: 'info', message: 'Draft discarded.' });
     };
 
-    const handleSave = async (e) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaveError('');
         setSaving(true);
@@ -147,14 +165,14 @@ export const AdminCrudLayout = ({
             clearTranslationCache();
             clearResponseCache();
             fetchData();
-        } catch (err) {
+        } catch (err: any) {
             setSaveError(err.response?.data?.message || err.response?.data?.error || err.message);
         } finally {
             setSaving(false);
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id: any) => {
         openConfirmModal(
             'Confirm Deletion',
             'Are you sure you want to delete this record? This action cannot be undone.',
@@ -172,7 +190,7 @@ export const AdminCrudLayout = ({
         );
     };
 
-    const handleMove = async (index, direction) => {
+    const handleMove = async (index: number, direction: number) => {
         if (!reorderEndpoint) return;
         const newContent = [...content];
         const targetIndex = index + direction;
@@ -180,12 +198,13 @@ export const AdminCrudLayout = ({
         if (targetIndex < 0 || targetIndex >= newContent.length) return;
         
         const temp = newContent[index];
+        if (!temp) return;
         newContent[index] = newContent[targetIndex];
         newContent[targetIndex] = temp;
         
         setContent(newContent);
         
-        const orders = newContent.map((item, idx) => ({
+        const orders = newContent.map((item: any, idx: number) => ({
             id: item.id,
             sort_order: idx
         }));

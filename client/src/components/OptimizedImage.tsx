@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { buildPictureProps } from '../utils/imageUrl';
 
@@ -9,7 +8,7 @@ interface OptimizedImageProps {
   height: number;
   sizes?: string;
   breakpoints?: number[];
-  fetchpriority?: 'high' | 'auto' | 'low';
+  fetchPriority?: 'high' | 'auto' | 'low';
   loading?: 'lazy' | 'eager';
   className?: string;
   onError?: () => void;
@@ -23,7 +22,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   height,
   sizes,
   breakpoints = [400, 800, 1200],
-  fetchpriority = 'auto',
+  fetchPriority = 'auto',
   loading = 'lazy',
   className = '',
   onError,
@@ -54,7 +53,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
         width={width}
         height={height}
         loading={loading}
-        fetchpriority={fetchpriority}
+        fetchPriority={fetchPriority}
         decoding="async"
         onError={handleOnError}
         className={className}
@@ -78,7 +77,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
         width={width}
         height={height}
         loading={loading}
-        fetchpriority={fetchpriority}
+        fetchPriority={fetchPriority}
         decoding="async"
         onError={handleOnError}
         className={className}

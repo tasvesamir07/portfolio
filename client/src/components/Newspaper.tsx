@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Newspaper as NewspaperIcon, ExternalLink, ArrowRight } from 'lucide-react';
@@ -13,7 +13,7 @@ import OptimizedImage from './OptimizedImage';
 
 const Newspaper = () => {
     const prefersReduced = useReducedMotion();
-    const [brokenImages, setBrokenImages] = useState([]);
+    const [brokenImages, setBrokenImages] = useState<any[]>([]);
     const { language, t } = useI18n();
     const noDataLabel = getNoDataLabel(language);
 
@@ -36,7 +36,7 @@ const Newspaper = () => {
          <section id="newspaper" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
             <div className="max-w-7xl mx-auto px-6 text-center">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{kickerLabel}</span>
-                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h2>
+                <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h1>
             </div>
          </section>
     );
@@ -45,7 +45,7 @@ const Newspaper = () => {
          <section id="newspaper" className="py-16 md:py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
             <div className="max-w-7xl mx-auto px-6 text-center">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{kickerLabel}</span>
-                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{titleMainLabel}<span className="text-brand-blue">{titleAccentLabel}</span></h2>
+                <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{titleMainLabel}<span className="text-brand-blue">{titleAccentLabel}</span></h1>
                 <p className="text-gray-500 font-medium">{emptyLabel}</p>
             </div>
          </section>
@@ -55,7 +55,7 @@ const Newspaper = () => {
         <section id="newspaper" className="py-16 md:py-24 bg-[#fcfaf7]">
             <div className="max-w-7xl mx-auto px-6">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center text-sm">{kickerLabel}</span>
-                <h2 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{titleMainLabel}<span className="text-brand-blue">{titleAccentLabel}</span></h2>
+                <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-center mb-10 md:mb-16 text-gray-900 tracking-tight">{titleMainLabel}<span className="text-brand-blue">{titleAccentLabel}</span></h1>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {articles.map((item, index) => {
@@ -135,4 +135,4 @@ const Newspaper = () => {
     );
 };
 
-export default Newspaper;
+export default React.memo(Newspaper);

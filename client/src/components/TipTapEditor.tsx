@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -32,7 +32,7 @@ const FontSize = Mark.create({
   },
 });
 
-export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography...', className = '' }) => {
+export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography...', className = '' }: any) => {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -86,7 +86,7 @@ export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography..
   return (
     <div className={`rounded-xl border border-gray-300 bg-white overflow-hidden shadow-sm flex flex-col ${className}`}>
       <div className="flex flex-wrap items-center gap-1 border-b border-gray-200 bg-gray-50 px-3 py-2">
-        {window.APP_FEATURES?.newEditor && (
+        {(window as any).APP_FEATURES?.newEditor && (
           <div className="order-last ml-auto mr-1 flex items-center">
             <span className="text-[9px] font-black uppercase tracking-[0.15em] bg-[#ceb079]/20 text-[#ceb079] border border-[#ceb079]/30 px-2 py-0.5 rounded-md">
               New Editor
@@ -163,7 +163,7 @@ export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography..
             <input
               type="color"
               value={editor.getAttributes('textStyle').color || '#000000'}
-              onInput={e => editor.chain().focus().setColor(e.target.value).run()}
+              onInput={e => editor.chain().focus().setColor((e.target as HTMLInputElement).value).run()}
               className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0 m-0 border-0 z-10"
             />
           </div>
@@ -211,7 +211,7 @@ export const TipTapEditor = ({ value, onChange, placeholder = 'Write biography..
   );
 };
 
-export const TipTapMinimal = ({ value, onChange, placeholder = 'Enter details...', className = '' }) => {
+export const TipTapMinimal = ({ value, onChange, placeholder = 'Enter details...', className = '' }: any) => {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -333,7 +333,7 @@ export const TipTapMinimal = ({ value, onChange, placeholder = 'Enter details...
             <input
               type="color"
               value={editor.getAttributes('textStyle').color || '#000000'}
-              onInput={e => editor.chain().focus().setColor(e.target.value).run()}
+              onInput={e => editor.chain().focus().setColor((e.target as HTMLInputElement).value).run()}
               className="absolute inset-0 opacity-0 w-full h-full cursor-pointer p-0 m-0 border-0 z-10"
             />
           </div>

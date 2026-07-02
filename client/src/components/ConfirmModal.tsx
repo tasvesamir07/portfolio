@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, X } from 'lucide-react';
@@ -6,7 +5,9 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
-const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Delete', type = 'danger' }) => {
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = 'Delete', type = 'danger' }: {
+  isOpen: boolean; onClose: () => void; onConfirm: () => void; title: string; message: string; confirmText?: string; type?: 'danger' | 'default' | 'info' | 'blue'
+}) => {
     const containerRef = useFocusTrap(isOpen);
     const prefersReduced = useReducedMotion();
 

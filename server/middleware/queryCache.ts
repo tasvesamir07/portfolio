@@ -1,5 +1,6 @@
 import crypto = require('crypto');
 import type { Request, Response, NextFunction } from 'express';
+const logger = require('../utils/logger');
 
 const { Redis } = require('@upstash/redis');
 
@@ -10,12 +11,12 @@ if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
             url: process.env.UPSTASH_REDIS_URL,
             token: process.env.UPSTASH_REDIS_TOKEN
         });
-        console.log('[Query-Cache] Upstash Redis client initialized successfully.');
-    } catch (e: any) {
-        console.error('[Query-Cache] Failed to initialize Redis:', e.message);
+        logger.info('[Query-Cache] Upstash Redis client initialized successfully.');
+    } catch (e: unknown) {
+        logger.error({ err: e }, '[Query-Cache] Failed to initialize Redis');
     }
 } else {
-    console.warn('[Query-Cache] Upstash Redis credentials not set. Falling back to memory cache.');
+    logger.warn('[Query-Cache] Upstash Redis credentials not set. Falling back to memory cache.');
 }
 
 const memoryCache = new Map<string, { data: unknown; savedAt: number }>();
@@ -23,86 +24,77 @@ const activeRefreshes = new Map<string, boolean>();
 
 const FRESH_TTL_MS = 300 * 1000;
 const STALE_TTL_MS = 24 * 60 * 60 * 1000;
-const REDIS_TTL_SECS = 24 * 60 * 60;
-
-const getCacheKey = (req: Request): string => {
-    const lang = (req.headers['x-translate-language'] as string) || 'en';
-    const url = req.originalUrl || req.url || '';
-    return `api_cache_v6::${lang}::${url}`;
-};
-
-const generateETag = (body: unknown): string => {
-    const stringBody = typeof body === 'string' ? body : JSON.stringify(body);
-    return `W/"${crypto.createHash('md5').update(stringBody).digest('hex')}"`;
-};
 
 interface CacheEntry {
     data: unknown;
     savedAt: number;
 }
 
-const saveToCache = (key: string, payload: unknown): void => {
-    const cacheEntry: CacheEntry = {
-        data: payload,
-        savedAt: Date.now()
-    };
+const getCacheKey = (req: Request): string => {
+    const url = req.originalUrl || req.url;
+    const lang = req.headers['x-translate-language'] || 'en';
+    const cleanUrl = url.replace(/[\s\r\n]/g, '');
+    const cleanLang = String(lang).replace(/[\s\r\n]/g, '');
+    return `api_cache_v6::${cleanLang}::${cleanUrl}`;
+};
 
-    memoryCache.set(key, cacheEntry);
+const generateETag = (data: unknown): string => {
+    const str = typeof data === 'string' ? data : JSON.stringify(data);
+    const hash = crypto.createHash('sha1').update(str).digest('base64');
+    return `W/"${hash.slice(0, 27)}"`;
+};
+
+const saveToCache = async (key: string, data: unknown): Promise<void> => {
+    const entry: CacheEntry = { data, savedAt: Date.now() };
+    memoryCache.set(key, entry);
 
     if (redis) {
-        redis.set(key, JSON.stringify(cacheEntry), { ex: REDIS_TTL_SECS })
-            .catch((e: Error) => console.warn('[Query-Cache] Redis background save error:', e.message));
+        try {
+            await redis.set(key, JSON.stringify(entry), { ex: Math.ceil(STALE_TTL_MS / 1000) });
+        } catch (e: unknown) {
+            logger.warn({ err: e }, '[Query-Cache] Failed to save to Redis cache');
+        }
     }
 };
 
 const triggerBackgroundRefresh = (req: Request, res: Response, key: string): void => {
-    const mockReq = Object.create(req) as any;
-    mockReq.headers = { ...req.headers };
-    mockReq.bypassCache = true;
+    const mockReq = {
+        method: req.method,
+        url: req.url,
+        originalUrl: req.originalUrl,
+        headers: { ...req.headers },
+        bypassCache: true,
+        app: req.app
+    } as any;
 
-    const mockRes = Object.create(res) as any;
-    mockRes.statusCode = 200;
-    mockRes.headers = {};
-    mockRes.locals = { ...(res?.locals || {}) };
-
-    mockRes.setHeader = function (name: string, value: string) {
-        this.headers[name.toLowerCase()] = value;
-        return this;
-    };
-
-    mockRes.status = function (code: number) {
-        this.statusCode = code;
-        return this;
-    };
-
-    mockRes.json = function (payload: unknown) {
-        saveToCache(key, payload);
-        activeRefreshes.delete(key);
-        return this;
-    };
-
-    mockRes.send = function (payload: string) {
-        try {
-            const parsed = JSON.parse(payload);
-            saveToCache(key, parsed);
-        } catch {
-            saveToCache(key, payload);
+    const mockRes = {
+        statusCode: 200,
+        setHeader: () => {},
+        status: function(code: number) { this.statusCode = code; return this; },
+        json: function(payload: unknown) {
+            saveToCache(key, payload).finally(() => {
+                activeRefreshes.delete(key);
+            });
+            return this;
+        },
+        end: function() {
+            activeRefreshes.delete(key);
+            return this;
+        },
+        send: function(payload: unknown) {
+            saveToCache(key, payload).finally(() => {
+                activeRefreshes.delete(key);
+            });
+            return this;
         }
-        activeRefreshes.delete(key);
-        return this;
-    };
-
-    mockRes.end = function () {
-        activeRefreshes.delete(key);
-        return this;
-    };
+    } as any;
 
     const app = req.app as any;
     if (app && typeof app.handle === 'function') {
         try {
             app.handle(mockReq, mockRes);
-        } catch (e: any) {
-            console.warn('[Query-Cache] Background refresh dispatch error:', e.message);
+        } catch (e: unknown) {
+            logger.warn({ err: e }, '[Query-Cache] Background refresh dispatch error');
             activeRefreshes.delete(key);
         }
     } else {
@@ -130,12 +122,12 @@ const queryCacheMiddleware = async (req: Request, res: Response, next: NextFunct
                 if (keys && keys.length > 0) {
                     await Promise.all((keys as string[]).map((k: string) => redis.del(k)));
                 }
-                console.log('[Query-Cache] Invalidated all API cache on mutation.');
+                logger.info('[Query-Cache] Invalidated all API cache on mutation.');
             } else {
-                console.log('[Query-Cache] Invalidated all in-memory API cache on mutation.');
+                logger.info('[Query-Cache] Invalidated all in-memory API cache on mutation.');
             }
-        } catch (e: any) {
-            console.error('[Query-Cache] Invalidation error:', e.message);
+        } catch (e: unknown) {
+            logger.error({ err: e }, '[Query-Cache] Invalidation error');
         }
         next();
         return;
@@ -215,8 +207,8 @@ const queryCacheMiddleware = async (req: Request, res: Response, next: NextFunct
                 return;
             }
         }
-    } catch (err: any) {
-        console.warn('[Query-Cache] Read error:', err.message);
+    } catch (err: unknown) {
+        logger.warn({ err }, '[Query-Cache] Read error');
     }
 
     const originalJson = res.json.bind(res);
@@ -232,8 +224,8 @@ const queryCacheMiddleware = async (req: Request, res: Response, next: NextFunct
                 }
 
                 saveToCache(key, payload);
-            } catch (e: any) {
-                console.warn('[Query-Cache] Write error:', e.message);
+            } catch (e: unknown) {
+                logger.warn({ err: e }, '[Query-Cache] Write error');
             }
         }
 

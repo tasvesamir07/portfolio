@@ -1,4 +1,5 @@
 import fs = require('fs');
+const logger = require('../utils/logger');
 import path = require('path');
 import type { Request, Response, NextFunction } from 'express';
 
@@ -10,8 +11,8 @@ try {
     if (fs.existsSync(glossaryPath)) {
         glossary = JSON.parse(fs.readFileSync(glossaryPath, 'utf-8'));
     }
-} catch (e: any) {
-    console.warn('[Auto-Translate Middleware] Failed to load glossary:', e.message);
+} catch (e: unknown) {
+    logger.warn('[Auto-Translate Middleware] Failed to load glossary:', (e as any).message || String(e));
 }
 
 const applyGlossaryToText = (text: string, language = 'en'): string => {
@@ -440,8 +441,8 @@ const maybeTranslateApiPayload = async (req: Request, res: Response, payload: un
                 res.setHeader('Vary', 'Accept-Encoding, x-translate-language');
                 return parsed;
             }
-        } catch (e: any) {
-            console.warn('[Auto-Translate] Redis response cache get failed:', e.message);
+        } catch (e: unknown) {
+            logger.warn('[Auto-Translate] Redis response cache get failed:', (e as any).message || String(e));
         }
     }
 
@@ -462,16 +463,16 @@ const maybeTranslateApiPayload = async (req: Request, res: Response, payload: un
 
         if (redis && translated) {
             redis.set(redisResponseKey, JSON.stringify(translated), { ex: REDIS_RESPONSE_CACHE_TTL })
-                .catch((e: Error) => console.warn('[Auto-Translate] Redis response cache set failed:', e.message));
+                .catch((e: Error) => logger.warn('[Auto-Translate] Redis response cache set failed:', e.message));
         }
 
         res.setHeader(RESPONSE_TRANSLATED_HEADER, '1');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Vary', 'Accept-Encoding, x-translate-language');
         return translated;
-    } catch (err: any) {
+    } catch (err: unknown) {
         if (timeoutId) clearTimeout(timeoutId);
-        console.warn(`[Auto-Translate] Falling back to original data for ${req.originalUrl || req.path} (${normalizedLanguage}) due to: ${err.message}`);
+        logger.warn(`[Auto-Translate] Falling back to original data for ${req.originalUrl || req.path} (${normalizedLanguage}) due to: ${(err as any).message || String(err)}`);
         return payload;
     }
 };

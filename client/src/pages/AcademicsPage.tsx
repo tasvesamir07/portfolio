@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import Academics from '../components/Academics';
 import SEO from '../hooks/useSeo';

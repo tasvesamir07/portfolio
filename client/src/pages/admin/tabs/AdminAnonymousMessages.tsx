@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { Mail, Check, Trash2, Calendar, ShieldAlert } from 'lucide-react';
 import api from '../../../api';
@@ -6,10 +5,10 @@ import ConfirmModal from '../../../components/ConfirmModal';
 import { showSiteAlert } from '../../../utils/siteAlerts';
 
 const AdminAnonymousMessages = () => {
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState<any[]>([]);
     const [filter, setFilter] = useState('all'); // all, unread
     const [loading, setLoading] = useState(false);
-    const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
+    const [confirmModal, setConfirmModal] = useState<any>({ isOpen: false, id: null });
 
     const fetchMessages = async () => {
         setLoading(true);
@@ -18,7 +17,7 @@ const AdminAnonymousMessages = () => {
             setMessages(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error('Error fetching anonymous messages:', err);
-            showSiteAlert('Failed to fetch messages', 'error');
+            showSiteAlert({ message: 'Failed to fetch messages', type: 'error' });
         } finally {
             setLoading(false);
         }
@@ -28,18 +27,18 @@ const AdminAnonymousMessages = () => {
         fetchMessages();
     }, []);
 
-    const handleMarkRead = async (id, currentReadStatus) => {
+    const handleMarkRead = async (id: any, currentReadStatus: any) => {
         try {
             await api.put(`/anonymous-messages/${id}`, { is_read: !currentReadStatus });
-            showSiteAlert(currentReadStatus ? 'Marked as unread' : 'Marked as read', 'success');
+            showSiteAlert({ message: currentReadStatus ? 'Marked as unread' : 'Marked as read', type: 'success' });
             fetchMessages();
         } catch (err) {
             console.error('Error updating message status:', err);
-            showSiteAlert('Failed to update status', 'error');
+            showSiteAlert({ message: 'Failed to update status', type: 'error' });
         }
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = (id: any) => {
         setConfirmModal({
             isOpen: true,
             id,
@@ -48,23 +47,23 @@ const AdminAnonymousMessages = () => {
             onConfirm: async () => {
                 try {
                     await api.delete(`/anonymous-messages/${id}`);
-                    showSiteAlert('Message deleted successfully', 'success');
+                    showSiteAlert({ message: 'Message deleted successfully', type: 'success' });
                     fetchMessages();
                 } catch (err) {
                     console.error('Error deleting message:', err);
-                    showSiteAlert('Failed to delete message', 'error');
+                    showSiteAlert({ message: 'Failed to delete message', type: 'error' });
                 }
                 setConfirmModal({ isOpen: false, id: null });
             }
         });
     };
 
-    const filteredMessages = messages.filter(msg => {
+    const filteredMessages = messages.filter((msg: any) => {
         if (filter === 'unread') return !msg.is_read;
         return true;
     });
 
-    const unreadCount = messages.filter(m => !m.is_read).length;
+    const unreadCount = messages.filter((m: any) => !m.is_read).length;
 
     return (
         <div className="bg-[#fcfaf7] min-h-screen p-6">
@@ -106,7 +105,7 @@ const AdminAnonymousMessages = () => {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {filteredMessages.map((msg) => (
+                        {filteredMessages.map((msg: any) => (
                             <div 
                                 key={msg.id}
                                 className={`relative p-6 rounded-2xl border transition-all duration-200 ${!msg.is_read ? 'bg-[#ceb079]/5 border-[#ceb079]/30 shadow-md shadow-[#ceb079]/5' : 'bg-white border-gray-100 hover:border-gray-200'}`}

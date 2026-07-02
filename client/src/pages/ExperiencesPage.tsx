@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import Experiences from '../components/Experiences';
 import SEO from '../hooks/useSeo';

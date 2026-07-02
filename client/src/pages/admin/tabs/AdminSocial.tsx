@@ -1,10 +1,9 @@
-// @ts-nocheck
 import React from 'react';
 import {
     Field
 } from '../components/AdminSharedComponents';
 import { availableSocialPlatforms } from '../../../utils/socialIcons';
-import AdminCrudLayout from '../components/AdminCrudLayout';
+import { AdminCrudLayout } from '../components/AdminCrudLayout';
 
 const AdminSocial = () => {
     const columns = [
@@ -12,7 +11,7 @@ const AdminSocial = () => {
         { header: 'Profile URL', className: 'max-w-md' }
     ];
 
-    const renderRowCells = (item) => (
+    const renderRowCells = (item: any) => (
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
@@ -27,14 +26,14 @@ const AdminSocial = () => {
         </>
     );
 
-    const renderFormFields = (formData, setFormData) => (
+    const renderFormFields = (formData: any, setFormData: any) => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Platform Name">
                 <input className="input" value={formData.platform || ''} onChange={e => setFormData({...formData, platform: e.target.value})} placeholder="e.g. GitHub" />
             </Field>
             <Field label="Icon Selection">
                 <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2 mt-1 max-h-60 overflow-y-auto p-1 border border-gray-200 rounded-lg bg-gray-50/50">
-                    {availableSocialPlatforms.map((platform) => {
+                    {availableSocialPlatforms.map((platform: any) => {
                         const Icon = platform.icon;
                         const isSelected = (formData.icon_name || '').toLowerCase().replace(/[\s-_]/g, '') === platform.id;
                         return (

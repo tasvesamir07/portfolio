@@ -25,7 +25,8 @@ describe('Public API Routes Tests', () => {
 
             expect(res.body).toEqual(mockNewspapers);
             expect(db.query).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT * FROM newspapers')
+                expect.stringContaining('SELECT * FROM newspapers'),
+                expect.any(Array)
             );
         });
     });
@@ -60,7 +61,6 @@ describe('Public API Routes Tests', () => {
     describe('GET /api/v1/gallery', () => {
         it('should return gallery images sorted correctly', async () => {
             const mockGallery = [{ id: 1, caption: 'Art', image_url: 'art.png', sort_order: 0 }];
-            db.query.mockResolvedValueOnce({ rows: [{ total: 1 }] }); // for count query
             db.query.mockResolvedValueOnce({ rows: mockGallery }); // for select query
 
             const res = await request(app)

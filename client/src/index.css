@@ -20,9 +20,9 @@
     --background: #ffffff;
     --foreground: #1a1a1a;
     --brand-blue: #0b3b75;
-    --brand-gold: #ceb079;
+    --brand-gold: #9c7715;
     --accent-primary: #0b3b75; 
-    --accent-secondary: #ceb079;
+    --accent-secondary: #9c7715;
     --muted: #f3f4f6;
     --border-light: #e5e7eb;
   }
@@ -129,33 +129,18 @@
     @apply w-full bg-gray-50/50 border border-gray-200 rounded-xl px-4 py-3.5 focus:border-[#0b3b75] focus:ring-4 focus:ring-[#0b3b75]/10 outline-none transition-all text-gray-900 shadow-sm text-sm placeholder:text-gray-400 focus:bg-white dark:bg-muted dark:border-border-light dark:text-foreground dark:placeholder:text-foreground/40 dark:focus:bg-background;
   }
 
-  .hover-glow {
+  .hover-glow, .motion-card-hover {
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
-  .hover-glow:hover {
-    transform: translateY(-8px) scale(1.02) !important;
-    box-shadow: 0 20px 45px rgba(206, 176, 121, 0.25), 0 0 30px rgba(206, 176, 121, 0.15), 0 0 0 1px rgba(206, 176, 121, 0.3) !important;
-    border-color: rgba(206, 176, 121, 0.5) !important;
-  }
-  .hover-glow img {
-    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  }
-  .hover-glow:hover img {
-    transform: scale(1.08) !important;
-  }
-
-  .motion-card-hover {
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  }
-  .motion-card-hover:hover {
+  .hover-glow:hover, .motion-card-hover:hover {
     transform: translateY(-8px) scale(1.025) !important;
-    box-shadow: 0 20px 45px rgba(206, 176, 121, 0.25), 0 0 30px rgba(206, 176, 121, 0.15), 0 0 0 1px rgba(206, 176, 121, 0.3) !important;
-    border-color: rgba(206, 176, 121, 0.6) !important;
+    box-shadow: 0 20px 45px rgba(156, 119, 21, 0.25), 0 0 30px rgba(156, 119, 21, 0.15), 0 0 0 1px rgba(156, 119, 21, 0.3) !important;
+    border-color: rgba(156, 119, 21, 0.6) !important;
   }
-  .motion-card-hover img {
+  .hover-glow img, .motion-card-hover img {
     transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
-  .motion-card-hover:hover img {
+  .hover-glow:hover img, .motion-card-hover:hover img {
     transform: scale(1.08) !important;
   }
 }

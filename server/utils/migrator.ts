@@ -1,9 +1,10 @@
 import fs from 'fs';
 import path from 'path';
+import logger = require('./logger');
 const db = require('../db') as typeof import('../db');
 
 export const runMigrations = async (): Promise<void> => {
-    console.log('[Migrator] Checking database schema version...');
+    logger.info('[Migrator] Checking database schema version...');
 
     const client = await db.connect();
     try {
@@ -16,7 +17,7 @@ export const runMigrations = async (): Promise<void> => {
 
         const migrationsDir = path.join(__dirname, '../migrations');
         if (!fs.existsSync(migrationsDir)) {
-            console.warn('[Migrator] Migrations directory does not exist. Skipping database migrations.');
+            logger.warn('[Migrator] Migrations directory does not exist. Skipping database migrations.');
             return;
         }
 
@@ -32,7 +33,7 @@ export const runMigrations = async (): Promise<void> => {
                 continue;
             }
 
-            console.log(`[Migrator] Applying migration: ${file}...`);
+            logger.info(`[Migrator] Applying migration: ${file}...`);
             const filePath = path.join(migrationsDir, file);
             const sql = fs.readFileSync(filePath, 'utf-8');
 
@@ -44,15 +45,15 @@ export const runMigrations = async (): Promise<void> => {
                     [file]
                 );
                 await client.query('COMMIT');
-                console.log(`[Migrator] Successfully applied: ${file}`);
-            } catch (err: any) {
+                logger.info(`[Migrator] Successfully applied: ${file}`);
+            } catch (err: unknown) {
                 await client.query('ROLLBACK');
-                console.error(`[Migrator] FATAL: Failed applying migration "${file}":`, err.message);
+                logger.error({ err }, `[Migrator] FATAL: Failed applying migration "${file}"`);
                 throw err;
             }
         }
 
-        console.log('[Migrator] All database schemas are up to date.');
+        logger.info('[Migrator] All database schemas are up to date.');
     } finally {
         client.release();
     }

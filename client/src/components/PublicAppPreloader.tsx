@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -16,11 +16,11 @@ const PUBLIC_ROUTE_LOADERS = [
 
 const LOAD_FALLBACK_DELAY_MS = 1200;
 const IDLE_TIMEOUT_MS = 3500;
-let routeWarmupPromise = null;
+let routeWarmupPromise: Promise<any> | null = null;
 
 const getClientConnection = () => {
     if (typeof navigator === 'undefined') return null;
-    return navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
+    return (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection || null;
 };
 
 const getWarmupProfile = () => {
@@ -59,8 +59,8 @@ const scheduleWarmup = () => {
         return () => {};
     }
 
-    let idleId = null;
-    let timeoutId = null;
+    let idleId: number | null = null;
+    let timeoutId: number | null = null;
     let cancelled = false;
 
     const runWarmup = () => {
@@ -69,8 +69,8 @@ const scheduleWarmup = () => {
     };
 
     const scheduleIdleWarmup = () => {
-        if (typeof window.requestIdleCallback === 'function') {
-            idleId = window.requestIdleCallback(runWarmup, { timeout: IDLE_TIMEOUT_MS });
+        if (typeof (window as any).requestIdleCallback === 'function') {
+            idleId = (window as any).requestIdleCallback(runWarmup, { timeout: IDLE_TIMEOUT_MS });
             return;
         }
 
@@ -88,7 +88,7 @@ const scheduleWarmup = () => {
         window.removeEventListener('load', scheduleIdleWarmup);
 
         if (idleId != null) {
-            window.cancelIdleCallback?.(idleId);
+            (window as any).cancelIdleCallback?.(idleId);
         }
 
         if (timeoutId != null) {

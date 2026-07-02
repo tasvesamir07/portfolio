@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { getSocialIcon } from '../utils/socialIcons';
@@ -7,14 +6,14 @@ import { usePublicPageData } from '../hooks/useSiteName';
 const Footer = () => {
     const { t } = useI18n();
     const { data } = usePublicPageData();
-    const socialLinks = data?.socialLinks || data?.['social-links'] || data?.social_links || [];
+    const socialLinks = (data as any)?.socialLinks || (data as any)?.['social-links'] || (data as any)?.social_links || [];
 
     return (
         <footer className="py-12 md:py-24 bg-[#0b3b75] overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#ceb079]/40 to-transparent" />
             <div className="max-w-7xl mx-auto px-6 text-center">
                 <div className="flex flex-wrap justify-center gap-6 md:gap-10 mb-10 md:mb-16">
-                    {socialLinks.map((social, idx) => {
+                    {socialLinks.map((social: any, idx: number) => {
                         const IconComponent = getSocialIcon(social.icon_name || social.platform);
 
                         return (
@@ -42,4 +41,4 @@ const Footer = () => {
     );
 };
 
-export default Footer;
+export default React.memo(Footer);

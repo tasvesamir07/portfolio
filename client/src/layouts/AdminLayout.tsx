@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { LogOut, FileText, Briefcase, GraduationCap, Image as ImageIcon, User, ExternalLink, Share2, Mail, Menu, X, Languages, GripVertical } from 'lucide-react';
@@ -29,7 +28,17 @@ const SIDEBAR_TABS = [
     { id: 'translations', label: 'Translations', icon: Languages }
 ];
 
-const SidebarLinks = ({ activeTab, onClickLink, tabs, draggedIndex, onDragStart, onDragOver, onDragEnd }) => {
+interface SidebarLinksProps {
+    activeTab: string | null;
+    onClickLink?: () => void;
+    tabs: typeof SIDEBAR_TABS;
+    draggedIndex: number | null;
+    onDragStart: (e: React.DragEvent, index: number) => void;
+    onDragOver: (e: React.DragEvent, index: number) => void;
+    onDragEnd: () => void;
+}
+
+const SidebarLinks = ({ activeTab, onClickLink, tabs, draggedIndex, onDragStart, onDragOver, onDragEnd }: SidebarLinksProps) => {
     return (
         <>
             {tabs.map((tab, index) => {
@@ -78,11 +87,11 @@ const AdminLayout = () => {
 
     const activeTab = new URLSearchParams(location.search).get('tab');
 
-    const [aboutData, setAboutData] = useState(null);
+    const [aboutData, setAboutData] = useState<any>(null);
     const [tabs, setTabs] = useState(SIDEBAR_TABS);
-    const [draggedIndex, setDraggedIndex] = useState(null);
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-    const draggedIndexRef = useRef(null);
+    const draggedIndexRef = useRef<number | null>(null);
     const tabsRef = useRef(tabs);
 
     useEffect(() => {
@@ -103,8 +112,8 @@ const AdminLayout = () => {
     // Re-sort tabs whenever aboutData changes
     useEffect(() => {
         if (aboutData?.custom_sidebar_order && Array.isArray(aboutData.custom_sidebar_order)) {
-            const sorted = [];
-            aboutData.custom_sidebar_order.forEach(id => {
+            const sorted: typeof SIDEBAR_TABS = [];
+            aboutData.custom_sidebar_order.forEach((id: string) => {
                 const found = SIDEBAR_TABS.find(t => t.id === id);
                 if (found) sorted.push(found);
             });
@@ -120,20 +129,21 @@ const AdminLayout = () => {
         }
     }, [aboutData]);
 
-    const handleDragStart = (e, index) => {
+    const handleDragStart = (e: React.DragEvent, index: number) => {
         draggedIndexRef.current = index;
         setDraggedIndex(index);
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', index);
+        e.dataTransfer.setData('text/plain', String(index));
     };
 
-    const handleDragOver = (e, index) => {
+    const handleDragOver = (e: React.DragEvent, index: number) => {
         e.preventDefault();
         const currentDragIdx = draggedIndexRef.current;
         if (currentDragIdx === null || currentDragIdx === index) return;
 
         const newTabs = [...tabsRef.current];
         const draggedItem = newTabs[currentDragIdx];
+        if (!draggedItem) return;
         newTabs.splice(currentDragIdx, 1);
         newTabs.splice(index, 0, draggedItem);
         
@@ -143,15 +153,15 @@ const AdminLayout = () => {
         setTabs(newTabs);
     };
 
-    const buildCustomNav = (sortedSidebarIds) => {
-        const customNav = [{ name: 'Home', path: '/' }];
+    const buildCustomNav = (sortedSidebarIds: string[]) => {
+        const customNav: any[] = [{ name: 'Home', path: '/' }];
         const addedNodes = new Set(['home']);
 
         sortedSidebarIds.forEach(id => {
             if (id === 'academics' || id === 'experiences' || id === 'research-interests') {
                 if (!addedNodes.has('personal-profile')) {
                     addedNodes.add('personal-profile');
-                    const dropdownItems = [];
+                    const dropdownItems: { name: string; path: string }[] = [];
                     sortedSidebarIds.forEach(subId => {
                         if (subId === 'academics') {
                             dropdownItems.push({ name: 'Education', path: '/academics' });
@@ -285,11 +295,11 @@ const AdminLayout = () => {
             }
 
             try {
-                const res = await api.get('/session', { enableAutoTranslate: false });
+                const res = await api.get('/session', { enableAutoTranslate: false } as any);
                 if (res.data?.features) {
-                    window.APP_FEATURES = res.data.features;
+                    (window as any).APP_FEATURES = res.data.features;
                 }
-            } catch (error) {
+            } catch (error: any) {
                 if (!cancelled) {
                     expireSessionAndRedirect({
                         message: error?.response?.data?.message || 'Session expired. Please log in again.'

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
@@ -9,19 +8,13 @@ const BackToTop = () => {
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
-        const handleScroll = (event) => {
-            const target = event.target;
-            const isWindowOrDoc = target === document || target === window || 
-                (target && (target.window === target || target.nodeType === 9 || target.constructor?.name === 'Window' || target.constructor?.name === 'HTMLDocument'));
-            const scrollTop = isWindowOrDoc
-                ? window.scrollY || document.documentElement.scrollTop
-                : target.scrollTop;
+        const handleScroll = () => {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
             setIsVisible(scrollTop > 200);
         };
 
-        // Listen in capture phase to support nested scrollable elements like <main>
-        window.addEventListener('scroll', handleScroll, { capture: true, passive: true });
-        return () => window.removeEventListener('scroll', handleScroll, { capture: true });
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
     const scrollToTop = () => {
@@ -60,4 +53,4 @@ const BackToTop = () => {
     );
 };
 
-export default BackToTop;
+export default React.memo(BackToTop);

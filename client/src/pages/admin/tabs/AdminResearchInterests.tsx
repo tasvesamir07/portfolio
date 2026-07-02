@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import { Briefcase, GraduationCap, FileText, Globe } from 'lucide-react';
 import {
@@ -12,15 +11,15 @@ import {
     serializeStructuredItems,
     buildStructuredPreview
 } from '../../../utils/structuredItems';
-import AdminCrudLayout from '../components/AdminCrudLayout';
+import { AdminCrudLayout } from '../components/AdminCrudLayout';
 
 const AdminResearchInterests = () => {
-    const buildLegacyStructuredItems = (record = {}) => {
+    const buildLegacyStructuredItems = (record: any = {}) => {
         if (!record.details) return [];
         return parseStructuredItems(record.details);
     };
 
-    const prepareFormData = (record = {}) => {
+    const prepareFormData = (record: any = {}) => {
         const hasSavedStructuredJson =
             typeof record.details_json === 'string' && record.details_json.trim().startsWith('[');
 
@@ -35,7 +34,7 @@ const AdminResearchInterests = () => {
         };
     };
 
-    const preparePayloadData = (formData) => {
+    const preparePayloadData = (formData: any) => {
         const structuredItems = formData.structured_items || [];
         const payload = {
             ...formData,
@@ -48,7 +47,7 @@ const AdminResearchInterests = () => {
         return payload;
     };
 
-    const getAdminDetailsPreview = (item = {}) => {
+    const getAdminDetailsPreview = (item: any = {}) => {
         const structuredPreview = buildStructuredPreview(item.details_json || '');
         return structuredPreview || item.details || item.interest || 'No details';
     };
@@ -58,7 +57,7 @@ const AdminResearchInterests = () => {
         { header: 'Details', className: 'max-w-md' }
     ];
 
-    const renderRowCells = (item) => (
+    const renderRowCells = (item: any) => (
         <>
             <td className="py-4 px-6">
                 <div className="font-bold text-gray-900 text-base leading-tight">
@@ -73,7 +72,7 @@ const AdminResearchInterests = () => {
         </>
     );
 
-    const renderFormFields = (formData, setFormData) => (
+    const renderFormFields = (formData: any, setFormData: any) => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field label="Interest Area Title">
                 <InlineFormatEditor value={formData.interest || ''} onChange={val => setFormData({...formData, interest: val})} />
@@ -85,7 +84,7 @@ const AdminResearchInterests = () => {
                         { name: 'Academic', id: 'GraduationCap', icon: GraduationCap },
                         { name: 'Research', id: 'FileText', icon: FileText },
                         { name: 'Global', id: 'Globe', icon: Globe }
-                    ].map((item) => (
+                    ].map((item: any) => (
                         <button
                             key={item.id}
                             type="button"

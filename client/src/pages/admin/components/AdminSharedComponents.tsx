@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { Plus, Trash2, FileText, AlertCircle, ArrowUp, ArrowDown } from 'lucide-react';
 import api from '../../../api';
@@ -21,7 +21,7 @@ export const getAcceptedFileLabel = (accept = 'image/*') => {
         .join(', ');
 };
 
-export const formatUploadErrorMessage = (error: unknown): string => {
+export const formatUploadErrorMessage = (error: any): string => {
     if (error?.response?.status === 413) {
         return `File is too large. Maximum upload size is ${MAX_UPLOAD_SIZE_MB} MB.`;
     }
@@ -68,7 +68,7 @@ export const parseHighlightItems = (content = ''): HighlightItemData[] => {
                         values: Array.isArray(item.values) ? item.values : [item.value || ''],
                         text: item.text || ''
                     }))
-                    .filter((item) => item.type === 'text' ? extractPlainText(item.text).trim() : (item.title.trim() || item.values.some((value) => extractPlainText(value).trim())));
+                    .filter((item: any) => item.type === 'text' ? extractPlainText(item.text).trim() : (item.title.trim() || item.values.some((value: any) => extractPlainText(value).trim())));
             }
         } catch (err) {
             console.error('Failed to parse saved highlight items:', err);
@@ -97,7 +97,7 @@ export const parseHighlightItems = (content = ''): HighlightItemData[] => {
             return {
                 id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
                 type: 'pair',
-                title: rawTitle.trim(),
+                title: (rawTitle || '').trim(),
                 values: rest.join(':').split(/\n+/).map((value) => value.trim()).filter(Boolean).length
                     ? rest.join(':').split(/\n+/).map((value) => value.trim()).filter(Boolean)
                     : [rest.join(':').trim()],
@@ -238,10 +238,11 @@ export const normalizeInlineRichText = (html = '') => {
             return '';
         }
 
+        const el = node as Element;
         const children = Array.from(node.childNodes).map(serializeNode).join('');
-        const tag = node.tagName.toLowerCase();
+        const tag = el.tagName.toLowerCase();
 
-        const style = node.getAttribute('style');
+        const style = el.getAttribute('style');
         const styleAttr = style ? ` style="${escapeHtml(style)}"` : '';
 
         if (tag === 'span') {
@@ -257,7 +258,7 @@ export const normalizeInlineRichText = (html = '') => {
             return children ? `${children}<br>` : '<br>';
         }
         if (tag === 'a') {
-            const href = normalizeHref(node.getAttribute('href') || node.textContent || '');
+            const href = normalizeHref(el.getAttribute('href') || node.textContent || '');
             return href ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"${styleAttr}>${children || escapeHtml(node.textContent || href)}</a>` : children;
         }
 
@@ -280,16 +281,17 @@ export const normalizeAboutRichText = (html = '') => {
     const doc = new DOMParser().parseFromString(html, 'text/html');
 
     doc.body.querySelectorAll('*').forEach((element) => {
-        element.style.removeProperty('font-size');
-        element.style.removeProperty('line-height');
-        element.style.removeProperty('font-family');
+        const el = element as HTMLElement;
+        el.style.removeProperty('font-size');
+        el.style.removeProperty('line-height');
+        el.style.removeProperty('font-family');
 
         ['ql-size-small', 'ql-size-large', 'ql-size-huge'].forEach((className) => {
             element.classList.remove(className);
         });
 
-        if (!element.getAttribute('style')?.trim()) {
-            element.removeAttribute('style');
+        if (!el.getAttribute('style')?.trim()) {
+            el.removeAttribute('style');
         }
     });
 
@@ -389,31 +391,31 @@ interface HighlightItemsEditorProps {
 }
 
 export const HighlightItemsEditor = ({ items = [], onChange }: HighlightItemsEditorProps) => {
-    const updateItem = (id, patch) => {
-        onChange(items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+    const updateItem = (id: any, patch: any) => {
+        onChange(items.map((item: any) => (item.id === id ? { ...item, ...patch } : item)));
     };
 
-    const removeItem = (id) => {
-        onChange(items.filter((item) => item.id !== id));
+    const removeItem = (id: any) => {
+        onChange(items.filter((item: any) => item.id !== id));
     };
 
-    const addItem = (type) => {
+    const addItem = (type: any) => {
         onChange([...items, createHighlightItem(type)]);
     };
 
-    const moveItem = (fromIndex, direction) => {
+    const moveItem = (fromIndex: number, direction: number) => {
         const toIndex = fromIndex + direction;
         if (toIndex < 0 || toIndex >= items.length) return;
 
         const nextItems = [...items];
-        const [movedItem] = nextItems.splice(fromIndex, 1);
+        const movedItem = nextItems.splice(fromIndex, 1)[0] as HighlightItemData;
         nextItems.splice(toIndex, 0, movedItem);
         onChange(nextItems);
     };
 
-    const updateValue = (itemId, valueIndex, nextValue) => {
+    const updateValue = (itemId: any, valueIndex: number, nextValue: any) => {
         onChange(
-            items.map((item) => {
+            items.map((item: any) => {
                 if (item.id !== itemId) return item;
                 const nextValues = [...(item.values || [''])];
                 nextValues[valueIndex] = nextValue;
@@ -422,9 +424,9 @@ export const HighlightItemsEditor = ({ items = [], onChange }: HighlightItemsEdi
         );
     };
 
-    const addValue = (itemId) => {
+    const addValue = (itemId: any) => {
         onChange(
-            items.map((item) =>
+            items.map((item: any) =>
                 item.id === itemId
                     ? { ...item, values: [...(item.values || ['']), ''] }
                     : item
@@ -432,20 +434,20 @@ export const HighlightItemsEditor = ({ items = [], onChange }: HighlightItemsEdi
         );
     };
 
-    const removeValue = (itemId, valueIndex) => {
+    const removeValue = (itemId: any, valueIndex: number) => {
         onChange(
-            items.map((item) => {
+            items.map((item: any) => {
                 if (item.id !== itemId) return item;
                 const currentValues = item.values || [''];
-                const nextValues = currentValues.filter((_, index) => index !== valueIndex);
+                const nextValues = currentValues.filter((_: any, index: number) => index !== valueIndex);
                 return { ...item, values: nextValues.length ? nextValues : [''] };
             })
         );
     };
 
-    const moveValue = (itemId, valueIndex, direction) => {
+    const moveValue = (itemId: any, valueIndex: number, direction: number) => {
         onChange(
-            items.map((item) => {
+            items.map((item: any) => {
                 if (item.id !== itemId) return item;
 
                 const currentValues = [...(item.values || [''])];
@@ -455,7 +457,7 @@ export const HighlightItemsEditor = ({ items = [], onChange }: HighlightItemsEdi
                     return item;
                 }
 
-                const [movedValue] = currentValues.splice(valueIndex, 1);
+                const movedValue = currentValues.splice(valueIndex, 1)[0] as string;
                 currentValues.splice(targetIndex, 0, movedValue);
 
                 return { ...item, values: currentValues };
@@ -616,31 +618,31 @@ interface StructuredItemsEditorProps {
 }
 
 export const StructuredItemsEditor = ({ items = [], onChange, itemLabel = 'Entry' }: StructuredItemsEditorProps) => {
-    const updateItem = (id, patch) => {
-        onChange(items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+    const updateItem = (id: any, patch: any) => {
+        onChange(items.map((item: any) => (item.id === id ? { ...item, ...patch } : item)));
     };
 
-    const removeItem = (id) => {
-        onChange(items.filter((item) => item.id !== id));
+    const removeItem = (id: any) => {
+        onChange(items.filter((item: any) => item.id !== id));
     };
 
-    const addItem = (type) => {
+    const addItem = (type: any) => {
         onChange([...items, createStructuredItem(type)]);
     };
 
-    const moveItem = (fromIndex, direction) => {
+    const moveItem = (fromIndex: number, direction: number) => {
         const toIndex = fromIndex + direction;
         if (toIndex < 0 || toIndex >= items.length) return;
 
         const nextItems = [...items];
-        const [movedItem] = nextItems.splice(fromIndex, 1);
+        const movedItem = nextItems.splice(fromIndex, 1)[0] as import('../../../types').StructuredItem;
         nextItems.splice(toIndex, 0, movedItem);
         onChange(nextItems);
     };
 
-    const updateValue = (itemId, valueIndex, nextValue) => {
+    const updateValue = (itemId: any, valueIndex: number, nextValue: any) => {
         onChange(
-            items.map((item) => {
+            items.map((item: any) => {
                 if (item.id !== itemId) return item;
                 const nextValues = [...(item.values || [''])];
                 nextValues[valueIndex] = nextValue;
@@ -649,9 +651,9 @@ export const StructuredItemsEditor = ({ items = [], onChange, itemLabel = 'Entry
         );
     };
 
-    const addValue = (itemId) => {
+    const addValue = (itemId: any) => {
         onChange(
-            items.map((item) =>
+            items.map((item: any) =>
                 item.id === itemId
                     ? { ...item, values: [...(item.values || ['']), ''] }
                     : item
@@ -659,26 +661,26 @@ export const StructuredItemsEditor = ({ items = [], onChange, itemLabel = 'Entry
         );
     };
 
-    const removeValue = (itemId, valueIndex) => {
+    const removeValue = (itemId: any, valueIndex: number) => {
         onChange(
-            items.map((item) => {
+            items.map((item: any) => {
                 if (item.id !== itemId) return item;
-                const nextValues = (item.values || ['']).filter((_, index) => index !== valueIndex);
+                const nextValues = (item.values || ['']).filter((_: any, index: number) => index !== valueIndex);
                 return { ...item, values: nextValues.length ? nextValues : [''] };
             })
         );
     };
 
-    const moveValue = (itemId, valueIndex, direction) => {
+    const moveValue = (itemId: any, valueIndex: number, direction: number) => {
         onChange(
-            items.map((item) => {
+            items.map((item: any) => {
                 if (item.id !== itemId) return item;
 
                 const nextValues = [...(item.values || [''])];
                 const targetIndex = valueIndex + direction;
                 if (targetIndex < 0 || targetIndex >= nextValues.length) return item;
 
-                const [movedValue] = nextValues.splice(valueIndex, 1);
+                const movedValue = nextValues.splice(valueIndex, 1)[0] as string;
                 nextValues.splice(targetIndex, 0, movedValue);
 
                 return { ...item, values: nextValues };
@@ -860,7 +862,7 @@ export const FileUploadField = ({ value, onChange, label, required, accept = "im
     const [uploadError, setUploadError] = useState('');
     const acceptedFileLabel = getAcceptedFileLabel(accept);
 
-    const handleFileChange = async (e) => {
+    const handleFileChange = async (e: any) => {
         const input = e.target;
         const file = input.files[0];
         if (!file) return;
@@ -880,8 +882,8 @@ export const FileUploadField = ({ value, onChange, label, required, accept = "im
         setUploading(true);
         try {
             const res = await api.post('/upload', formData, {
-                onUploadProgress: (progressEvent) => {
-                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                onUploadProgress: (progressEvent: any) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
                     setProgress(percentCompleted);
                 }
             });
@@ -974,18 +976,18 @@ export const GalleryBulkUploadField = ({ files = [], onChange, disabled = false 
     );
 
     useEffect(() => () => {
-        queuedFiles.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+        queuedFiles.forEach((item: any) => URL.revokeObjectURL(item.previewUrl));
     }, [queuedFiles]);
 
-    const handleFileSelection = (event) => {
+    const handleFileSelection = (event: any) => {
         const input = event.target;
         const selectedFiles = Array.from(input.files || []);
         if (!selectedFiles.length) return;
 
-        const validFiles = [];
-        const invalidFiles = [];
+        const validFiles: any[] = [];
+        const invalidFiles: any[] = [];
 
-        selectedFiles.forEach((file) => {
+        selectedFiles.forEach((file: any) => {
             if (!file.type.startsWith('image/')) {
                 invalidFiles.push(`${file.name} is not an image.`);
                 return;
@@ -1000,8 +1002,8 @@ export const GalleryBulkUploadField = ({ files = [], onChange, disabled = false 
         });
 
         if (validFiles.length) {
-            const existingKeys = new Set(files.map((file) => `${file.name}-${file.size}-${file.lastModified}`));
-            const dedupedFiles = validFiles.filter((file) => !existingKeys.has(`${file.name}-${file.size}-${file.lastModified}`));
+            const existingKeys = new Set(files.map((file: any) => `${file.name}-${file.size}-${file.lastModified}`));
+            const dedupedFiles = validFiles.filter((file: any) => !existingKeys.has(`${file.name}-${file.size}-${file.lastModified}`));
             onChange([...files, ...dedupedFiles]);
         }
 
@@ -1009,7 +1011,7 @@ export const GalleryBulkUploadField = ({ files = [], onChange, disabled = false 
         input.value = '';
     };
 
-    const removeQueuedFile = (indexToRemove) => {
+    const removeQueuedFile = (indexToRemove: number) => {
         onChange(files.filter((_, index) => index !== indexToRemove));
         setSelectionError('');
     };

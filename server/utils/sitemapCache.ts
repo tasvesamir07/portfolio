@@ -1,3 +1,5 @@
+import logger = require('./logger');
+
 let sitemapCache: string | null = null;
 let sitemapCacheTimestamp: number = 0;
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -17,5 +19,5 @@ export const set = (xml: string): void => {
 export const invalidate = (): void => {
     sitemapCache = null;
     sitemapCacheTimestamp = 0;
-    console.log('[Sitemap-Cache] Sitemap cache invalidated.');
+    logger.info('[Sitemap-Cache] Sitemap cache invalidated.');
 };

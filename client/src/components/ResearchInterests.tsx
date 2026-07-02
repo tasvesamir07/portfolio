@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FileText, GraduationCap, Briefcase, Globe } from 'lucide-react';
@@ -12,7 +12,7 @@ import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 
-const iconMap = {
+const iconMap: Record<string, any> = {
     FileText,
     GraduationCap,
     Briefcase,
@@ -37,7 +37,7 @@ const ResearchInterests = () => {
             <section id="research-interests" className="py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center">{t('researchInterests.kicker')}</span>
-                    <h2 className="text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h2>
+                    <h1 className="text-5xl md:text-7xl font-bold text-center mb-8 text-gray-900 tracking-tight">{t('common.loading')}</h1>
                 </div>
             </section>
         );
@@ -48,7 +48,7 @@ const ResearchInterests = () => {
             <section id="research-interests" className="py-24 bg-[#fcfaf7] min-h-[60vh] flex items-center justify-center">
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center">{t('researchInterests.kicker')}</span>
-                    <h2 className="text-5xl md:text-7xl font-bold text-center mb-4 text-gray-900 tracking-tight">{t('researchInterests.titleMain')} <span className="text-brand-blue">{t('researchInterests.titleAccent')}</span></h2>
+                    <h1 className="text-5xl md:text-7xl font-bold text-center mb-4 text-gray-900 tracking-tight">{t('researchInterests.titleMain')} <span className="text-brand-blue">{t('researchInterests.titleAccent')}</span></h1>
                     <p className="text-gray-500 font-medium">{noDataLabel}</p>
                 </div>
             </section>
@@ -59,7 +59,7 @@ const ResearchInterests = () => {
         <section id="research-interests" className="py-24 bg-[#fcfaf7]">
             <div className="max-w-7xl mx-auto px-6">
                 <span className="text-brand-gold font-bold uppercase tracking-widest mb-4 block text-center">{t('researchInterests.kicker')}</span>
-                <h2 className="text-5xl md:text-7xl font-bold text-center mb-16 text-gray-900 tracking-tight">{t('researchInterests.titleMain')} <span className="text-brand-blue">{t('researchInterests.titleAccent')}</span></h2>
+                <h1 className="text-5xl md:text-7xl font-bold text-center mb-16 text-gray-900 tracking-tight">{t('researchInterests.titleMain')} <span className="text-brand-blue">{t('researchInterests.titleAccent')}</span></h1>
                 <div className="grid grid-cols-1 gap-8">
                     {interests.map((item, index) => {
                         const detailItems = parseStructuredItems(getLocalizedFirstField(item, ['details_json', 'details'], language, ''));
@@ -100,4 +100,4 @@ const ResearchInterests = () => {
     );
 };
 
-export default ResearchInterests;
+export default React.memo(ResearchInterests);

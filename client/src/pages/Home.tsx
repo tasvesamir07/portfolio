@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import Hero from '../components/Hero';
 import About from '../components/About';
@@ -10,8 +9,8 @@ const Home = () => {
     const { name, siteName } = useSiteIdentity();
     const { data: pageData } = usePublicPageData();
 
-    const aboutData = pageData?.about || null;
-    const socialLinks = pageData?.socialLinks || pageData?.['social-links'] || [];
+    const aboutData = (pageData?.about || null) as any;
+    const socialLinks = (pageData?.socialLinks || pageData?.['social-links'] || []) as any[];
 
     return (
         <div className="bg-[#fcfaf7] min-h-screen">

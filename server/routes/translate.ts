@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express';
+const logger = require('../utils/logger');
+const { errorResponse } = require('../utils/errorResponse');
 const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../auth');
@@ -22,8 +24,8 @@ router.post('/', async (req: Request, res: Response) => {
     try {
         const translations = await translateTexts(texts.map((text: any) => String(text ?? '')), targetLang);
         res.json({ translations });
-    } catch (err: any) {
-        res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -31,8 +33,8 @@ router.get('/cache', authenticateToken, async (req: Request, res: Response) => {
     try {
         const cache = await getAllCachedTranslations();
         res.json({ cache });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -48,8 +50,8 @@ router.put('/cache', authenticateToken, async (req: Request, res: Response) => {
         clearResponseCache(targetLang);
         await clearRedisResponseCache(targetLang);
         res.json({ success: true });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -66,8 +68,8 @@ router.delete('/cache', authenticateToken, async (req: Request, res: Response) =
         clearResponseCache(deleteLang);
         await clearRedisResponseCache(deleteLang);
         res.json({ success: true });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -77,8 +79,8 @@ router.patch('/cache/:id/review', authenticateToken, async (req: Request, res: R
         const db = require('../db');
         await db.query('UPDATE translations SET is_reviewed = $1, updated_at = NOW() WHERE id = $2', [!!reviewed, req.params.id]);
         res.json({ success: true });
-    } catch (err: any) {
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 
@@ -145,9 +147,9 @@ router.post('/run-batch', authenticateToken, async (req: Request, res: Response)
             remaining: missingTexts.length - batch.length,
             done
         });
-    } catch (err: any) {
-        console.error('[Auto-Translate Run-Batch] Error:', err.message);
-        res.status(500).json({ error: err.message });
+    } catch (err: unknown) {
+        logger.error({ err }, '[Auto-Translate Run-Batch] Error:', (err as any).message || String(err));
+        errorResponse(res, 500, 'An internal error occurred.', err);
     }
 });
 

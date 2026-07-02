@@ -1,4 +1,5 @@
 import db = require('../db');
+import logger = require('./logger');
 import crypto = require('crypto');
 
 export const CONFIG = [
@@ -182,8 +183,8 @@ export const extractAllStrings = async (lang: string): Promise<Set<string>> => {
                     collectStrings(val, col, allStrings, lang);
                 });
             }
-        } catch (err: any) {
-            console.warn(`[translationExtractor] Failed to extract from table ${entry.table}:`, err.message);
+        } catch (err: unknown) {
+            logger.warn({ err, table: entry.table }, '[translationExtractor] Failed to extract from table');
         }
     }
 

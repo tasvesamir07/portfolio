@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from 'react';
 import Newspaper from '../components/Newspaper';
 import SEO from '../hooks/useSeo';

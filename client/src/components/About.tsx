@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
@@ -14,7 +13,7 @@ import {
 import { sanitizeStructuredInlineHtml as sanitizeInlineHtml } from '../utils/structuredItems';
 import { cleanHtmlInline } from '../utils/htmlRenderer';
 
-const About = ({ data }) => {
+const About = ({ data }: { data: any }) => {
     const { language, t } = useI18n();
     const { name, hero_image_url, sub_bio, bio_text, resume_url } = data || {};
 
@@ -41,7 +40,7 @@ const About = ({ data }) => {
                                     alt={localizedName || 'Profile'}
                                     width={320}
                                     height={426}
-                                    fetchpriority="high"
+                                    fetchPriority="high"
                                     loading="eager"
                                     sizes="(max-width: 640px) 100vw, 320px"
                                     className="w-full h-full object-cover object-top filter contrast-105 pointer-events-none select-none"
@@ -65,11 +64,11 @@ const About = ({ data }) => {
                         >
                             {translatedHighlightItems.length > 0 && (
                                 <ul className="about-highlight-list flex flex-col w-full min-w-0">
-                                    {translatedHighlightItems.map((item, i) => {
-                                        const point = item.text;
+                                    {translatedHighlightItems.map((item: any, i) => {
+                                        const point = item.text || '';
                                         const label = item.kind === 'pair'
                                             ? item.label
-                                            : (point.includes(':') ? point.split(':')[0].trim() : '');
+                                            : (point?.includes(':') ? point.split(':')[0].trim() : '');
                                         const value = item.kind === 'pair'
                                             ? item.linkedValues.join(' ')
                                             : (point.includes(':') ? point.split(':').slice(1).join(':').trim() : point.trim());
@@ -92,7 +91,7 @@ const About = ({ data }) => {
                                                             />
                                                             {isContact ? (
                                                                 <div className="min-w-0 max-w-full flex flex-col items-start gap-y-3">
-                                                                    {contactValues.map((contactValue, itemIndex) => (
+                                                                    {contactValues.map((contactValue: any, itemIndex: number) => (
                                                                         <a
                                                                             key={`${contactValue}-${itemIndex}`}
                                                                             href={toHref(contactValue)}
@@ -106,7 +105,7 @@ const About = ({ data }) => {
                                                                 </div>
                                                             ) : (
                                                                 <div className="min-w-0 max-w-full flex flex-col gap-y-2">
-                                                                    {(item.valueHtmls || [sanitizeInlineHtml(value)]).map((valueHtml, valueIndex) => (
+                                                                    {(item.valueHtmls || [sanitizeInlineHtml(value)]).map((valueHtml: any, valueIndex: number) => (
                                                                         <span
                                                                             key={`${i}-value-${valueIndex}`}
                                                                             className="about-highlight-text text-[#334155] font-semibold break-words"
@@ -160,7 +159,7 @@ const About = ({ data }) => {
                                                 key={`${block.type}-${index}`}
                                                 className={`${block.type === 'ul' ? 'list-disc' : 'list-decimal'} pl-5 sm:pl-6 mb-5 space-y-2`}
                                             >
-                                                {block.items.map((blockItem, itemIndex) => (
+                                                {(block.items || []).map((blockItem, itemIndex) => (
                                                     <li key={`${blockItem}-${itemIndex}`} className="break-words">
                                                         {blockItem}
                                                     </li>
@@ -184,4 +183,4 @@ const About = ({ data }) => {
     );
 };
 
-export default About;
+export default React.memo(About);

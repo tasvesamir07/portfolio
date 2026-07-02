@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useRef } from 'react';
 import { Edit3, Save, AlertCircle, ArrowLeft } from 'lucide-react';
 import api, { clearResponseCache } from '../../../api';
@@ -11,14 +10,14 @@ import { showSiteAlert } from '../../../utils/siteAlerts';
 const PROFILE_OTP_REGEX = /^\d{0,6}$/;
 
 const AdminProfile = () => {
-    const [content, setContent] = useState(null);
+    const [content, setContent] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({});
+    const [formData, setFormData] = useState<any>({});
     const [saveError, setSaveError] = useState('');
     const [saving, setSaving] = useState(false);
 
-    const headerRef = useRef(null);
+    const headerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!saveError) return undefined;
@@ -42,7 +41,7 @@ const AdminProfile = () => {
         fetchData();
     }, []);
 
-    const prepareProfileFormData = (profile = {}) => ({
+    const prepareProfileFormData = (profile: any = {}) => ({
         ...profile,
         username: profile.username || '',
         email: profile.email || '',
@@ -53,9 +52,9 @@ const AdminProfile = () => {
         otp_recipient: ''
     });
 
-    const [initialData, setInitialData] = useState({});
+    const [initialData, setInitialData] = useState<any>({});
     const [draftAvailable, setDraftAvailable] = useState(false);
-    const [draftData, setDraftData] = useState(null);
+    const [draftData, setDraftData] = useState<any>(null);
     const autosaveKey = 'autosave_profile_form';
 
     // Autosave local storage save trigger
@@ -72,7 +71,7 @@ const AdminProfile = () => {
         return () => clearTimeout(timer);
     }, [formData, isEditing, initialData, autosaveKey]);
 
-    const openEditor = (profile) => {
+    const openEditor = (profile: any) => {
         const prepared = prepareProfileFormData(profile);
         setFormData(prepared);
         setInitialData(prepared);
@@ -84,7 +83,7 @@ const AdminProfile = () => {
             const saved = localStorage.getItem(autosaveKey);
             if (saved) {
                 try {
-                    const { formData: savedForm, timestamp } = JSON.parse(saved);
+                    const { formData: savedForm } = JSON.parse(saved);
                     // Only prompt if draft is different from the currently loaded entity
                     if (JSON.stringify(savedForm) !== JSON.stringify(prepared)) {
                         setDraftAvailable(true);
@@ -97,8 +96,8 @@ const AdminProfile = () => {
         }
     };
 
-    const updateProfileDraft = (field, value) => {
-        setFormData((prev) => ({
+    const updateProfileDraft = (field: string, value: any) => {
+        setFormData((prev: any) => ({
             ...prev,
             [field]: value,
             otp_requested: false,
@@ -107,7 +106,7 @@ const AdminProfile = () => {
         }));
     };
 
-    const handleSave = async (e) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaveError('');
         setSaving(true);
@@ -141,7 +140,7 @@ const AdminProfile = () => {
                     password
                 });
 
-                setFormData((prev) => ({
+                setFormData((prev: any) => ({
                     ...prev,
                     username,
                     email,
@@ -173,7 +172,7 @@ const AdminProfile = () => {
             clearResponseCache();
             fetchData();
             setTimeout(() => window.location.reload(), 1000);
-        } catch (err) {
+        } catch (err: any) {
             setSaveError(err.response?.data?.message || err.response?.data?.error || err.message);
         } finally {
             setSaving(false);
@@ -243,7 +242,7 @@ const AdminProfile = () => {
                                     </tr>
                                 ) : (
                                     <tr>
-                                        <td colSpan="3" className="py-16 text-center text-gray-400 font-medium text-sm">No profiles found.</td>
+                                         <td colSpan={3} className="py-16 text-center text-gray-400 font-medium text-sm">No profiles found.</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -374,7 +373,7 @@ const AdminProfile = () => {
                                             onChange={(e) => {
                                                 const nextValue = e.target.value.replace(/\D/g, '');
                                                 if (!PROFILE_OTP_REGEX.test(nextValue)) return;
-                                                setFormData((prev) => ({ ...prev, otp: nextValue }));
+                                                 setFormData((prev: any) => ({ ...prev, otp: nextValue }));
                                             }}
                                             placeholder="000000"
                                             required
@@ -383,7 +382,7 @@ const AdminProfile = () => {
                                     <div className="flex items-end">
                                         <button
                                             type="button"
-                                            onClick={() => setFormData((prev) => ({ ...prev, otp_requested: false, otp: '', otp_recipient: '' }))}
+                                             onClick={() => setFormData((prev: any) => ({ ...prev, otp_requested: false, otp: '', otp_recipient: '' }))}
                                             className="w-full rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 mb-6"
                                         >
                                             Request New OTP

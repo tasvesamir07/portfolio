@@ -1,7 +1,6 @@
-// @ts-nocheck
 import React from 'react';
 
-const Skeleton = ({ className = '', variant = 'text' }) => {
+const Skeleton = ({ className = '', variant = 'text' }: { className?: string; variant?: 'text' | 'circle' | 'card' | 'title' | 'image' }) => {
   const baseClass = "animate-pulse bg-[#f3ece2]/70 rounded-xl";
   
   let variantClass = "h-4 w-full"; // default 'text'

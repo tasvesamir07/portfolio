@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+const logger = require('../utils/logger');
 
 const { Ratelimit } = require('@upstash/ratelimit');
 const { Redis } = require('@upstash/redis');
@@ -10,12 +11,12 @@ if (process.env.NODE_ENV !== 'test' && process.env.UPSTASH_REDIS_URL && process.
             url: process.env.UPSTASH_REDIS_URL,
             token: process.env.UPSTASH_REDIS_TOKEN
         });
-        console.log('[Rate-Limit] Upstash Redis client initialized successfully.');
-    } catch (e: any) {
-        console.error('[Rate-Limit] Failed to initialize Redis:', e.message);
+        logger.info('[Rate-Limit] Upstash Redis client initialized successfully.');
+    } catch (e: unknown) {
+        logger.error({ err: e }, '[Rate-Limit] Failed to initialize Redis');
     }
 } else {
-    console.warn('[Rate-Limit] Upstash Redis credentials not set or in test environment. Falling back to in-memory rate limiting.');
+    logger.warn('[Rate-Limit] Upstash Redis credentials not set or in test environment. Falling back to in-memory rate limiting.');
 }
 
 interface RateLimiterConfig {
@@ -50,8 +51,8 @@ const createRateLimiter = ({ windowMs, max, message, prefix }: RateLimiterConfig
                     return;
                 }
                 next();
-            } catch (err: any) {
-                console.error('[Rate-Limit] Redis error:', err.message);
+            } catch (err: unknown) {
+                logger.error({ err }, '[Rate-Limit] Redis error');
                 next();
             }
         };
