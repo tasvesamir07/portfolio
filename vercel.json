@@ -1,6 +1,11 @@
 {
   "version": 2,
   "buildCommand": "cd server && npx tsc",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "server/migrations/*.sql"
+    }
+  },
   "builds": [
     {
       "src": "api/index.js",
