@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { clearSessionToken, expireSessionAndRedirect, getStoredToken, getTokenExpiryTime, isTokenExpired, SESSION_CHANGED_EVENT } from '../utils/authSession';
 import api from '../api';
 import BackToTop from '../components/BackToTop';
+import TranslateAllButton from '../components/TranslateAllButton';
 
 const MIN_SESSION_CHECK_INTERVAL_MS = 60000;
 
@@ -417,6 +418,9 @@ const AdminLayout = () => {
                                 onDragOver={handleDragOver}
                                 onDragEnd={handleDragEnd}
                             />
+                            <div className="pt-4 px-3">
+                                <TranslateAllButton />
+                            </div>
                         </nav>
 
                         <div className="p-6 border-t border-gray-100 flex-shrink-0 mt-auto bg-gray-50/30">
@@ -450,6 +454,9 @@ const AdminLayout = () => {
                         onDragOver={handleDragOver}
                         onDragEnd={handleDragEnd}
                     />
+                    <div className="pt-4 px-3">
+                        <TranslateAllButton />
+                    </div>
                 </nav>
 
                 <div className="p-6 border-t border-gray-100 flex-shrink-0 mt-auto bg-gray-50/30">

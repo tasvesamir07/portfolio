@@ -26,6 +26,8 @@ router.post('/', authenticateToken, validate(skillsSchema), async (req: Request,
             'INSERT INTO skills (category, items, details_json) VALUES ($1,$2,$3) RETURNING *',
             [category||'', items||'', details_json||'']
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('skills', req.body).catch(console.error);
         res.status(201).json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -39,6 +41,8 @@ router.put('/:id', authenticateToken, validate(skillsSchema), async (req: Reques
             'UPDATE skills SET category=$1,items=$2,details_json=$3 WHERE id=$4 RETURNING *',
             [category||'', items||'', details_json||'', req.params.id]
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('skills', req.body).catch(console.error);
         res.json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

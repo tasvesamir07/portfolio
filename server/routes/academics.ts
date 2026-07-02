@@ -27,6 +27,8 @@ router.post('/', authenticateToken, validate(academicsSchema), async (req: Reque
             'INSERT INTO academics (institution, degree, start_year, end_year, logo_url, details_json) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
             [institution || '', degree || '', start_year || '', end_year || '', logo_url || '', details_json || '']
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('academics', req.body).catch(console.error);
         res.status(201).json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -44,6 +46,8 @@ router.put('/:id', authenticateToken, validate(academicsSchema), async (req: Req
             const oldLogoUrl = result.rows[0].old_logo_url;
             await cleanMediaUrls(diffRemovedMediaUrls([oldLogoUrl], [logo_url || '']));
         }
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('academics', req.body).catch(console.error);
         res.json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

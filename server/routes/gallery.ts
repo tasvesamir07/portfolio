@@ -26,6 +26,8 @@ router.post('/', authenticateToken, validate(gallerySchema), async (req: Request
             'INSERT INTO gallery (image_url, caption, category) VALUES ($1,$2,$3) RETURNING *',
             [image_url||'', caption||'', category||'']
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('gallery', req.body).catch(console.error);
         res.status(201).json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -39,6 +41,8 @@ router.put('/:id', authenticateToken, validate(gallerySchema), async (req: Reque
             'UPDATE gallery SET image_url=$1,caption=$2,category=$3 WHERE id=$4 RETURNING *',
             [image_url||'', caption||'', category||'', req.params.id]
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('gallery', req.body).catch(console.error);
         res.json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

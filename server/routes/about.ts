@@ -99,6 +99,8 @@ router.put('/', authenticateToken, validate(aboutSchema), async (req: Request, r
                 ]
             );
         }
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('about', req.body).catch(console.error);
         res.json(result.rows[0]);
     } catch (err: any) {
         console.error('Update About Error:', err);

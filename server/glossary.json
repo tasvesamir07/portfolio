@@ -1,4 +1,10 @@
 {
   "Passing Year": { "bn": "পাসের বছর", "ko": "졸업 연도", "en": "Passing Year" },
-  "Research Interest": { "bn": "গবেষণা আগ্রহ", "ko": "연구 관심", "en": "Research Interest" }
+  "Research Interest": { "bn": "গবেষণা আগ্রহ", "ko": "연구 관심", "en": "Research Interest" },
+  "Assistant Professor": { "bn": "সহকারী অধ্যাপক", "ko": "조교수", "en": "Assistant Professor" },
+  "Bioinformatics": { "bn": "বায়োইনফরমেটিক্স", "ko": "생물정보학", "en": "Bioinformatics" },
+  "Ph.D.": { "bn": "পিএইচ.ডি.", "ko": "박사", "en": "Ph.D." },
+  "Postdoctoral Researcher": { "bn": "পোস্টডক্টরাল গবেষক", "ko": "박사후 연구원", "en": "Postdoctoral Researcher" },
+  "Yeungnam University": { "bn": "ইয়েংনাম বিশ্ববিদ্যালয়", "ko": "영남대학교", "en": "Yeungnam University" },
+  "Bangladesh Agricultural University": { "bn": "বাংলাদেশ কৃষি বিশ্ববিদ্যালয়", "ko": "방글라데시 농업 대학교", "en": "Bangladesh Agricultural University" }
 }

@@ -71,4 +71,71 @@ router.delete('/cache', authenticateToken, async (req: Request, res: Response) =
     }
 });
 
+router.patch('/cache/:id/review', authenticateToken, async (req: Request, res: Response) => {
+    const { reviewed } = req.body;
+    try {
+        const db = require('../db');
+        await db.query('UPDATE translations SET is_reviewed = $1, updated_at = NOW() WHERE id = $2', [!!reviewed, req.params.id]);
+        res.json({ success: true });
+    } catch (err: any) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/run-batch', authenticateToken, async (req: Request, res: Response) => {
+    const { lang = 'bn', batchSize = 200 } = req.body;
+
+    try {
+        const { extractAllStrings, getHash } = require('../utils/translationExtractor');
+        const db = require('../db');
+        const { translateTexts } = require('../translate');
+
+        const allStrings = await extractAllStrings(lang);
+        const allStringsArray = Array.from(allStrings) as string[];
+
+        // Check which hashes already exist in translations table
+        const dbResults = await db.query(
+            'SELECT source_hash FROM translations WHERE target_lang = $1',
+            [lang]
+        );
+        const existingHashes = new Set<string>(dbResults.rows.map((row: any) => row.source_hash));
+
+        const missingTexts: string[] = [];
+        for (const text of allStringsArray) {
+            const hash = getHash(text, lang);
+            if (!existingHashes.has(hash)) {
+                missingTexts.push(text);
+            }
+        }
+
+        const total = allStringsArray.length;
+        const current = total - missingTexts.length;
+
+        if (missingTexts.length === 0) {
+            res.json({
+                lang,
+                current: total,
+                total,
+                remaining: 0,
+                done: true
+            });
+            return;
+        }
+
+        const batch = missingTexts.slice(0, batchSize);
+        await translateTexts(batch, lang);
+
+        res.json({
+            lang,
+            current: current + batch.length,
+            total,
+            remaining: missingTexts.length - batch.length,
+            done: missingTexts.length - batch.length === 0
+        });
+    } catch (err: any) {
+        console.error('[Auto-Translate Run-Batch] Error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 export = router;

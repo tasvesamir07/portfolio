@@ -74,6 +74,8 @@ router.post('/', authenticateToken, validate(pagesSchema), async (req: Request, 
             [title || '', slug || '', content || '', Boolean(show_in_nav), details_json || '']
         );
         sitemapCache.invalidate();
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('pages', req.body).catch(console.error);
         res.status(201).json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -88,6 +90,8 @@ router.put('/:id', authenticateToken, validate(pagesSchema), async (req: Request
             [title || '', slug || '', content || '', Boolean(show_in_nav), details_json || '', req.params.id]
         );
         sitemapCache.invalidate();
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('pages', req.body).catch(console.error);
         res.json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

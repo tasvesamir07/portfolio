@@ -26,6 +26,8 @@ router.post('/', authenticateToken, validate(researchInterestsSchema), async (re
             'INSERT INTO research_interests (interest, details, icon_name, details_json) VALUES ($1,$2,$3,$4) RETURNING *',
             [interest||'', details||'', icon_name||'', details_json||'']
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('research_interests', req.body).catch(console.error);
         res.status(201).json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -39,6 +41,8 @@ router.put('/:id', authenticateToken, validate(researchInterestsSchema), async (
             'UPDATE research_interests SET interest=$1,details=$2,icon_name=$3,details_json=$4 WHERE id=$5 RETURNING *',
             [interest||'', details||'', icon_name||'', details_json||'', req.params.id]
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('research_interests', req.body).catch(console.error);
         res.json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

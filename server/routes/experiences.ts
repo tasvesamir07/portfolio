@@ -27,6 +27,8 @@ router.post('/', authenticateToken, validate(experiencesSchema), async (req: Req
             'INSERT INTO experiences (company, position, location, start_date, end_date, description, logo_url, details_json) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',
             [company||'', position||'', location||'', start_date||'', end_date||'', description||'', logo_url||'', details_json||'']
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('experiences', req.body).catch(console.error);
         res.status(201).json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -44,6 +46,8 @@ router.put('/:id', authenticateToken, validate(experiencesSchema), async (req: R
             const oldLogo = result.rows[0].logo_url;
             await cleanMediaUrls(diffRemovedMediaUrls([oldLogo], [logo_url||'']));
         }
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('experiences', req.body).catch(console.error);
         res.json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

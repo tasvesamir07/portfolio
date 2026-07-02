@@ -1,6 +1,8 @@
 import fs = require('fs');
 import path = require('path');
+import crypto = require('crypto');
 const { Redis } = require('@upstash/redis');
+const db = require('./db');
 
 let redis: any = null;
 if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
@@ -16,6 +18,7 @@ if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
 } else {
     console.warn('[Auto-Translate] Upstash Redis credentials not set. Falling back to local/memory cache.');
 }
+
 
 const CHUNK_SIZES: Record<string, Record<string, number>> = {
     'en': { 'bn': 3000, 'ko': 3000 },
@@ -39,8 +42,8 @@ try {
 
 let translator: any = null;
 const translationCache = new Map<string, string>();
-const MAX_CACHE_ENTRIES = 6000;
-const CHUNK_CONCURRENCY = 3;
+const MAX_CACHE_ENTRIES = 1000;
+const CHUNK_CONCURRENCY = 10;
 const CACHE_VERSION = 'v7';
 const REDIS_RESPONSE_CACHE_PREFIX = 'response_cache';
 const GOOGLE_TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
@@ -438,6 +441,29 @@ const looksLikeBrokenTranslation = (translated = '', original = '', targetLangua
     return false;
 };
 
+const rateLimitState = {
+    isPaused: false,
+    consecutive429s: 0,
+};
+
+const backoffSchedule = [1_000, 2_000, 4_000, 8_000, 16_000, 32_000, 60_000];
+
+const handleRateLimit = async () => {
+    rateLimitState.isPaused = true;
+    rateLimitState.consecutive429s++;
+    const idx = Math.min(rateLimitState.consecutive429s - 1, backoffSchedule.length - 1);
+    const waitMs = backoffSchedule[idx] + Math.random() * 1000; // jitter
+    console.warn(`[Auto-Translate] Rate limited (429). Pausing translation workers and backing off for ${Math.round(waitMs)}ms.`);
+    await new Promise(resolve => setTimeout(resolve, waitMs));
+    rateLimitState.isPaused = false;
+};
+
+const waitIfRateLimited = async () => {
+    while (rateLimitState.isPaused) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+};
+
 const translateViaGoogleEndpoint = async (text = '', sourceLanguage = 'auto', targetLanguage = 'en'): Promise<string> => {
     const params = new URLSearchParams({
         client: 'gtx',
@@ -460,8 +486,13 @@ const translateViaGoogleEndpoint = async (text = '', sourceLanguage = 'auto', ta
     });
 
     if (!response.ok) {
+        if (response.status === 429) {
+            await handleRateLimit();
+        }
         throw new Error(`Google translate endpoint failed with status ${response.status}`);
     }
+
+    rateLimitState.consecutive429s = 0; // reset on success
 
     const payload = await response.json();
     if (!Array.isArray(payload?.[0])) {
@@ -475,6 +506,7 @@ const translateViaGoogleEndpoint = async (text = '', sourceLanguage = 'auto', ta
 };
 
 const translateWithFallbacks = async (text = '', sourceLanguage = 'auto', targetLanguage = 'en'): Promise<string> => {
+    await waitIfRateLimited();
     try {
         const translated = await translateViaGoogleEndpoint(text, sourceLanguage, targetLanguage);
         if (!looksLikeBrokenTranslation(translated, text, targetLanguage)) {
@@ -484,9 +516,19 @@ const translateWithFallbacks = async (text = '', sourceLanguage = 'auto', target
         console.warn('Google endpoint translation failed:', error.message);
     }
 
-    const translate = await getTranslator();
-    const translated = await translate(text, { from: sourceLanguage, to: targetLanguage });
-    return translated || text;
+    await waitIfRateLimited();
+    try {
+        const translate = await getTranslator();
+        const translated = await translate(text, { from: sourceLanguage, to: targetLanguage });
+        rateLimitState.consecutive429s = 0; // reset on success
+        return translated || text;
+    } catch (error: any) {
+        console.warn('Google library translation failed:', error.message);
+        if (error.message?.includes('429') || error.status === 429) {
+            await handleRateLimit();
+        }
+        return text;
+    }
 };
 
 const getCacheKey = (text = '', targetLanguage = 'en', sourceLanguage = 'en'): string =>
@@ -516,6 +558,31 @@ const postProcessTranslation = (str: string, targetLanguage: string): string => 
     }).join('');
 };
 
+const getHash = (text: string, lang: string): string => {
+    return crypto.createHash('sha256')
+        .update(text + lang)
+        .digest('hex');
+};
+
+const getTranslationFromDB = async (hash: string, lang: string): Promise<string | null> => {
+    const result = await db.query(
+        'SELECT translated_text FROM translations WHERE source_hash = $1 AND target_lang = $2',
+        [hash, lang]
+    );
+    return result.rows[0]?.translated_text || null;
+};
+
+const saveTranslationToDB = async (hash: string, source: string, lang: string, translated: string, isHtml: boolean): Promise<void> => {
+    await db.query(
+        `INSERT INTO translations (source_hash, source_text, target_lang, translated_text, is_html)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (source_hash, target_lang)
+         DO UPDATE SET translated_text = EXCLUDED.translated_text, updated_at = NOW()
+         WHERE translations.is_reviewed = false`,
+        [hash, source, lang, translated, isHtml]
+    );
+};
+
 const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLanguage = 'en'): Promise<string | null> => {
     const cleanText = (str: string) => str.replace(/<[^>]+>/g, '').replace(/[:.]/g, '').trim().toLowerCase();
     const cleaned = cleanText(text);
@@ -533,6 +600,7 @@ const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLan
 
     const key = getCacheKey(text, targetLanguage, sourceLanguage);
 
+    // 1. Check LRU memory cache
     if (translationCache.has(key)) {
         const value = translationCache.get(key)!;
         translationCache.delete(key);
@@ -540,12 +608,35 @@ const readCachedTranslation = async (text = '', targetLanguage = 'en', sourceLan
         return postProcessTranslation(value, targetLanguage);
     }
 
+    // 2. Check Postgres DB
+    try {
+        const normTarget = normalizeTargetLanguage(targetLanguage);
+        const hash = getHash(text, normTarget);
+        const dbValue = await getTranslationFromDB(hash, normTarget);
+        if (dbValue) {
+            translationCache.set(key, dbValue);
+            trimCache();
+            return postProcessTranslation(dbValue, targetLanguage);
+        }
+    } catch (e: any) {
+        console.warn('[Auto-Translate] Postgres translation lookup failed:', e.message);
+    }
+
+    // 3. Check Redis (fallback)
     if (redis) {
         try {
             const value = await redis.get(key);
             if (value) {
                 translationCache.set(key, value as string);
                 trimCache();
+                try {
+                    const normTarget = normalizeTargetLanguage(targetLanguage);
+                    const hash = getHash(text, normTarget);
+                    const isHtml = HTML_REGEX.test(text);
+                    await saveTranslationToDB(hash, text, normTarget, value as string, isHtml);
+                } catch (dbErr: any) {
+                    console.warn('[Auto-Translate] Failed to backport Redis hit to Postgres:', dbErr.message);
+                }
                 return postProcessTranslation(value as string, targetLanguage);
             }
         } catch (e: any) {
@@ -563,7 +654,7 @@ const readCachedTranslations = async (texts: string[], targetLanguage: string, s
     const results = new Map<string, string>();
 
     const cleanText = (str: string) => str.replace(/<[^>]+>/g, '').replace(/[:.]/g, '').trim().toLowerCase();
-    const l1MissKeys: Array<{ text: string; key: string }> = [];
+    const l1MissItems: Array<{ text: string; key: string }> = [];
 
     for (let i = 0; i < keys.length; i++) {
         const text = texts[i];
@@ -590,18 +681,63 @@ const readCachedTranslations = async (texts: string[], targetLanguage: string, s
             translationCache.set(key, value);
             results.set(text, postProcessTranslation(value, targetLanguage));
         } else {
-            l1MissKeys.push({ text, key });
+            l1MissItems.push({ text, key });
         }
     }
 
-    if (redis && l1MissKeys.length > 0) {
+    if (l1MissItems.length > 0) {
+        // 2. Batch check Postgres
         try {
-            const redisValues = await redis.mget(...l1MissKeys.map(m => m.key));
-            for (let i = 0; i < l1MissKeys.length; i++) {
+            const normTarget = normalizeTargetLanguage(targetLanguage);
+            const textHashMap = new Map<string, { text: string; key: string }>();
+            l1MissItems.forEach(item => {
+                const hash = getHash(item.text, normTarget);
+                textHashMap.set(hash, item);
+            });
+            const hashes = Array.from(textHashMap.keys());
+
+            if (hashes.length > 0) {
+                const dbResults = await db.query(
+                    'SELECT source_hash, translated_text FROM translations WHERE source_hash = ANY($1) AND target_lang = $2',
+                    [hashes, normTarget]
+                );
+
+                dbResults.rows.forEach((row: { source_hash: string; translated_text: string }) => {
+                    const item = textHashMap.get(row.source_hash);
+                    if (item) {
+                        translationCache.set(item.key, row.translated_text);
+                        results.set(item.text, postProcessTranslation(row.translated_text, targetLanguage));
+                        // remove from l1MissItems so we don't query Redis
+                        const idx = l1MissItems.findIndex(m => m.key === item.key);
+                        if (idx !== -1) l1MissItems.splice(idx, 1);
+                    }
+                });
+            }
+        } catch (e: any) {
+            console.warn('[Auto-Translate] Postgres batch lookup failed:', e.message);
+        }
+    }
+
+    if (redis && l1MissItems.length > 0) {
+        try {
+            const redisValues = await redis.mget(...l1MissItems.map(m => m.key));
+            for (let i = 0; i < l1MissItems.length; i++) {
                 const value = redisValues[i];
                 if (value) {
-                    translationCache.set(l1MissKeys[i].key, value as string);
-                    results.set(l1MissKeys[i].text, postProcessTranslation(value as string, targetLanguage));
+                    const text = l1MissItems[i].text;
+                    const key = l1MissItems[i].key;
+                    translationCache.set(key, value as string);
+                    results.set(text, postProcessTranslation(value as string, targetLanguage));
+
+                    // Save to Postgres
+                    try {
+                        const normTarget = normalizeTargetLanguage(targetLanguage);
+                        const hash = getHash(text, normTarget);
+                        const isHtml = HTML_REGEX.test(text);
+                        await saveTranslationToDB(hash, text, normTarget, value as string, isHtml);
+                    } catch (dbErr: any) {
+                        console.warn('[Auto-Translate] Failed to backport Redis batch hit to Postgres:', dbErr.message);
+                    }
                 }
             }
         } catch (e: any) {
@@ -617,11 +753,20 @@ const writeCachedTranslation = async (text = '', targetLanguage = 'en', sourceLa
 
     translationCache.set(key, translated);
     trimCache();
-    if (!redis) {
-        saveCacheToDisk();
+
+    // 1. Save to Postgres
+    try {
+        const normTarget = normalizeTargetLanguage(targetLanguage);
+        const hash = getHash(text, normTarget);
+        const isHtml = HTML_REGEX.test(text);
+        await saveTranslationToDB(hash, text, normTarget, translated, isHtml);
+    } catch (e: any) {
+        console.warn('[Auto-Translate] Failed to save translation to Postgres:', e.message);
     }
 
-    if (redis) {
+    if (!redis) {
+        saveCacheToDisk();
+    } else {
         try {
             await redis.set(key, translated, { ex: 604800 });
         } catch (e: any) {
@@ -827,7 +972,7 @@ const translateTexts = async (texts: string[] = [], language = 'en'): Promise<st
             groups[groupKey].push(text);
         }
 
-        const BATCH_SIZE = 10;
+        const BATCH_SIZE = 50;
         for (const [groupKey, groupTexts] of Object.entries(groups)) {
             const [sourceLanguage, targetLanguage] = groupKey.split('::');
             const batches: string[][] = [];
@@ -882,74 +1027,79 @@ const translateTexts = async (texts: string[] = [], language = 'en'): Promise<st
     }));
 };
 
-const getAllCachedTranslations = async (): Promise<Array<{ key: string; version: string; sourceLang: string; targetLang: string; originalText: string; translatedText: string }>> => {
-    const items: Array<{ key: string; value: string }> = [];
-    if (redis) {
-        try {
-            const keys = await redis.keys(`${CACHE_VERSION}::*`);
-            if (keys && keys.length > 0) {
-                for (let i = 0; i < keys.length; i += 100) {
-                    const chunkKeys = keys.slice(i, i + 100);
-                    const values = await Promise.all((chunkKeys as string[]).map((k: string) => redis.get(k)));
-                    (chunkKeys as string[]).forEach((key, idx) => {
-                        if (values[idx]) {
-                            items.push({ key, value: values[idx] as string });
-                        }
-                    });
-                }
-            }
-        } catch (e: any) {
-            console.warn('[Auto-Translate] Redis keys/get failed in getAllCachedTranslations:', e.message);
-        }
-    }
-
-    const mapEntries = Array.from(translationCache.entries());
-    mapEntries.forEach(([key, value]) => {
-        if (!items.find(item => item.key === key)) {
-            items.push({ key, value });
-        }
-    });
-
-    return items.map(item => {
-        const parts = item.key.split('::');
-        const version = parts[0];
-        const sourceLang = parts[1] || 'en';
-        const targetLang = parts[2] || 'en';
-        const originalText = parts.slice(3).join('::');
-        return {
-            key: item.key,
-            version,
-            sourceLang,
-            targetLang,
-            originalText,
-            translatedText: item.value
-        };
-    });
-};
-
-const updateCachedTranslation = async (key: string, translatedText: string): Promise<void> => {
-    translationCache.set(key, translatedText);
-    if (!redis) {
-        saveCacheToDisk();
-    } else {
-        try {
-            await redis.set(key, translatedText);
-        } catch (e: any) {
-            console.warn('[Auto-Translate] Redis set failed in updateCachedTranslation:', e.message);
-        }
+const getAllCachedTranslations = async (): Promise<Array<{ key: string; id: number; version: string; sourceLang: string; targetLang: string; originalText: string; translatedText: string; is_reviewed: boolean }>> => {
+    try {
+        const result = await db.query(
+            'SELECT id, source_text, target_lang, translated_text, is_reviewed, is_html FROM translations ORDER BY updated_at DESC'
+        );
+        return result.rows.map((row: any) => {
+            const sourceLang = detectSourceLanguage(row.source_text, row.target_lang);
+            const key = `v7::${sourceLang}::${row.target_lang}::${row.id}`;
+            return {
+                key: key,
+                id: row.id,
+                version: 'v7',
+                sourceLang,
+                targetLang: row.target_lang,
+                originalText: row.source_text,
+                translatedText: row.translated_text,
+                is_reviewed: !!row.is_reviewed
+            };
+        });
+    } catch (e: any) {
+        console.error('[Auto-Translate] Failed to query all translations from database:', e.message);
+        return [];
     }
 };
 
-const deleteCachedTranslation = async (key: string): Promise<void> => {
-    translationCache.delete(key);
-    if (!redis) {
-        saveCacheToDisk();
+const updateCachedTranslation = async (keyOrId: string, translatedText: string): Promise<void> => {
+    let id: number | null = null;
+    if (/^\d+$/.test(keyOrId)) {
+        id = parseInt(keyOrId);
     } else {
-        try {
-            await redis.del(key);
-        } catch (e: any) {
-            console.warn('[Auto-Translate] Redis del failed in deleteCachedTranslation:', e.message);
+        const parts = keyOrId.split('::');
+        const lastPart = parts[parts.length - 1];
+        if (/^\d+$/.test(lastPart)) {
+            id = parseInt(lastPart);
         }
+    }
+
+    if (id !== null) {
+        try {
+            await db.query(
+                'UPDATE translations SET translated_text = $1, updated_at = NOW() WHERE id = $2',
+                [translatedText, id]
+            );
+            translationCache.clear();
+        } catch (e: any) {
+            console.error('[Auto-Translate] Failed to update translation in Postgres:', e.message);
+        }
+    } else {
+        console.warn('[Auto-Translate] Update key was not numeric:', keyOrId);
+    }
+};
+
+const deleteCachedTranslation = async (keyOrId: string): Promise<void> => {
+    let id: number | null = null;
+    if (/^\d+$/.test(keyOrId)) {
+        id = parseInt(keyOrId);
+    } else {
+        const parts = keyOrId.split('::');
+        const lastPart = parts[parts.length - 1];
+        if (/^\d+$/.test(lastPart)) {
+            id = parseInt(lastPart);
+        }
+    }
+
+    if (id !== null) {
+        try {
+            await db.query('DELETE FROM translations WHERE id = $1', [id]);
+            translationCache.clear();
+        } catch (e: any) {
+            console.error('[Auto-Translate] Failed to delete translation in Postgres:', e.message);
+        }
+    } else {
+        console.warn('[Auto-Translate] Delete key was not numeric:', keyOrId);
     }
 };
 

@@ -1,10 +1,11 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Search, Edit3, Save, Trash2, X, RefreshCw } from 'lucide-react';
+import { Search, Edit3, Save, Trash2, X, RefreshCw, Star } from 'lucide-react';
 import api from '../../../api';
 import { clearTranslationCache } from '../../../i18n/translator';
 import ConfirmModal from '../../../components/ConfirmModal';
 import { showSiteAlert } from '../../../utils/siteAlerts';
+import TranslateAllButton from '../../../components/TranslateAllButton';
 
 const AdminTranslation = () => {
     const [cache, setCache] = useState([]);
@@ -100,6 +101,18 @@ const AdminTranslation = () => {
         window.location.reload();
     };
 
+    const handleToggleReview = async (item) => {
+        const newReviewed = !item.is_reviewed;
+        try {
+            await api.patch(`/translate/cache/${item.id}/review`, { reviewed: newReviewed });
+            showSiteAlert(newReviewed ? 'Translation locked and reviewed' : 'Translation review removed', 'success');
+            fetchCache();
+        } catch (err) {
+            console.error('Error toggling translation review:', err);
+            showSiteAlert('Failed to update review status', 'error');
+        }
+    };
+
     return (
         <div className="bg-[#fcfaf7] min-h-screen p-6">
             <div className="max-w-7xl mx-auto bg-white rounded-3xl border border-gray-100 shadow-2xl p-8">
@@ -108,13 +121,18 @@ const AdminTranslation = () => {
                         <h2 className="text-3xl font-black text-[#0b3b75] tracking-tight mb-2">Translation Manager</h2>
                         <p className="text-sm text-gray-500 font-medium">Review, correct, and manage automatically cached text translations.</p>
                     </div>
-                    <button
-                        onClick={handleForceRefreshClient}
-                        className="flex items-center gap-2 px-5 py-3 bg-[#0b3b75] hover:bg-black text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer"
-                    >
-                        <RefreshCw size={15} />
-                        Clear Client Cache
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                        <div className="w-full sm:w-48">
+                            <TranslateAllButton />
+                        </div>
+                        <button
+                            onClick={handleForceRefreshClient}
+                            className="flex items-center justify-center gap-2 px-5 py-3 bg-[#0b3b75] hover:bg-black text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer whitespace-nowrap h-full"
+                        >
+                            <RefreshCw size={15} />
+                            Clear Client Cache
+                        </button>
+                    </div>
                 </div>
 
                 <div className="relative mb-6">
@@ -145,12 +163,13 @@ const AdminTranslation = () => {
                                     <th className="px-6 py-4 w-20">Lang</th>
                                     <th className="px-6 py-4">Original Text (Source)</th>
                                     <th className="px-6 py-4">Translated Text</th>
+                                    <th className="px-6 py-4 w-28">Status</th>
                                     <th className="px-6 py-4 w-32 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-sm font-medium text-gray-700">
                                 {filteredCache.map((item) => (
-                                    <tr key={item.key} className="hover:bg-gray-50/50 transition-colors">
+                                    <tr key={item.key} className={`hover:bg-gray-50/50 transition-colors ${item.is_reviewed ? 'bg-green-50/20' : ''}`}>
                                         <td className="px-6 py-4">
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-[#ceb079]/10 text-[#ceb079] uppercase">
                                                 {item.sourceLang} &rarr; {item.targetLang}
@@ -170,6 +189,20 @@ const AdminTranslation = () => {
                                             ) : (
                                                 <span className="text-gray-900 font-semibold">{item.translatedText}</span>
                                             )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <button
+                                                onClick={() => handleToggleReview(item)}
+                                                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all cursor-pointer border ${
+                                                    item.is_reviewed
+                                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                                                }`}
+                                                title={item.is_reviewed ? "This translation is locked — it will never be auto-overwritten" : "Mark as reviewed and lock"}
+                                            >
+                                                <Star size={13} fill={item.is_reviewed ? '#16a34a' : 'none'} className={item.is_reviewed ? 'text-green-600' : 'text-gray-400'} />
+                                                {item.is_reviewed ? 'REVIEWED' : 'UNREVIEWED'}
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             {editingKey === item.key ? (

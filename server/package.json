@@ -10,7 +10,11 @@
     "start:once": "node server.js",
     "lint": "eslint .",
     "test": "jest --runInBand --detectOpenHandles --forceExit",
-    "create-admin": "node scripts/create-admin.js"
+    "create-admin": "node scripts/create-admin.js",
+    "translate-all": "tsx scripts/translate-all.ts",
+    "translate-all:bn": "tsx scripts/translate-all.ts --lang=bn",
+    "translate-all:ko": "tsx scripts/translate-all.ts --lang=ko",
+    "translate-all:force": "tsx scripts/translate-all.ts --force"
   },
   "keywords": [],
   "author": "",

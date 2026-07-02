@@ -26,6 +26,8 @@ router.post('/', authenticateToken, validate(newspapersSchema), async (req: Requ
             'INSERT INTO newspapers (title, short_description, image_url, link_url, sort_order) VALUES ($1,$2,$3,$4,$5) RETURNING *',
             [title||'', short_description||'', image_url||'', link_url||'', sort_order != null ? sort_order : 0]
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('newspapers', req.body).catch(console.error);
         res.status(201).json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -39,6 +41,8 @@ router.put('/:id', authenticateToken, validate(newspapersSchema), async (req: Re
             'UPDATE newspapers SET title=$1,short_description=$2,image_url=$3,link_url=$4,sort_order=$5 WHERE id=$6 RETURNING *',
             [title||'', short_description||'', image_url||'', link_url||'', sort_order != null ? sort_order : 0, req.params.id]
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('newspapers', req.body).catch(console.error);
         res.json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

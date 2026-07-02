@@ -26,6 +26,8 @@ router.post('/', authenticateToken, validate(publicationsSchema), async (req: Re
             'INSERT INTO publications (title,thumbnail_url,journal_name,pub_year,authors,introduction,methods,link_url,file_url,details_json,doi_url,journal_url,doi) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *',
             [title||'', thumbnail_url||'', journal_name||'', pub_year||'', authors||'', introduction||'', methods||'', link_url||'', file_url||'', details_json||'', doi_url||'', journal_url||'', doi||'']
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('publications', req.body).catch(console.error);
         res.status(201).json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -39,6 +41,8 @@ router.put('/:id', authenticateToken, validate(publicationsSchema), async (req: 
             'UPDATE publications SET title=$1,thumbnail_url=$2,journal_name=$3,pub_year=$4,authors=$5,introduction=$6,methods=$7,link_url=$8,file_url=$9,details_json=$10,doi_url=$11,journal_url=$12,doi=$13 WHERE id=$14 RETURNING *',
             [title||'',thumbnail_url||'',journal_name||'',pub_year||'',authors||'',introduction||'',methods||'',link_url||'',file_url||'',details_json||'',doi_url||'',journal_url||'',doi||'', req.params.id]
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('publications', req.body).catch(console.error);
         res.json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });

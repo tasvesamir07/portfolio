@@ -448,7 +448,7 @@ const maybeTranslateApiPayload = async (req: Request, res: Response, payload: un
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     try {
         const timeoutPromise = new Promise((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error('Server translation timeout')), 15000);
+            timeoutId = setTimeout(() => reject(new Error('Server translation timeout')), 60000);
         });
 
         const translated = await Promise.race([

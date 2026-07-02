@@ -26,6 +26,8 @@ router.post('/', authenticateToken, validate(researchSchema), async (req: Reques
             'INSERT INTO research (title,description,image_url,link,file_url,status,date_text,details_json) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *',
             [title||'',description||'',image_url||'',link||'',file_url||'',status||'',date_text||'',details_json||'']
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('research', req.body).catch(console.error);
         res.status(201).json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
@@ -39,6 +41,8 @@ router.put('/:id', authenticateToken, validate(researchSchema), async (req: Requ
             'UPDATE research SET title=$1,description=$2,image_url=$3,link=$4,file_url=$5,status=$6,date_text=$7,details_json=$8 WHERE id=$9 RETURNING *',
             [title||'',description||'',image_url||'',link||'',file_url||'',status||'',date_text||'',details_json||'', req.params.id]
         );
+        const { translateOnSave } = require('../utils/translateOnSave');
+        translateOnSave('research', req.body).catch(console.error);
         res.json(result.rows[0]);
     } catch (err: any) {
         res.status(500).json({ error: process.env.NODE_ENV === 'production' ? 'An internal error occurred.' : err.message });
