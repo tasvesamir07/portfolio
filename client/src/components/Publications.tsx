@@ -113,7 +113,7 @@ const Publications = () => {
                                     transition: { duration: 0.6 },
                                     whileHover: { scale: 1.02, y: -6 }
                                 } : {})}
-                                className="group bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm motion-card-hover flex flex-col justify-between cursor-pointer"
+                                className="group bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-sm motion-card-hover flex flex-col justify-between"
                                 style={{ contentVisibility: 'auto', containIntrinsicSize: '200px' }}
                             >
                                 <div className="flex-grow flex flex-col justify-start">
