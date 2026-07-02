@@ -94,6 +94,9 @@ export const sanitizeStructuredInlineHtml = (html = ''): string => {
     if (tag === 'strong' || tag === 'b') return `<strong${styleAttr}>${children}</strong>`;
     if (tag === 'em' || tag === 'i') return `<em${styleAttr}>${children}</em>`;
     if (tag === 'br') return '<br>';
+    if (tag === 'div' || tag === 'p' || tag === 'li') {
+      return children ? `${children}<br>` : '<br>';
+    }
     if (tag === 'a') {
       const href = normalizeHref((node as Element).getAttribute('href') || (node as Element).textContent || '');
       return href ? `<a href="${escapeStructuredHtml(href)}" target="_blank" rel="noopener noreferrer"${styleAttr}>${children || escapeStructuredHtml((node as Element).textContent || href)}</a>` : children;
@@ -102,7 +105,12 @@ export const sanitizeStructuredInlineHtml = (html = ''): string => {
     return children;
   };
 
-  return Array.from(doc.body.childNodes).map(serializeNode).join('').trim();
+  return Array.from(doc.body.childNodes)
+    .map(serializeNode)
+    .join('')
+    .replace(/\u200B/g, '')
+    .replace(/(?:<br>\s*){3,}/g, '<br><br>')
+    .replace(/^(?:<br>\s*)+|(?:<br>\s*)+$/g, '');
 };
 
 interface ParsedItem {
