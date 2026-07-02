@@ -12,7 +12,7 @@ const TranslateAllButton = () => {
     const handleTranslateAll = async () => {
         if (running) return;
         setRunning(true);
-        const languages = ['bn', 'ko'];
+        const languages = ['en', 'bn', 'ko'];
 
         try {
             for (const lang of languages) {

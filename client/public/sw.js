@@ -78,9 +78,10 @@ if (workbox) {
     })
   );
 
-  // Stale-While-Revalidate for /api/v1/page-data with 3s timeout on cache miss
-  const apiPageDataStrategy = new workbox.strategies.StaleWhileRevalidate({
+  // NetworkFirst for /api/v1/page-data with 5s timeout on network failure
+  const apiPageDataStrategy = new workbox.strategies.NetworkFirst({
     cacheName: 'portfolio-api-page-data-cache',
+    networkTimeoutSeconds: 5,
     plugins: [
       new workbox.expiration.ExpirationPlugin({
         maxEntries: 10,
