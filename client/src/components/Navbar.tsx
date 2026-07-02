@@ -6,8 +6,8 @@ import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedNavName, normalizeLabel } from '../i18n/localize';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useFocusTrap } from '../hooks/useFocusTrap';
-import { getTransformedUrl } from '../utils/imageUrl';
 import { usePublicPageData } from '../hooks/useSiteName';
+import OptimizedImage from './OptimizedImage';
 
 const isBlogMenuLink = (link = {}, t) => {
     const label = normalizeLabel(link.name);
@@ -207,11 +207,12 @@ const Navbar = () => {
                     <div className="flex items-center justify-between gap-4">
                         <Link to="/" className="flex items-center gap-3 group min-w-0 flex-shrink-0" onClick={() => setIsOpen(false)}>
                             {about?.logo_url && !logoBroken ? (
-                                <img
-                                    src={getTransformedUrl(about.logo_url, 56, 75)}
+                                <OptimizedImage
+                                    src={about.logo_url}
                                     alt="Logo"
-                                    width="56"
-                                    height="56"
+                                    width={56}
+                                    height={56}
+                                    breakpoints={[56]}
                                     fetchpriority="high"
                                     className="w-14 h-14 object-contain group-hover:scale-105 transition-transform"
                                     onError={() => setLogoBroken(true)}
@@ -312,11 +313,12 @@ const Navbar = () => {
                     <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0 min-h-[72px]">
                         <Link to="/" onClick={() => setIsOpen(false)} className="flex items-center gap-3 decoration-transparent">
                             {about?.logo_url && !logoBroken ? (
-                                <img
-                                    src={getTransformedUrl(about.logo_url, 40, 75)}
+                                <OptimizedImage
+                                    src={about.logo_url}
                                     alt="Logo"
-                                    width="40"
-                                    height="40"
+                                    width={40}
+                                    height={40}
+                                    breakpoints={[40]}
                                     fetchpriority="high"
                                     className="w-10 h-10 object-contain"
                                     onError={() => setLogoBroken(true)}

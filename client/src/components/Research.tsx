@@ -10,8 +10,8 @@ import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
-import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
+import OptimizedImage from './OptimizedImage';
 
 import ResearchSkeleton from '../pages/skeletons/ResearchSkeleton';
 
@@ -75,17 +75,20 @@ const Research = () => {
                             >
                                 <div className="w-full md:w-2/5 h-48 sm:h-64 md:h-full relative overflow-hidden bg-gray-50 flex-shrink-0">
                                     {item.image_url && !brokenImages.includes(item.id) ? (
-                                        <img 
-                                            src={getTransformedUrl(item.image_url, 480, 75)} 
-                                            srcSet={buildSrcSet(item.image_url)}
-                                            sizes="(max-width: 768px) 100vw, 480px"
+                                        <OptimizedImage 
+                                            src={item.image_url} 
                                             alt={title} 
+                                            width={480}
+                                            height={320}
+                                            sizes="(max-width: 768px) 100vw, 480px"
                                             loading="lazy"
-                                            decoding="async"
-                                            width="480"
-                                            height="320"
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                                             onError={() => setBrokenImages((prev) => [...prev, item.id])}
+                                            fallback={
+                                                <div className="w-full h-full flex items-center justify-center text-gray-200">
+                                                    <Briefcase size={64} />
+                                                </div>
+                                            }
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-200">

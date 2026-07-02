@@ -8,8 +8,8 @@ import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
-import { getTransformedUrl } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
+import OptimizedImage from './OptimizedImage';
 
 import GallerySkeleton from '../pages/skeletons/GallerySkeleton';
 
@@ -163,11 +163,14 @@ const Gallery = () => {
                                 onClick={() => setSelectedImage(img)}
                                 style={{ contentVisibility: 'auto', containIntrinsicSize: '300px' }}
                             >
-                                <img 
-                                    src={getTransformedUrl(img.image_url, 600, 75)} 
+                                <OptimizedImage 
+                                    src={img.image_url} 
                                     alt={localizedCaption ? localizedCaption.replace(/<[^>]*>/g, '') : ''}
+                                    width={600}
+                                    height={450}
+                                    breakpoints={[300, 600, 900]}
+                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                     loading="lazy"
-                                    decoding="async"
                                     onError={() => {
                                         setBrokenImageIds((current) => current.includes(img.id) ? current : [...current, img.id]);
                                         if (selectedImage?.id === img.id) {
@@ -215,9 +218,13 @@ const Gallery = () => {
                             className="relative w-full max-w-5xl"
                             onClick={(event) => event.stopPropagation()}
                         >
-                            <img 
-                                src={getTransformedUrl(selectedImage.image_url, 1200, 80)} 
+                            <OptimizedImage 
+                                src={selectedImage.image_url} 
                                 alt={(getLocalizedField(selectedImage, 'caption', language, selectedImage.caption) || '').replace(/<[^>]*>/g, '')} 
+                                width={1200}
+                                height={900}
+                                breakpoints={[600, 900, 1200, 1600]}
+                                loading="eager"
                                 onError={() => setSelectedImage(null)}
                                 className="max-h-[78vh] w-full rounded-[1.75rem] object-contain shadow-2xl"
                             />

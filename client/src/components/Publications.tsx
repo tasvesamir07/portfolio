@@ -10,8 +10,8 @@ import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
-import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
+import OptimizedImage from './OptimizedImage';
 
 import PublicationsSkeleton from '../pages/skeletons/PublicationsSkeleton';
 
@@ -121,15 +121,13 @@ const Publications = () => {
                                     <div className="flex flex-col sm:flex-row gap-6 mb-2">
                                         {item.thumbnail_url && !brokenThumbnails.includes(item.id) && (
                                             <div className="w-full sm:w-44 sm:h-56 h-48 overflow-hidden rounded-xl bg-gray-50 flex items-center justify-center border border-gray-200/60 shrink-0 shadow-sm">
-                                                <img 
-                                                    src={getTransformedUrl(item.thumbnail_url, 240, 75)} 
-                                                    srcSet={buildSrcSet(item.thumbnail_url)}
-                                                    sizes="(max-width: 640px) 100vw, 180px"
+                                                <OptimizedImage 
+                                                    src={item.thumbnail_url}
                                                     alt={title} 
+                                                    width={180}
+                                                    height={240}
+                                                    sizes="(max-width: 640px) 100vw, 180px"
                                                     loading="lazy"
-                                                    decoding="async"
-                                                    width="180"
-                                                    height="240"
                                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                                     onError={() => setBrokenThumbnails((prev) => [...prev, item.id])}
                                                 />

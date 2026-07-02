@@ -9,8 +9,8 @@ import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
-import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
+import OptimizedImage from './OptimizedImage';
 
 import ExperiencesSkeleton from '../pages/skeletons/ExperiencesSkeleton';
 
@@ -69,15 +69,14 @@ const Experiences = () => {
                         >
                             <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-emerald-50 rounded-2xl flex items-center justify-center transition-all">
                                 {item.logo_url && !brokenLogos.includes(item.id) ? (
-                                    <img 
-                                        src={getTransformedUrl(item.logo_url, 80, 75)} 
-                                        srcSet={buildSrcSet(item.logo_url)}
-                                        sizes="80px"
+                                    <OptimizedImage 
+                                        src={item.logo_url}
                                         alt={company} 
+                                        width={80}
+                                        height={80}
+                                        breakpoints={[80]}
+                                        sizes="80px"
                                         loading="lazy"
-                                        decoding="async"
-                                        width="80"
-                                        height="80"
                                         className="w-full h-full object-cover rounded-2xl" 
                                         onError={() => setBrokenLogos((prev) => [...prev, item.id])}
                                     />

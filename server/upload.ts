@@ -7,7 +7,7 @@ const MAX_UPLOAD_SIZE_MB = 4;
 const MAX_UPLOAD_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
 const SUPABASE_BUCKET = 'portfolio-uploads';
 const MAX_IMAGE_DIMENSION = 1600;
-const IMAGE_QUALITY = 80;
+const IMAGE_QUALITY = 65;
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -49,20 +49,24 @@ const processFile = async (file: any): Promise<string> => {
     }
 
     if (isCompressibleImage && sharp) {
-        const optimizedBuffer = await sharp(file.buffer)
-            .rotate()
-            .resize({
-                width: MAX_IMAGE_DIMENSION,
-                height: MAX_IMAGE_DIMENSION,
-                fit: 'inside',
-                withoutEnlargement: true
-            })
-            .webp({ quality: IMAGE_QUALITY })
-            .toBuffer();
+        try {
+            const optimizedBuffer = await sharp(file.buffer)
+                .rotate()
+                .resize({
+                    width: MAX_IMAGE_DIMENSION,
+                    height: MAX_IMAGE_DIMENSION,
+                    fit: 'inside',
+                    withoutEnlargement: true
+                })
+                .avif({ quality: IMAGE_QUALITY })
+                .toBuffer();
 
-        buffer = optimizedBuffer;
-        contentType = 'image/webp';
-        filename = `${Date.now()}-${fileBaseName}.webp`;
+            buffer = optimizedBuffer;
+            contentType = 'image/avif';
+            filename = `${Date.now()}-${fileBaseName}.avif`;
+        } catch (sharpError: any) {
+            console.warn('[Upload] Sharp processing failed, using original file buffer:', sharpError.message);
+        }
     }
 
     const supabaseUrl = process.env.SUPABASE_URL;

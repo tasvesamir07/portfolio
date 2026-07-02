@@ -10,8 +10,8 @@ import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
-import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
+import OptimizedImage from './OptimizedImage';
 
 import AcademicsSkeleton from '../pages/skeletons/AcademicsSkeleton';
 
@@ -125,15 +125,14 @@ const Academics = () => {
                         >
                             <div className="flex-shrink-0 w-16 h-16 sm:w-[74px] sm:h-[74px] bg-brand-blue/5 rounded-2xl flex items-center justify-center transition-all mt-1">
                                 {item.logo_url && !brokenLogos.includes(item.id) ? (
-                                    <img 
-                                        src={getTransformedUrl(item.logo_url, 74, 75)} 
-                                        srcSet={buildSrcSet(item.logo_url)}
-                                        sizes="74px"
+                                    <OptimizedImage 
+                                        src={item.logo_url}
                                         alt={institution} 
+                                        width={74}
+                                        height={74}
+                                        breakpoints={[74]}
+                                        sizes="74px"
                                         loading="lazy"
-                                        decoding="async"
-                                        width="74"
-                                        height="74"
                                         className="w-full h-full object-cover rounded-2xl" 
                                         onError={() => setBrokenLogos((prev) => [...prev, item.id])}
                                     />

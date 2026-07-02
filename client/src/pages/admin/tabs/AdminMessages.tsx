@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Trash2, Edit3 } from 'lucide-react';
+import { Trash2, Eye } from 'lucide-react';
 import api, { clearResponseCache } from '../../../api';
 import { clearTranslationCache } from '../../../i18n/translator';
 import ConfirmModal from '../../../components/ConfirmModal';
@@ -97,7 +97,7 @@ const AdminMessages = () => {
                                         <td className="py-4 pl-6 pr-8 text-right whitespace-nowrap">
                                             <div className="flex items-center justify-end gap-1">
                                                 <button onClick={() => openEditor(item)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all" title="View">
-                                                    <Edit3 size={18} />
+                                                    <Eye size={18} />
                                                 </button>
                                                 <button onClick={() => handleDelete(item.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all" title="Delete">
                                                     <Trash2 size={18} />

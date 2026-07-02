@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
-import { getTransformedUrl } from '../utils/imageUrl';
+import OptimizedImage from './OptimizedImage';
 import {
     isContactLabel,
     toHref,
@@ -36,17 +36,24 @@ const About = ({ data }) => {
                     <div className="w-full flex justify-center lg:justify-start">
                         <div className="w-full max-w-[260px] sm:max-w-[300px] lg:max-w-[320px] pt-3 pb-5">
                             <div className="bg-white p-2 rounded-sm shadow-2xl border border-gray-100 aspect-[3/4] overflow-hidden hover-glow">
-                                <img
-                                    src={getTransformedUrl(hero_image_url, 320, 75) || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'}
+                                <OptimizedImage
+                                    src={hero_image_url}
                                     alt={localizedName || 'Profile'}
-                                    width="320"
-                                    height="426"
+                                    width={320}
+                                    height={426}
                                     fetchpriority="high"
+                                    loading="eager"
+                                    sizes="(max-width: 640px) 100vw, 320px"
                                     className="w-full h-full object-cover object-top filter contrast-105 pointer-events-none select-none"
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.src = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d';
-                                    }}
+                                    fallback={
+                                        <img
+                                            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"
+                                            alt={localizedName || 'Profile'}
+                                            width="320"
+                                            height="426"
+                                            className="w-full h-full object-cover object-top filter contrast-105 pointer-events-none select-none"
+                                        />
+                                    }
                                 />
                             </div>
                         </div>

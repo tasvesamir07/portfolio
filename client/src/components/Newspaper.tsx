@@ -8,8 +8,8 @@ import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
-import { getTransformedUrl, buildSrcSet } from '../utils/imageUrl';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
+import OptimizedImage from './OptimizedImage';
 
 const Newspaper = () => {
     const prefersReduced = useReducedMotion();
@@ -77,17 +77,20 @@ const Newspaper = () => {
                             >
                                 <div className="w-full h-48 relative overflow-hidden bg-gray-50 flex-shrink-0 border-b border-gray-50">
                                     {item.image_url && !brokenImages.includes(item.id) ? (
-                                        <img 
-                                            src={getTransformedUrl(item.image_url, 480, 75)} 
-                                            srcSet={buildSrcSet(item.image_url)}
-                                            sizes="(max-width: 768px) 100vw, 480px"
+                                        <OptimizedImage 
+                                            src={item.image_url} 
                                             alt={title ? title.replace(/<[^>]*>/g, '') : ''} 
+                                            width={480}
+                                            height={320}
+                                            sizes="(max-width: 768px) 100vw, 480px"
                                             loading="lazy"
-                                            decoding="async"
-                                            width="480"
-                                            height="320"
                                             className="w-full h-full object-cover" 
                                             onError={() => setBrokenImages((prev) => [...prev, item.id])}
+                                            fallback={
+                                                <div className="w-full h-full flex items-center justify-center text-[#ceb079]/40 bg-[#ceb079]/5">
+                                                    <NewspaperIcon size={48} strokeWidth={1.5} />
+                                                </div>
+                                            }
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-[#ceb079]/40 bg-[#ceb079]/5">

@@ -35,9 +35,13 @@ router.post('/', anonymousLimiter, validate(anonymousMessageSchema), async (req:
     }
 });
 
-router.put('/read/:id', authenticateToken, async (req: Request, res: Response) => {
+router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+    const isRead = req.body?.is_read !== false;
     try {
-        const result = await db.query('UPDATE anonymous_messages SET is_read = true WHERE id = $1 RETURNING *', [req.params.id]);
+        const result = await db.query(
+            'UPDATE anonymous_messages SET is_read = $1 WHERE id = $2 RETURNING *',
+            [isRead, req.params.id]
+        );
         if (result.rows.length === 0) {
             res.status(404).json({ error: 'Message not found' });
             return;
