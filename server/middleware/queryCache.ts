@@ -72,9 +72,13 @@ const triggerBackgroundRefresh = (req: Request, res: Response, key: string): voi
         setHeader: () => {},
         status: function(code: number) { this.statusCode = code; return this; },
         json: function(payload: unknown) {
-            saveToCache(key, payload).finally(() => {
+            if (this.statusCode >= 200 && this.statusCode < 300) {
+                saveToCache(key, payload).finally(() => {
+                    activeRefreshes.delete(key);
+                });
+            } else {
                 activeRefreshes.delete(key);
-            });
+            }
             return this;
         },
         end: function() {
@@ -82,9 +86,13 @@ const triggerBackgroundRefresh = (req: Request, res: Response, key: string): voi
             return this;
         },
         send: function(payload: unknown) {
-            saveToCache(key, payload).finally(() => {
+            if (this.statusCode >= 200 && this.statusCode < 300) {
+                saveToCache(key, payload).finally(() => {
+                    activeRefreshes.delete(key);
+                });
+            } else {
                 activeRefreshes.delete(key);
-            });
+            }
             return this;
         }
     } as any;
