@@ -143,15 +143,15 @@ const Publications = () => {
                                             <div className="space-y-2 text-xs sm:text-sm text-gray-600">
                                                 {(!isFieldEmpty(mainAuthor) || !isFieldEmpty(authors)) && (
                                                     <p className="leading-relaxed">
-                                                        <span className="font-semibold text-gray-700">Authors: </span>
+                                                        <span className="font-bold text-gray-900">Authors:</span>{' '}
                                                         {!isFieldEmpty(mainAuthor) && (
-                                                            <strong className="text-gray-900">
+                                                            <strong className="text-gray-900 [&_p]:inline [&_div]:inline [&_ul]:inline [&_li]:inline [&_ol]:inline [&_ul]:p-0 [&_ul]:m-0 [&_li]:p-0 [&_li]:m-0 [&_li]:list-none">
                                                                 <RenderInlineHtml html={mainAuthor} />*
                                                             </strong>
                                                         )}
                                                         {!isFieldEmpty(mainAuthor) && !isFieldEmpty(authors) && <span>, </span>}
                                                         {!isFieldEmpty(authors) && (
-                                                            <span className="[&_p]:inline [&_div]:inline [&_a]:text-[#3a96b7] [&_a]:hover:underline [&_a]:font-semibold">
+                                                            <span className="[&_p]:inline [&_div]:inline [&_ul]:inline [&_li]:inline [&_ol]:inline [&_ul]:p-0 [&_ul]:m-0 [&_li]:p-0 [&_li]:m-0 [&_li]:list-none [&_li:not(:last-child)]:after:content-[',_'] [&_a]:text-[#3a96b7] [&_a]:hover:underline [&_a]:font-semibold">
                                                                 <RenderInlineHtml html={authors} />
                                                             </span>
                                                         )}
@@ -173,8 +173,19 @@ const Publications = () => {
                                                                 {(!isFieldEmpty(volume) || !isFieldEmpty(issue) || !isFieldEmpty(item.pub_year)) && '. '}
                                                             </>
                                                         )}
-                                                        {!isFieldEmpty(volume) && <>Vol. <RenderInlineHtml html={volume} />{!isFieldEmpty(issue) ? ', ' : ''}</>}
-                                                        {!isFieldEmpty(issue) && <>Issue <RenderInlineHtml html={issue} /></>}
+                                                        {!isFieldEmpty(volume) && (
+                                                            <>
+                                                                <span className="font-bold text-gray-900">Volume:</span>{' '}
+                                                                <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={volume} /></span>
+                                                                {!isFieldEmpty(issue) ? ', ' : ''}
+                                                            </>
+                                                        )}
+                                                        {!isFieldEmpty(issue) && (
+                                                            <>
+                                                                <span className="font-bold text-gray-900">Issue:</span>{' '}
+                                                                <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={issue} /></span>
+                                                            </>
+                                                        )}
                                                         {!isFieldEmpty(item.pub_year) && (
                                                             <> <span className="text-gray-600 font-medium">(<RenderInlineHtml html={item.pub_year} />)</span></>
                                                         )}
