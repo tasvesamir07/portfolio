@@ -8,7 +8,6 @@ const PUBLIC_ROUTE_LOADERS = [
     () => import('../pages/ExperiencesPage'),
     () => import('../pages/ResearchInterestsPage'),
     () => import('../pages/PublicationsPage'),
-    () => import('../pages/ResearchPage'),
     () => import('../pages/GalleryPage'),
     () => import('../pages/ContactPage'),
     () => import('../pages/DynamicPage')

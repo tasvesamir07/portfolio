@@ -129,6 +129,15 @@ export const AdminCrudLayout = ({
         if (draftData) {
             const restored = { ...draftData };
             if (initialData?.id) restored.id = initialData.id;
+            // Merge any fields from initialData that are missing in the draft
+            // (handles schema additions like main_author, volume, issue)
+            if (initialData && typeof initialData === 'object') {
+                Object.keys(initialData).forEach(key => {
+                    if (!(key in restored) && initialData[key] !== undefined) {
+                        restored[key] = initialData[key];
+                    }
+                });
+            }
             setFormData(restored);
             setDraftAvailable(false);
             showSiteAlert({ type: 'success', message: 'Restored unsaved draft.' });

@@ -13,7 +13,6 @@ import Experiences from './Experiences';
 import Gallery from './Gallery';
 import Hero from './Hero';
 import Newspaper from './Newspaper';
-import Research from './Research';
 import ResearchInterests from './ResearchInterests';
 import StructuredData from './StructuredData';
 import StructuredDetails from './StructuredDetails';
@@ -26,7 +25,6 @@ vi.mock('@tanstack/react-query', () => ({
         if (queryKey.includes('academics')) return { data: [{ id: '1', institution: 'MIT', degree: 'PhD', details_json: '[]' }], isLoading: false };
         if (queryKey.includes('gallery')) return { data: [{ id: '1', category: 'Tech', image_url: 'http://test.com/img.png', caption: 'Test Caption' }], isLoading: false };
         if (queryKey.includes('newspapers')) return { data: [{ id: '1', title: 'Daily Star' }], isLoading: false };
-        if (queryKey.includes('research')) return { data: [{ id: '1', title: 'AI Research', details_json: '[]' }], isLoading: false };
         if (queryKey.includes('research-interests')) return { data: [{ id: '1', interest: 'ML', details_json: '[]' }], isLoading: false };
         if (queryKey.includes('page-data')) {
             return {
@@ -158,11 +156,6 @@ describe('Client Components Tests', () => {
     it('renders Newspaper component', () => {
         render(<Newspaper />);
         expect(screen.getByText('Daily Star')).toBeInTheDocument();
-    });
-
-    it('renders Research component', () => {
-        render(<Research />);
-        expect(screen.getByText('AI Research')).toBeInTheDocument();
     });
 
     it('renders ResearchInterests component', () => {

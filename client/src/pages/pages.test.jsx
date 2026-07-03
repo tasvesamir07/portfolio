@@ -15,7 +15,6 @@ import NewspaperPage from './NewspaperPage';
 import NotFound from './NotFound';
 import PublicationsPage from './PublicationsPage';
 import ResearchInterestsPage from './ResearchInterestsPage';
-import ResearchPage from './ResearchPage';
 
 // Mock SEO component
 vi.mock('../hooks/useSeo', () => ({
@@ -56,7 +55,6 @@ vi.mock('@tanstack/react-query', () => ({
         if (queryKey.includes('academics')) return { data: [{ id: '1', institution: 'MIT', degree: 'PhD', details_json: '[]' }], isLoading: false };
         if (queryKey.includes('gallery')) return { data: [{ id: '1', category: 'Tech', image_url: 'http://test.com/img.png', caption: 'Test Caption' }], isLoading: false };
         if (queryKey.includes('newspapers')) return { data: [{ id: '1', title: 'Daily Star' }], isLoading: false };
-        if (queryKey.includes('research')) return { data: [{ id: '1', title: 'AI Research', details_json: '[]' }], isLoading: false };
         if (queryKey.includes('research-interests')) return { data: [{ id: '1', interest: 'ML', details_json: '[]' }], isLoading: false };
         if (queryKey.includes('blog')) return { data: { title: 'Blog Post Title', details_json: '[]', content: 'Test blog content' }, isLoading: false };
         if (queryKey.includes('publications')) return { data: [{ id: '1', title: 'Paper Title', doi_url: 'http://doi.org', pub_year: '2023', journal_name: 'IEEE' }], isLoading: false };
@@ -167,11 +165,5 @@ describe('Client Pages Tests', () => {
         renderWithRouter(<ResearchInterestsPage />);
         expect(screen.getByTestId('seo-element')).toBeInTheDocument();
         expect(screen.getByText('ML')).toBeInTheDocument();
-    });
-
-    it('renders ResearchPage', () => {
-        renderWithRouter(<ResearchPage />);
-        expect(screen.getByTestId('seo-element')).toBeInTheDocument();
-        expect(screen.getByText('AI Research')).toBeInTheDocument();
     });
 });

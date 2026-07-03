@@ -220,7 +220,6 @@ v1Router.use('/about', require('./routes/about'));
 v1Router.use('/academics', require('./routes/academics'));
 v1Router.use('/publications', require('./routes/publications'));
 v1Router.use('/newspapers', require('./routes/newspapers'));
-v1Router.use('/research', require('./routes/research'));
 v1Router.use('/research-interests', require('./routes/researchInterests'));
 v1Router.use('/gallery', require('./routes/gallery'));
 v1Router.use('/gallery-categories', require('./routes/galleryCategories'));
@@ -343,11 +342,6 @@ app.get('/sitemap.xml', async (req: Request, res: Response) => {
         <loc>${baseUrl}/publications</loc>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
-    </url>
-    <url>
-        <loc>${baseUrl}/research</loc>
-        <changefreq>monthly</changefreq>
-        <priority>0.8</priority>
     </url>
     <url>
         <loc>${baseUrl}/gallery</loc>

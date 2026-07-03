@@ -52,10 +52,8 @@ const DEFAULT_NAV_LINKS = [
             { name: 'Research Interests', path: '/research-interests' }
         ]
     },
-    { name: 'Research', path: '/research' },
     { name: 'Publications', path: '/publications' },
     { name: 'Newspaper', path: '/newspaper' },
-    { name: 'Gallery', path: '/gallery' },
     { name: 'Contact', path: '/contact' },
     { name: 'Anon. Message', path: '/anonymous-message' }
 ];
@@ -115,37 +113,31 @@ const Navbar = () => {
     const brandLabel = localizedSiteName || localizedOwnerName || 'Portfolio';
 
     const activeNavLinks = useMemo(() => {
-        const normalizedLinks = baseNavLinks.map((link: any) => ({ ...link }));
+        // Remove standalone Gallery if present (e.g. from old custom_nav data)
+        let normalizedLinks = baseNavLinks.filter((link: any) => !isGalleryLink(link, t));
 
         const blogLink = {
             id: 'blog-menu',
-            name: 'Blog', // Will be localized by localizeLinkTree
-            dropdown: blogPages.map((page: any) => ({
-                name: stripHtml(getLocalizedField(page, 'title', language, page.title)),
-                path: `/blog/${page.slug}`
-            }))
+            name: 'Blog',
+            dropdown: [
+                ...blogPages.map((page: any) => ({
+                    name: stripHtml(getLocalizedField(page, 'title', language, page.title)),
+                    path: `/blog/${page.slug}`
+                })),
+                { name: 'Gallery', path: '/gallery' }
+            ]
         };
 
         const existingBlogIndex = normalizedLinks.findIndex((link: any) => isBlogMenuLink(link, t));
 
-        if (blogPages.length > 0) {
-            if (existingBlogIndex >= 0) {
-                normalizedLinks[existingBlogIndex] = {
-                    ...normalizedLinks[existingBlogIndex],
-                    id: 'blog-menu',
-                    dropdown: blogLink.dropdown
-                };
-            } else {
-                const insertIndex = normalizedLinks.findIndex((link: any) => isGalleryLink(link, t));
-                if (insertIndex >= 0) {
-                    normalizedLinks.splice(insertIndex, 0, blogLink);
-                } else {
-                    normalizedLinks.push(blogLink);
-                }
-            }
-        } else if (existingBlogIndex >= 0 && !normalizedLinks[existingBlogIndex].dropdownItems?.length) {
-            // Remove empty blog menu if no pages exist and it's not a custom one with items
-            normalizedLinks.splice(existingBlogIndex, 1);
+        if (existingBlogIndex >= 0) {
+            normalizedLinks[existingBlogIndex] = {
+                ...normalizedLinks[existingBlogIndex],
+                id: 'blog-menu',
+                dropdown: blogLink.dropdown
+            };
+        } else {
+            normalizedLinks.push(blogLink);
         }
 
         return localizeLinkTree(normalizedLinks, language, t);
@@ -159,12 +151,10 @@ const Navbar = () => {
             const path = link.path || '';
             const normalizedName = normalizeLabel(link.name);
 
-            // Group Gallery, Contact, and Anon. Message under 'More'
+            // Group Contact and Anon. Message under 'More'
             const isMoreTarget = 
-                path === '/gallery' ||
                 path === '/contact' ||
                 path.includes('anonymous-message') ||
-                normalizedName === 'gallery' ||
                 normalizedName === 'contact' ||
                 normalizedName.includes('anon') ||
                 normalizedName.includes('benami');

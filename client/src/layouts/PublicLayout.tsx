@@ -45,7 +45,6 @@ const PublicLayout = () => {
 
         prefetchData('academics', '/academics');
         prefetchData('publications', '/publications');
-        prefetchData('research', '/research');
         prefetchData('research-interests', '/research-interests');
         prefetchData('gallery', '/gallery');
         prefetchData('gallery-categories', '/gallery-categories');

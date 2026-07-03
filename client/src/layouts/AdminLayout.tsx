@@ -17,7 +17,6 @@ const SIDEBAR_TABS = [
     { id: 'trainings', label: 'Training', icon: ExternalLink },
     { id: 'skills', label: 'Skills', icon: Share2 },
     { id: 'research-interests', label: 'Interests', icon: FileText },
-    { id: 'research', label: 'Research', icon: Briefcase },
     { id: 'publications', label: 'Publications', icon: ExternalLink },
     { id: 'newspaper', label: 'Newspaper', icon: FileText },
     { id: 'blog', label: 'Blog Pages', icon: FileText },
@@ -176,11 +175,6 @@ const AdminLayout = () => {
                         dropdown: dropdownItems
                     });
                 }
-            } else if (id === 'research') {
-                if (!addedNodes.has('research')) {
-                    addedNodes.add('research');
-                    customNav.push({ name: 'Research', path: '/research' });
-                }
             } else if (id === 'publications') {
                 if (!addedNodes.has('publications')) {
                     addedNodes.add('publications');
@@ -191,10 +185,13 @@ const AdminLayout = () => {
                     addedNodes.add('newspaper');
                     customNav.push({ name: 'Newspaper', path: '/newspaper' });
                 }
-            } else if (id === 'gallery') {
-                if (!addedNodes.has('gallery')) {
-                    addedNodes.add('gallery');
-                    customNav.push({ name: 'Gallery', path: '/gallery' });
+            } else if (id === 'blog' || id === 'gallery') {
+                if (!addedNodes.has('blog-menu')) {
+                    addedNodes.add('blog-menu');
+                    customNav.push({
+                        name: 'Blog',
+                        dropdown: [{ name: 'Gallery', path: '/gallery' }]
+                    });
                 }
             } else if (id === 'messages') {
                 if (!addedNodes.has('contact')) {

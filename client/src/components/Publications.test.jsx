@@ -14,6 +14,11 @@ vi.mock('../i18n/I18nContext', () => ({
 vi.mock('../hooks/useSiteName', () => ({
     useSiteIdentity: () => ({
         authorNames: 'Samir'
+    }),
+    usePublicPageData: () => ({
+        data: {
+            about: { name: 'Samir', site_name: 'Samir' }
+        }
     })
 }));
 
@@ -25,7 +30,11 @@ vi.mock('../api', () => ({
                     id: 1,
                     title: 'Quantum Computing Breakthrough',
                     journal_name: 'Nature Science',
-                    authors: 'Samir, John Doe',
+                    authors: 'John Doe',
+                    main_author: 'Samir',
+                    volume: '12',
+                    issue: '3',
+                    pub_year: '2024',
                     introduction: '',
                     methods: '',
                     details_json: '[]'

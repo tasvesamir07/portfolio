@@ -16,7 +16,6 @@ const bn = {
         education: 'শিক্ষা',
         experiences: 'অভিজ্ঞতা',
         researchInterests: 'গবেষণার আগ্রহ',
-        research: 'গবেষণা',
         publications: 'প্রকাশনা',
         gallery: 'গ্যালারি',
         contact: 'যোগাযোগ',

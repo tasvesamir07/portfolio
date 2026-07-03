@@ -9,7 +9,6 @@ import RouteFallback from './components/RouteFallback';
 
 const Home = lazy(() => import('./pages/Home'));
 const AcademicsPage = lazy(() => import('./pages/AcademicsPage'));
-const ResearchPage = lazy(() => import('./pages/ResearchPage'));
 const GalleryPage = lazy(() => import('./pages/GalleryPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const ExperiencesPage = lazy(() => import('./pages/ExperiencesPage'));
@@ -38,7 +37,6 @@ function App() {
             <Route path="newspaper" element={<NewspaperPage />} />
             <Route path="anonymous-message" element={<AnonymousMessagePage />} />
             <Route path="blog/:slug" element={<DynamicPage />} />
-            <Route path="research" element={<ResearchPage />} />
             <Route path="gallery" element={<GalleryPage />} />
             <Route path="contact" element={<ContactPage />} />
             <Route path="*" element={<NotFound />} />

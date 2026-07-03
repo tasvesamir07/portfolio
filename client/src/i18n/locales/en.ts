@@ -16,7 +16,6 @@ const en = {
         education: 'Education',
         experiences: 'Experiences',
         researchInterests: 'Research Interests',
-        research: 'Research',
         publications: 'Publications',
         gallery: 'Gallery',
         contact: 'Contact',

@@ -93,6 +93,9 @@ const AdminPublications = () => {
             journal_name: formData.journal_name || '',
             pub_year: formData.pub_year || '',
             authors: formData.authors || '',
+            main_author: formData.main_author || '',
+            volume: formData.volume || '',
+            issue: formData.issue || '',
             link_url: formData.link_url || '',
             file_url: formData.file_url || '',
             introduction: formData.introduction || '',
@@ -142,8 +145,17 @@ const AdminPublications = () => {
                 <Field label="Publication Year">
                     <InlineFormatEditor value={formData.pub_year || ''} onChange={val => setFormData({...formData, pub_year: val})} />
                 </Field>
-                <Field label="Authors (Separate with commas)">
+                <Field label="Main Author (Corresponding Author)">
+                    <InlineFormatEditor value={formData.main_author || ''} onChange={val => setFormData({...formData, main_author: val})} />
+                </Field>
+                <Field label="Other Authors (Co-authors)">
                     <InlineFormatEditor value={formData.authors || ''} onChange={val => setFormData({...formData, authors: val})} />
+                </Field>
+                <Field label="Volume">
+                    <input type="text" className="input" value={formData.volume || ''} onChange={e => setFormData({...formData, volume: e.target.value})} placeholder="e.g. 12" />
+                </Field>
+                <Field label="Issue">
+                    <input type="text" className="input" value={formData.issue || ''} onChange={e => setFormData({...formData, issue: e.target.value})} placeholder="e.g. 3" />
                 </Field>
             </div>
 

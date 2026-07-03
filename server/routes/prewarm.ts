@@ -19,7 +19,6 @@ router.get('/', async (req: Request, res: Response) => {
         '/api/about',
         '/api/academics',
         '/api/publications',
-        '/api/research',
         '/api/research-interests',
         '/api/gallery',
         '/api/gallery-categories',

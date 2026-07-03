@@ -53,12 +53,12 @@ describe('Navbar Component', () => {
             expect(screen.getByText(/Portfolio/i)).toBeInTheDocument();
         });
 
-        // Common links like "Research" or "Publications" should appear
-        await waitFor(() => {
-            expect(screen.getByText('Research')).toBeInTheDocument();
-        });
+        // Common links like "Publications" or "Blog" should appear
         await waitFor(() => {
             expect(screen.getByText('Publications')).toBeInTheDocument();
+        });
+        await waitFor(() => {
+            expect(screen.getByText('Blog')).toBeInTheDocument();
         });
     });
 });

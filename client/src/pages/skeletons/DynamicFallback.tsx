@@ -4,7 +4,6 @@ import HomeSkeleton from './HomeSkeleton';
 import AcademicsSkeleton from './AcademicsSkeleton';
 import GallerySkeleton from './GallerySkeleton';
 import PublicationsSkeleton from './PublicationsSkeleton';
-import ResearchSkeleton from './ResearchSkeleton';
 import ExperiencesSkeleton from './ExperiencesSkeleton';
 import ContactSkeleton from './ContactSkeleton';
 import ResearchInterestsSkeleton from './ResearchInterestsSkeleton';
@@ -14,7 +13,6 @@ const pageSkeletons: Record<string, React.ComponentType> = {
   '/academics': AcademicsSkeleton,
   '/gallery': GallerySkeleton,
   '/publications': PublicationsSkeleton,
-  '/research': ResearchSkeleton,
   '/experiences': ExperiencesSkeleton,
   '/contact': ContactSkeleton,
   '/research-interests': ResearchInterestsSkeleton

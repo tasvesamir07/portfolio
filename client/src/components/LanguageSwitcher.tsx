@@ -13,7 +13,6 @@ const warmServerCache = (lang: string) => {
     const paths = [
         '/academics', 
         '/publications', 
-        '/research', 
         '/research-interests', 
         '/page-data?resources=experiences,trainings,skills'
     ];

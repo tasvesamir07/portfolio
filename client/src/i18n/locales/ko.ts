@@ -16,7 +16,6 @@ const ko = {
         education: '학력',
         experiences: '경험',
         researchInterests: '연구 관심사',
-        research: '연구',
         publications: '출판물',
         gallery: '갤러리',
         contact: '문의',

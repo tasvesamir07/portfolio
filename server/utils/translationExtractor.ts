@@ -10,8 +10,7 @@ export const CONFIG = [
   { table: 'trainings', columns: ['title', 'topic', 'instructor', 'details_json'] },
   { table: 'skills', columns: ['category', 'items', 'details_json'] },
   { table: 'research_interests', columns: ['interest', 'details', 'details_json'] },
-  { table: 'research', columns: ['title', 'description', 'status', 'details_json'] },
-  { table: 'publications', columns: ['title', 'journal_name', 'authors', 'introduction', 'methods', 'details_json'] },
+  { table: 'publications', columns: ['title', 'journal_name', 'authors', 'main_author', 'introduction', 'methods', 'details_json'] },
   { table: 'gallery', columns: ['caption'] },
   { table: 'gallery_categories', columns: ['name'] },
   { table: 'newspapers', columns: ['title', 'short_description'] }

@@ -104,21 +104,6 @@ CREATE TABLE IF NOT EXISTS research_interests (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 9. Research Table
-CREATE TABLE IF NOT EXISTS research (
-    id SERIAL PRIMARY KEY,
-    title TEXT,
-    description TEXT,
-    image_url TEXT,
-    link TEXT,
-    file_url TEXT,
-    status TEXT,
-    date_text VARCHAR(100),
-    details_json TEXT DEFAULT '',
-    sort_order INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 -- 10. Publications Table
 CREATE TABLE IF NOT EXISTS publications (
     id SERIAL PRIMARY KEY,
@@ -126,8 +111,11 @@ CREATE TABLE IF NOT EXISTS publications (
     thumbnail_url TEXT,
     journal_name TEXT,
     pub_year VARCHAR(20),
-    authors TEXT,
-    introduction TEXT,
+    authors       TEXT,
+    main_author   TEXT DEFAULT '',
+    volume        TEXT DEFAULT '',
+    issue         TEXT DEFAULT '',
+    introduction  TEXT,
     methods TEXT,
     link_url TEXT,
     file_url TEXT,
@@ -219,7 +207,6 @@ CREATE INDEX IF NOT EXISTS idx_gallery_category ON gallery(category);
 CREATE INDEX IF NOT EXISTS idx_publications_pub_year ON publications(pub_year);
 CREATE INDEX IF NOT EXISTS idx_academics_sort_order ON academics(sort_order);
 CREATE INDEX IF NOT EXISTS idx_experiences_sort_order ON experiences(sort_order);
-CREATE INDEX IF NOT EXISTS idx_research_sort_order ON research(sort_order);
 CREATE INDEX IF NOT EXISTS idx_publications_sort_order ON publications(sort_order);
 CREATE INDEX IF NOT EXISTS idx_gallery_sort_order ON gallery(sort_order);
 CREATE INDEX IF NOT EXISTS idx_newspapers_sort_order ON newspapers(sort_order);

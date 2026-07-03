@@ -93,20 +93,6 @@ export interface ResearchInterestRow {
   created_at: string;
 }
 
-export interface ResearchRow {
-  id: number;
-  title: string | null;
-  description: string | null;
-  image_url: string | null;
-  link: string | null;
-  file_url: string | null;
-  status: string | null;
-  date_text: string | null;
-  details_json: string | null;
-  sort_order: number;
-  created_at: string;
-}
-
 export interface PublicationRow {
   id: number;
   title: string | null;
@@ -114,6 +100,9 @@ export interface PublicationRow {
   journal_name: string | null;
   pub_year: string | null;
   authors: string | null;
+  main_author: string | null;
+  volume: string | null;
+  issue: string | null;
   introduction: string | null;
   methods: string | null;
   link_url: string | null;

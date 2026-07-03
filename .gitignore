@@ -65,3 +65,6 @@ client/coverage/
 client/playwright-report/
 client/test-results/
 server/coverage/
+
+.vercel
+.env*.local
