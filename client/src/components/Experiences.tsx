@@ -8,7 +8,7 @@ import api from '../api';
 import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
-import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { getLocalizedField, getLocalizedFirstField, localizeNumbers } from '../i18n/localize';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 import OptimizedImage from './OptimizedImage';
 
@@ -96,7 +96,7 @@ const Experiences = () => {
                                     </div>
                                     <div className="text-center md:text-right flex flex-col gap-1.5 md:min-w-[140px] pt-1">
                                         <p className="text-[12px] font-bold text-gray-500 flex items-center justify-center md:justify-end gap-1.5">
-                                            <Calendar size={14} className="text-gray-400" /> <RenderInlineHtml html={item.start_date} /> - <RenderInlineHtml html={item.end_date || t('common.present')} />
+                                            <Calendar size={14} className="text-gray-400" /> <RenderInlineHtml html={localizeNumbers(item.start_date, language)} /> - <RenderInlineHtml html={localizeNumbers(item.end_date || t('common.present'), language)} />
                                         </p>
                                         {locationLabel && (
                                             <p className="text-[11px] font-bold text-gray-400 flex items-center justify-center md:justify-end gap-1.5 uppercase tracking-widest leading-tight">
@@ -163,7 +163,7 @@ const Experiences = () => {
                                             <RenderInlineHtml html={topic} />
                                         </p>
                                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2">
-                                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> <RenderInlineHtml html={dateText} /></span>
+                                            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><Calendar size={12} className="text-gray-400" /> <RenderInlineHtml html={localizeNumbers(dateText, language)} /></span>
                                             <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><GraduationCap size={12} className="text-gray-400" /> <RenderInlineHtml html={instructor} /></span>
                                         </div>
                                         {detailItems.length > 0 && (

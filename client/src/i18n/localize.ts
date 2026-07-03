@@ -71,3 +71,12 @@ export const getLocalizedNavName = (item: Record<string, unknown> | null | undef
 
   return resolvedName.replace(/<[^>]*>/g, '').replace(/&nbsp;|\u00A0/g, ' ').trim();
 };
+
+const BANGLA_NUMERALS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+
+export const localizeNumbers = (value: string | number | null | undefined, language: string): string => {
+  if (value === null || value === undefined) return '';
+  const str = String(value);
+  if (language !== 'bn') return str;
+  return str.replace(/[0-9]/g, (digit) => BANGLA_NUMERALS[parseInt(digit, 10)] || digit);
+};

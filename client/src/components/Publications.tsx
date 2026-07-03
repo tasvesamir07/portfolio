@@ -8,7 +8,7 @@ import api from '../api';
 import StructuredDetails from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
-import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { getLocalizedField, getLocalizedFirstField, localizeNumbers } from '../i18n/localize';
 import { usePublicPageData } from '../hooks/useSiteName';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
@@ -176,18 +176,18 @@ const Publications = () => {
                                                         {!isFieldEmpty(volume) && (
                                                             <>
                                                                 <span className="font-bold text-gray-900">{t('publications.volume') || 'Volume'}:</span>{' '}
-                                                                <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={volume} /></span>
+                                                                <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(volume, language)} /></span>
                                                                 {!isFieldEmpty(issue) ? ', ' : ''}
                                                             </>
                                                         )}
                                                         {!isFieldEmpty(issue) && (
                                                             <>
                                                                 <span className="font-bold text-gray-900">{t('publications.issue') || 'Issue'}:</span>{' '}
-                                                                <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={issue} /></span>
+                                                                <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(issue, language)} /></span>
                                                             </>
                                                         )}
                                                         {!isFieldEmpty(item.pub_year) && (
-                                                            <> <span className="text-gray-600 font-medium">(<RenderInlineHtml html={item.pub_year} />)</span></>
+                                                            <> <span className="text-gray-600 font-medium">(<RenderInlineHtml html={localizeNumbers(item.pub_year, language)} />)</span></>
                                                         )}
                                                     </p>
                                                 )}

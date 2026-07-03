@@ -7,7 +7,7 @@ import api from '../api';
 import StructuredDetails, { type StructuredItem } from './StructuredDetails';
 import { parseStructuredItems } from '../utils/structuredItems';
 import { useI18n } from '../i18n/I18nContext';
-import { getLocalizedField, getLocalizedFirstField } from '../i18n/localize';
+import { getLocalizedField, getLocalizedFirstField, localizeNumbers } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
 import { RenderInlineHtml } from '../utils/htmlRenderer';
 import OptimizedImage from './OptimizedImage';
@@ -66,7 +66,7 @@ const Academics = () => {
                             const institution = getLocalizedField(item, 'institution', language, item.institution);
                             const primaryTitle = degree || institution;
                             const institutionText = institution && institution !== degree ? institution : '';
-                            const timelineText = [item.start_year, item.end_year].filter(Boolean).join(' - ');
+                            const timelineText = [localizeNumbers(item.start_year, language), localizeNumbers(item.end_year, language)].filter(Boolean).join(' - ');
                             const fallbackItems: StructuredItem[] = [];
                             const parsedLabels = new Set(
                                 parsedItems
@@ -82,7 +82,7 @@ const Academics = () => {
                                     id: `fallback-passing-${item.id}`,
                                     type: 'pair',
                                     title: t('academics.passingYear'),
-                                    values: [item.end_year],
+                                    values: [localizeNumbers(item.end_year, language)],
                                     text: ''
                                 });
                             }
