@@ -143,6 +143,7 @@ const Publications = () => {
                                             <div className="space-y-2 text-xs sm:text-sm text-gray-600">
                                                 {(!isFieldEmpty(mainAuthor) || !isFieldEmpty(authors)) && (
                                                     <p className="leading-relaxed">
+                                                        <span className="font-semibold text-gray-700">Authors: </span>
                                                         {!isFieldEmpty(mainAuthor) && (
                                                             <strong className="text-gray-900">
                                                                 <RenderInlineHtml html={mainAuthor} />*

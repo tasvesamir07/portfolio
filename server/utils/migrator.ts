@@ -15,9 +15,19 @@ export const runMigrations = async (): Promise<void> => {
             );
         `);
 
-        const migrationsDir = path.join(__dirname, '../migrations');
+        let migrationsDir = path.join(__dirname, '../migrations');
         if (!fs.existsSync(migrationsDir)) {
-            logger.warn('[Migrator] Migrations directory does not exist. Skipping database migrations.');
+            migrationsDir = path.join(__dirname, '../../migrations');
+        }
+        if (!fs.existsSync(migrationsDir)) {
+            migrationsDir = path.join(process.cwd(), 'server/migrations');
+        }
+        if (!fs.existsSync(migrationsDir)) {
+            migrationsDir = path.join(process.cwd(), 'migrations');
+        }
+
+        if (!fs.existsSync(migrationsDir)) {
+            logger.warn(`[Migrator] Migrations directory does not exist at ${migrationsDir}. Skipping database migrations.`);
             return;
         }
 
