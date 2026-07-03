@@ -7,12 +7,9 @@ const { translateTexts, redis } = require('../translate');
 
 let glossary: Record<string, Record<string, string>> = {};
 try {
-    const glossaryPath = path.join(__dirname, '../glossary.json');
-    if (fs.existsSync(glossaryPath)) {
-        glossary = JSON.parse(fs.readFileSync(glossaryPath, 'utf-8'));
-    }
+    glossary = require('../glossary.json');
 } catch (e: unknown) {
-    logger.warn('[Auto-Translate Middleware] Failed to load glossary:', (e as any).message || String(e));
+    logger.warn('[Auto-Translate Middleware] Failed to require glossary:', (e as any).message || String(e));
 }
 
 const applyGlossaryToText = (text: string, language = 'en'): string => {
@@ -105,7 +102,7 @@ const isLikelyAlreadyInTargetLanguage = (value = '', language = 'en'): boolean =
     }
 
     if (language === 'ko') {
-        return hasHangul && !hasBangla;
+        return hasHangul && !hasBangla && !hasLatin;
     }
 
     return !hasBangla && !hasHangul;

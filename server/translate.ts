@@ -33,12 +33,9 @@ const getMaxChunkSize = (sourceLang: string, targetLang: string): number => {
 
 let glossary: Record<string, Record<string, string>> = {};
 try {
-    const glossaryPath = path.join(__dirname, 'glossary.json');
-    if (fs.existsSync(glossaryPath)) {
-        glossary = JSON.parse(fs.readFileSync(glossaryPath, 'utf-8'));
-    }
+    glossary = require('./glossary.json');
 } catch (e: unknown) {
-    logger.warn('[Auto-Translate] Failed to load glossary:', (e instanceof Error ? e.message : String(e)));
+    logger.warn('[Auto-Translate] Failed to require glossary:', (e instanceof Error ? e.message : String(e)));
 }
 
 let translator: any = null;
