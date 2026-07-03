@@ -81,6 +81,9 @@ const en = {
         journalName: 'Journal Name',
         publicationYear: 'Publication Year',
         authors: 'Authors',
+        volume: 'Volume',
+        issue: 'Issue',
+        doi: 'DOI',
         readFullArticle: 'Read Full Article',
         downloadPdf: 'Download PDF'
     },
@@ -120,6 +123,7 @@ const en = {
     },
     anonymous: {
         kicker: 'Secure & Private',
+        anonymityGuaranteed: 'Anonymity Guaranteed',
         titleMain: 'Send An',
         titleAccent: 'Anonymous Message',
         successTitle: 'Message Sent',

@@ -125,12 +125,20 @@ const queryCacheMiddleware = async (req: Request, res: Response, next: NextFunct
     if (['POST', 'PUT', 'DELETE'].includes(method)) {
         try {
             memoryCache.clear();
+            try {
+                const autoTranslate = require('./autoTranslate');
+                autoTranslate.clearResponseCache();
+            } catch (e) {
+                // Ignore if autoTranslate is not yet initialized or fails to load
+            }
             if (redis) {
-                const keys = await redis.keys('api_cache_v7::*');
-                if (keys && keys.length > 0) {
-                    await Promise.all((keys as string[]).map((k: string) => redis.del(k)));
+                const cacheKeys = await redis.keys('api_cache_v7::*');
+                const translationKeys = await redis.keys('response_cache::*');
+                const allKeys = [...(cacheKeys || []), ...(translationKeys || [])];
+                if (allKeys.length > 0) {
+                    await Promise.all(allKeys.map((k: string) => redis.del(k)));
                 }
-                logger.info('[Query-Cache] Invalidated all API cache on mutation.');
+                logger.info('[Query-Cache] Invalidated all API cache and translation cache in Redis on mutation.');
             } else {
                 logger.info('[Query-Cache] Invalidated all in-memory API cache on mutation.');
             }

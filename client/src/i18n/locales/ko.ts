@@ -81,6 +81,9 @@ const ko = {
         journalName: '저널명',
         publicationYear: '출판 연도',
         authors: '저자',
+        volume: '볼륨',
+        issue: '호',
+        doi: 'DOI',
         readFullArticle: '전체 논문 보기',
         downloadPdf: 'PDF 다운로드'
     },
@@ -120,6 +123,7 @@ const ko = {
     },
     anonymous: {
         kicker: '안전 및 개인정보 보호',
+        anonymityGuaranteed: '익명성 보장',
         titleMain: '익명',
         titleAccent: '메시지 보내기',
         successTitle: '메시지 전송 완료!',

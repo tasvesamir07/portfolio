@@ -80,7 +80,7 @@ const AnonymousMessageForm = () => {
                         <div className="flex gap-4 items-start bg-brand-blue/5 border border-brand-blue/10 rounded-2xl p-5 text-brand-blue">
                             <Lock size={20} className="shrink-0 text-brand-gold mt-0.5" />
                             <div className="flex flex-col gap-1">
-                                <span className="font-bold text-sm text-gray-900">Anonymity Guaranteed</span>
+                                <span className="font-bold text-sm text-gray-900">{t('anonymous.anonymityGuaranteed') || 'Anonymity Guaranteed'}</span>
                                 <span className="text-xs text-gray-500 font-medium leading-relaxed">
                                     {t('anonymous.formInstructions') || 'Write anything you want below. The recipient will see your message but no identifiers (no name, no email, no logging).'}
                                 </span>

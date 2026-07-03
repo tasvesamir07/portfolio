@@ -143,7 +143,7 @@ const Publications = () => {
                                             <div className="space-y-2 text-xs sm:text-sm text-gray-600">
                                                 {(!isFieldEmpty(mainAuthor) || !isFieldEmpty(authors)) && (
                                                     <p className="leading-relaxed">
-                                                        <span className="font-bold text-gray-900">Authors:</span>{' '}
+                                                        <span className="font-bold text-gray-900">{t('publications.authors') || 'Authors'}:</span>{' '}
                                                         {!isFieldEmpty(mainAuthor) && (
                                                             <strong className="text-gray-900 [&_p]:inline [&_div]:inline [&_ul]:inline [&_li]:inline [&_ol]:inline [&_ul]:p-0 [&_ul]:m-0 [&_li]:p-0 [&_li]:m-0 [&_li]:list-none">
                                                                 <RenderInlineHtml html={mainAuthor} />*
@@ -175,14 +175,14 @@ const Publications = () => {
                                                         )}
                                                         {!isFieldEmpty(volume) && (
                                                             <>
-                                                                <span className="font-bold text-gray-900">Volume:</span>{' '}
+                                                                <span className="font-bold text-gray-900">{t('publications.volume') || 'Volume'}:</span>{' '}
                                                                 <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={volume} /></span>
                                                                 {!isFieldEmpty(issue) ? ', ' : ''}
                                                             </>
                                                         )}
                                                         {!isFieldEmpty(issue) && (
                                                             <>
-                                                                <span className="font-bold text-gray-900">Issue:</span>{' '}
+                                                                <span className="font-bold text-gray-900">{t('publications.issue') || 'Issue'}:</span>{' '}
                                                                 <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={issue} /></span>
                                                             </>
                                                         )}
@@ -193,7 +193,7 @@ const Publications = () => {
                                                 )}
                                                 {(!isFieldEmpty(item.doi) || !isFieldEmpty(item.doi_url)) && (
                                                     <p className="leading-relaxed">
-                                                        <span className="font-bold text-gray-900">DOI:</span>{' '}
+                                                        <span className="font-bold text-gray-900">{t('publications.doi') || 'DOI'}:</span>{' '}
                                                         {(() => {
                                                             const doiUrl = item.doi_url || (item.doi ? `https://doi.org/${item.doi.trim().replace(/<[^>]*>/g, '')}` : '');
                                                             const cleanDoi = item.doi ? item.doi.replace(/<[^>]*>/g, '') : '';

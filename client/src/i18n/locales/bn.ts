@@ -81,6 +81,9 @@ const bn = {
         journalName: 'জার্নালের নাম',
         publicationYear: 'প্রকাশের বছর',
         authors: 'লেখকবৃন্দ',
+        volume: 'ভলিউম',
+        issue: 'সংখ্যা',
+        doi: 'DOI',
         readFullArticle: 'পূর্ণ প্রবন্ধ পড়ুন',
         downloadPdf: 'PDF ডাউনলোড'
     },
@@ -120,6 +123,7 @@ const bn = {
     },
     anonymous: {
         kicker: 'নিরাপদ ও গোপনীয়',
+        anonymityGuaranteed: 'গোপনীয়তা নিশ্চিত',
         titleMain: 'বেনামী',
         titleAccent: 'বার্তা পাঠান',
         successTitle: 'বার্তা পাঠানো হয়েছে!',
