@@ -17,6 +17,7 @@ const en = {
         experiences: 'Experiences',
         researchInterests: 'Research Interests',
         publications: 'Publications',
+        conferences: 'Conferences',
         gallery: 'Gallery',
         contact: 'Contact',
         blog: 'Blog',
@@ -120,6 +121,17 @@ const en = {
     footer: {
         developedWithPassion: 'Developed with Passion',
         copyright: '© {{year}}, All rights reserved'
+    },
+    conferences: {
+        kicker: 'Academic Gatherings',
+        titleMain: 'Conference',
+        titleAccent: 'Proceedings',
+        emptyTitleMain: 'No',
+        emptyTitleAccent: 'Conferences',
+        emptyTitleSuffix: 'Yet',
+        authors: 'Authors',
+        date: 'Date',
+        viewProceedings: 'View Proceedings'
     },
     anonymous: {
         kicker: 'Secure & Private',

@@ -17,6 +17,7 @@ const bn = {
         experiences: 'অভিজ্ঞতা',
         researchInterests: 'গবেষণার আগ্রহ',
         publications: 'প্রকাশনা',
+        conferences: 'কনফারেন্স',
         gallery: 'গ্যালারি',
         contact: 'যোগাযোগ',
         blog: 'ব্লগ',
@@ -120,6 +121,17 @@ const bn = {
     footer: {
         developedWithPassion: 'আন্তরিকতায় নির্মিত',
         copyright: '© {{year}}, সর্বস্বত্ব সংরক্ষিত'
+    },
+    conferences: {
+        kicker: 'একাডেমিক সমাবেশ',
+        titleMain: 'কনফারেন্স',
+        titleAccent: 'কার্যবিবরণী',
+        emptyTitleMain: 'এখনও কোনো',
+        emptyTitleAccent: 'কনফারেন্স',
+        emptyTitleSuffix: 'নেই',
+        authors: 'লেখকবৃন্দ',
+        date: 'তারিখ',
+        viewProceedings: 'কার্যবিবরণী দেখুন'
     },
     anonymous: {
         kicker: 'নিরাপদ ও গোপনীয়',

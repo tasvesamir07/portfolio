@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS conferences (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT '',
+    title_bn TEXT DEFAULT '',
+    title_ko TEXT DEFAULT '',
+    main_author TEXT DEFAULT '',
+    main_author_bn TEXT DEFAULT '',
+    main_author_ko TEXT DEFAULT '',
+    authors TEXT DEFAULT '',
+    authors_bn TEXT DEFAULT '',
+    authors_ko TEXT DEFAULT '',
+    conference_date TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    description_bn TEXT DEFAULT '',
+    description_ko TEXT DEFAULT '',
+    link_url TEXT DEFAULT '',
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

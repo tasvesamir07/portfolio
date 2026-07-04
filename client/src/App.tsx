@@ -14,6 +14,7 @@ const ContactPage = lazy(() => import('./pages/ContactPage'));
 const ExperiencesPage = lazy(() => import('./pages/ExperiencesPage'));
 const ResearchInterestsPage = lazy(() => import('./pages/ResearchInterestsPage'));
 const PublicationsPage = lazy(() => import('./pages/PublicationsPage'));
+const ConferencesPage = lazy(() => import('./pages/ConferencesPage'));
 const NewspaperPage = lazy(() => import('./pages/NewspaperPage'));
 const DynamicPage = lazy(() => import('./pages/DynamicPage'));
 const AnonymousMessagePage = lazy(() => import('./pages/AnonymousMessagePage'));
@@ -34,6 +35,7 @@ function App() {
             <Route path="experiences" element={<ExperiencesPage />} />
             <Route path="research-interests" element={<ResearchInterestsPage />} />
             <Route path="publications" element={<PublicationsPage />} />
+            <Route path="conferences" element={<ConferencesPage />} />
             <Route path="newspaper" element={<NewspaperPage />} />
             <Route path="anonymous-message" element={<AnonymousMessagePage />} />
             <Route path="blog/:slug" element={<DynamicPage />} />

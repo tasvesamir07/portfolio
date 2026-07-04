@@ -13,6 +13,7 @@ export const CONFIG = [
   { table: 'publications', columns: ['title', 'journal_name', 'authors', 'main_author', 'introduction', 'methods', 'details_json'] },
   { table: 'gallery', columns: ['caption'] },
   { table: 'gallery_categories', columns: ['name'] },
+  { table: 'conferences', columns: ['title', 'main_author', 'authors', 'description'] },
   { table: 'newspapers', columns: ['title', 'short_description'] }
 ];
 

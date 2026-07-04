@@ -110,8 +110,8 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'x-translate-language', 'x-skip-auto-translate']
 }));
 
-app.use(bodyParser.json({ limit: '2mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '2mb' }));
+app.use(bodyParser.json({ limit: '4mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '4mb' }));
 
 const requestLogger = require('./middleware/requestLogger');
 app.use(requestLogger);
@@ -219,6 +219,7 @@ v1Router.use('/', require('./routes/admin'));
 v1Router.use('/about', require('./routes/about'));
 v1Router.use('/academics', require('./routes/academics'));
 v1Router.use('/publications', require('./routes/publications'));
+v1Router.use('/conferences', require('./routes/conferences'));
 v1Router.use('/newspapers', require('./routes/newspapers'));
 v1Router.use('/research-interests', require('./routes/researchInterests'));
 v1Router.use('/gallery', require('./routes/gallery'));

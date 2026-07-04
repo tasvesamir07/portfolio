@@ -92,6 +92,16 @@ export const galleryCategoriesSchema = z.object({
     name: reqString
 });
 
+export const conferencesSchema = z.object({
+    title: optString,
+    main_author: optString,
+    authors: optString,
+    conference_date: optString,
+    description: optString,
+    link_url: optString,
+    sort_order: z.number().optional().nullable()
+});
+
 export const newspapersSchema = z.object({
     title: optString,
     short_description: optString,

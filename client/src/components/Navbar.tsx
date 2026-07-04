@@ -53,6 +53,7 @@ const DEFAULT_NAV_LINKS = [
         ]
     },
     { name: 'Publications', path: '/publications' },
+    { name: 'Conferences', path: '/conferences' },
     { name: 'Newspaper', path: '/newspaper' },
     { name: 'Contact', path: '/contact' },
     { name: 'Anon. Message', path: '/anonymous-message' }

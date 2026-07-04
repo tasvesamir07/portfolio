@@ -18,6 +18,7 @@ const SIDEBAR_TABS = [
     { id: 'skills', label: 'Skills', icon: Share2 },
     { id: 'research-interests', label: 'Interests', icon: FileText },
     { id: 'publications', label: 'Publications', icon: ExternalLink },
+    { id: 'conferences', label: 'Conferences', icon: ExternalLink },
     { id: 'newspaper', label: 'Newspaper', icon: FileText },
     { id: 'blog', label: 'Blog Pages', icon: FileText },
     { id: 'gallery', label: 'Gallery', icon: ImageIcon },
@@ -179,6 +180,11 @@ const AdminLayout = () => {
                 if (!addedNodes.has('publications')) {
                     addedNodes.add('publications');
                     customNav.push({ name: 'Publications', path: '/publications' });
+                }
+            } else if (id === 'conferences') {
+                if (!addedNodes.has('conferences')) {
+                    addedNodes.add('conferences');
+                    customNav.push({ name: 'Conferences', path: '/conferences' });
                 }
             } else if (id === 'newspaper') {
                 if (!addedNodes.has('newspaper')) {
