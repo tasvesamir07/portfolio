@@ -56,7 +56,7 @@ const AdminMemberships = () => {
                 </span>
             </td>
             <td className="py-4 px-6 text-gray-600 font-medium">
-                {item.position || '—'}
+                {decodeHtmlPreview(item.position) || '—'}
             </td>
         </>
     );
