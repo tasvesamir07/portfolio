@@ -73,6 +73,39 @@ router.delete('/cache', authenticateToken, async (req: Request, res: Response) =
     }
 });
 
+router.delete('/cache/clear-all', authenticateToken, async (req: Request, res: Response) => {
+    try {
+        const db = require('../db');
+        const { Redis } = require('@upstash/redis');
+        
+        await db.query('DELETE FROM translations');
+        
+        clearResponseCache();
+        
+        if (process.env.UPSTASH_REDIS_URL && process.env.UPSTASH_REDIS_TOKEN) {
+            const redisClient = new Redis({
+                url: process.env.UPSTASH_REDIS_URL,
+                token: process.env.UPSTASH_REDIS_TOKEN
+            });
+            const keys = await redisClient.keys('*');
+            const keysToDelete = [];
+            for (const key of keys) {
+                if (key.startsWith('response_cache::') || key.startsWith('v7::')) {
+                    keysToDelete.push(key);
+                }
+            }
+            if (keysToDelete.length > 0) {
+                await redisClient.del(...keysToDelete);
+            }
+        }
+        
+        res.json({ success: true, message: 'All cached translations and responses cleared successfully.' });
+    } catch (err: unknown) {
+        logger.error({ err }, '[Auto-Translate Clear-All] Error:', (err as any).message || String(err));
+        errorResponse(res, 500, 'An internal error occurred.', err);
+    }
+});
+
 router.patch('/cache/:id/review', authenticateToken, async (req: Request, res: Response) => {
     const { reviewed } = req.body;
     try {

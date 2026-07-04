@@ -100,6 +100,30 @@ const AdminTranslation = () => {
         window.location.reload();
     };
 
+    const handleDeleteAll = () => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete All Translations',
+            message: 'Are you sure you want to delete ALL translation entries from the database and clear all Redis response caches? The system will rebuild them on next request or when you run TRANSLATE ALL.',
+            type: 'danger',
+            onConfirm: async () => {
+                setLoading(true);
+                try {
+                    await api.delete('/translate/cache/clear-all');
+                    showSiteAlert({ message: 'All cached translations and responses cleared', type: 'success' });
+                    clearTranslationCache();
+                    fetchCache();
+                } catch (err) {
+                    console.error('Error deleting all translations:', err);
+                    showSiteAlert({ message: 'Failed to clear all translations', type: 'error' });
+                } finally {
+                    setLoading(false);
+                }
+                setConfirmModal({ isOpen: false });
+            }
+        });
+    };
+
     const handleToggleReview = async (item: any) => {
         const newReviewed = !item.is_reviewed;
         try {
@@ -130,6 +154,13 @@ const AdminTranslation = () => {
                         >
                             <RefreshCw size={15} />
                             Clear Client Cache
+                        </button>
+                        <button
+                            onClick={handleDeleteAll}
+                            className="flex items-center justify-center gap-2 px-5 py-3 bg-[#8c2626] hover:bg-black text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-sm cursor-pointer whitespace-nowrap h-full"
+                        >
+                            <Trash2 size={15} />
+                            Delete All
                         </button>
                     </div>
                 </div>
