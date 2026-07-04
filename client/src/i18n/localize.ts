@@ -36,6 +36,7 @@ const knownNavLabelKeys = {
     experiences: 'nav.experiences',
     'research interests': 'nav.researchInterests',
     publications: 'nav.publications',
+    conferences: 'nav.conferences',
     gallery: 'nav.gallery',
     contact: 'nav.contact',
     blog: 'nav.blog',

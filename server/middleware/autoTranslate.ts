@@ -7,9 +7,27 @@ const { translateTexts, redis } = require('../translate');
 
 let glossary: Record<string, Record<string, string>> = {};
 try {
-    glossary = require('../glossary.json');
+    const pathsToTry = [
+        path.join(__dirname, 'glossary.json'),
+        path.join(__dirname, '../glossary.json'),
+        path.join(__dirname, '../../glossary.json'),
+        path.join(process.cwd(), 'glossary.json'),
+        path.join(process.cwd(), 'server/glossary.json')
+    ];
+    let foundPath = '';
+    for (const p of pathsToTry) {
+        if (fs.existsSync(p)) {
+            foundPath = p;
+            break;
+        }
+    }
+    if (foundPath) {
+        glossary = JSON.parse(fs.readFileSync(foundPath, 'utf8'));
+    } else {
+        logger.warn('[Auto-Translate Middleware] glossary.json not found in any expected location');
+    }
 } catch (e: unknown) {
-    logger.warn('[Auto-Translate Middleware] Failed to require glossary:', (e as any).message || String(e));
+    logger.warn('[Auto-Translate Middleware] Failed to load glossary:', (e as any).message || String(e));
 }
 
 const applyGlossaryToText = (text: string, language = 'en'): string => {

@@ -33,9 +33,26 @@ const getMaxChunkSize = (sourceLang: string, targetLang: string): number => {
 
 let glossary: Record<string, Record<string, string>> = {};
 try {
-    glossary = require('./glossary.json');
+    const pathsToTry = [
+        path.join(__dirname, 'glossary.json'),
+        path.join(__dirname, '../glossary.json'),
+        path.join(process.cwd(), 'glossary.json'),
+        path.join(process.cwd(), 'server/glossary.json')
+    ];
+    let foundPath = '';
+    for (const p of pathsToTry) {
+        if (fs.existsSync(p)) {
+            foundPath = p;
+            break;
+        }
+    }
+    if (foundPath) {
+        glossary = JSON.parse(fs.readFileSync(foundPath, 'utf8'));
+    } else {
+        logger.warn('[Auto-Translate] glossary.json not found in any expected location');
+    }
 } catch (e: unknown) {
-    logger.warn('[Auto-Translate] Failed to require glossary:', (e instanceof Error ? e.message : String(e)));
+    logger.warn('[Auto-Translate] Failed to load glossary:', (e instanceof Error ? e.message : String(e)));
 }
 
 let translator: any = null;
@@ -391,7 +408,7 @@ const protectGlossary = (text: string, sourceLang: string, targetLang: string): 
 
         if (regex.test(processed)) {
             processed = processed.replace(regex, (match: string) => {
-                const placeholder = `__GLOSS_${counter}__`;
+                const placeholder = `__Z_${counter}__`;
                 map[placeholder] = replacement;
                 counter++;
                 return placeholder;

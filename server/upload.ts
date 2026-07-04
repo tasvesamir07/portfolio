@@ -17,9 +17,10 @@ const upload = multer({
         fileSize: MAX_UPLOAD_SIZE_BYTES
     },
     fileFilter: (req: any, file: any, cb: any) => {
-        const isAllowedMime = /^image\/(jpeg|jpg|png|webp|avif|tiff|gif)$/i.test(file.mimetype || '');
-        if (!isAllowedMime) {
-            return cb(new Error('Only image files (jpeg, png, webp, avif, tiff, gif) are allowed.'), false);
+        const isImage = /^image\/(jpeg|jpg|png|webp|avif|tiff|gif)$/i.test(file.mimetype || '');
+        const isDocument = /^(application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document)$/i.test(file.mimetype || '');
+        if (!isImage && !isDocument) {
+            return cb(new Error('Only image files (jpeg, png, webp, avif, tiff, gif) and documents (pdf, doc, docx) are allowed.'), false);
         }
         cb(null, true);
     }

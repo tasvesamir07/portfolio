@@ -69,7 +69,10 @@ async function prerender() {
         { path: 'research', file: 'research/index.html' },
         { path: 'experiences', file: 'experiences/index.html' },
         { path: 'publications', file: 'publications/index.html' },
-        { path: 'newspaper', file: 'newspaper/index.html' }
+        { path: 'conferences', file: 'conferences/index.html' },
+        { path: 'newspaper', file: 'newspaper/index.html' },
+        { path: 'contact', file: 'contact/index.html' },
+        { path: 'anonymous-message', file: 'anonymous-message/index.html' }
     ];
 
     try {

@@ -17,6 +17,7 @@ const ko = {
         experiences: '경험',
         researchInterests: '연구 관심사',
         publications: '출판물',
+        conferences: '콘퍼런스',
         gallery: '갤러리',
         contact: '문의',
         blog: '블로그',
@@ -120,6 +121,17 @@ const ko = {
     footer: {
         developedWithPassion: '열정을 담아 제작',
         copyright: '© {{year}}, 모든 권리 보유'
+    },
+    conferences: {
+        kicker: '학술 모임',
+        titleMain: '학회',
+        titleAccent: '발표 논문',
+        emptyTitleMain: '아직 등록된',
+        emptyTitleAccent: '학회 일정이',
+        emptyTitleSuffix: '없습니다',
+        authors: '저자',
+        date: '날짜',
+        viewProceedings: '프로시딩 보기'
     },
     anonymous: {
         kicker: '안전 및 개인정보 보호',
