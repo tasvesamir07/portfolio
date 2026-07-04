@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, FileText, Briefcase, GraduationCap, Image as ImageIcon, User, ExternalLink, Share2, Mail, Menu, X, Languages, GripVertical } from 'lucide-react';
+import { LogOut, FileText, Briefcase, GraduationCap, Image as ImageIcon, User, ExternalLink, Share2, Mail, Menu, X, Languages, GripVertical, Users, Award, FolderKanban } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { clearSessionToken, expireSessionAndRedirect, getStoredToken, getTokenExpiryTime, isTokenExpired, SESSION_CHANGED_EVENT } from '../utils/authSession';
 import api from '../api';
@@ -19,6 +19,9 @@ const SIDEBAR_TABS = [
     { id: 'research-interests', label: 'Interests', icon: FileText },
     { id: 'publications', label: 'Publications', icon: ExternalLink },
     { id: 'conferences', label: 'Conferences', icon: ExternalLink },
+    { id: 'team', label: 'Team', icon: Users },
+    { id: 'membership', label: 'Membership', icon: Award },
+    { id: 'projects', label: 'Projects', icon: FolderKanban },
     { id: 'newspaper', label: 'Newspaper', icon: FileText },
     { id: 'blog', label: 'Blog Pages', icon: FileText },
     { id: 'gallery', label: 'Gallery', icon: ImageIcon },
@@ -158,7 +161,7 @@ const AdminLayout = () => {
         const addedNodes = new Set(['home']);
 
         sortedSidebarIds.forEach(id => {
-            if (id === 'academics' || id === 'experiences' || id === 'research-interests') {
+            if (id === 'academics' || id === 'experiences' || id === 'research-interests' || id === 'membership' || id === 'projects') {
                 if (!addedNodes.has('personal-profile')) {
                     addedNodes.add('personal-profile');
                     const dropdownItems: { name: string; path: string }[] = [];
@@ -169,6 +172,10 @@ const AdminLayout = () => {
                             dropdownItems.push({ name: 'Experiences', path: '/experiences' });
                         } else if (subId === 'research-interests') {
                             dropdownItems.push({ name: 'Research Interests', path: '/research-interests' });
+                        } else if (subId === 'membership') {
+                            dropdownItems.push({ name: 'Membership', path: '/membership' });
+                        } else if (subId === 'projects') {
+                            dropdownItems.push({ name: 'Projects', path: '/projects' });
                         }
                     });
                     customNav.push({
@@ -190,6 +197,11 @@ const AdminLayout = () => {
                 if (!addedNodes.has('newspaper')) {
                     addedNodes.add('newspaper');
                     customNav.push({ name: 'Newspaper', path: '/newspaper' });
+                }
+            } else if (id === 'team') {
+                if (!addedNodes.has('team')) {
+                    addedNodes.add('team');
+                    customNav.push({ name: 'Team', path: '/team' });
                 }
             } else if (id === 'blog' || id === 'gallery') {
                 if (!addedNodes.has('blog-menu')) {

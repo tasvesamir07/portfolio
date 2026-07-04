@@ -49,12 +49,15 @@ const DEFAULT_NAV_LINKS = [
         dropdown: [
             { name: 'Education', path: '/academics' },
             { name: 'Experiences', path: '/experiences' },
-            { name: 'Research Interests', path: '/research-interests' }
+            { name: 'Research Interests', path: '/research-interests' },
+            { name: 'Membership', path: '/membership' },
+            { name: 'Projects', path: '/projects' }
         ]
     },
     { name: 'Publications', path: '/publications' },
     { name: 'Conferences', path: '/conferences' },
     { name: 'Newspaper', path: '/newspaper' },
+    { name: 'Team', path: '/team' },
     { name: 'Contact', path: '/contact' },
     { name: 'Anon. Message', path: '/anonymous-message' }
 ];

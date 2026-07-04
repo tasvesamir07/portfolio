@@ -157,6 +157,32 @@ export const socialLinksSchema = z.object({
     color_class: optString
 });
 
+export const teamMemberSchema = z.object({
+    name: optString,
+    photo_url: optString,
+    research_area: optString,
+    phone: optString,
+    email: optString,
+    academic_level: optString,
+    member_type: optString,
+    sort_order: z.number().optional().nullable()
+});
+
+export const membershipSchema = z.object({
+    membership_type: optString,
+    name: optString,
+    url: optString,
+    position: optString,
+    sort_order: z.number().optional().nullable()
+});
+
+export const projectSchema = z.object({
+    title: optString,
+    funding_organization: optString,
+    duration: optString,
+    sort_order: z.number().optional().nullable()
+});
+
 export const trainingsSchema = z.object({
     title: optString,
     topic: optString,

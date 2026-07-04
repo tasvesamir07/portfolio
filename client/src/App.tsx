@@ -18,6 +18,9 @@ const ConferencesPage = lazy(() => import('./pages/ConferencesPage'));
 const NewspaperPage = lazy(() => import('./pages/NewspaperPage'));
 const DynamicPage = lazy(() => import('./pages/DynamicPage'));
 const AnonymousMessagePage = lazy(() => import('./pages/AnonymousMessagePage'));
+const TeamPage = lazy(() => import('./pages/TeamPage'));
+const MembershipPage = lazy(() => import('./pages/MembershipPage'));
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -38,6 +41,9 @@ function App() {
             <Route path="conferences" element={<ConferencesPage />} />
             <Route path="newspaper" element={<NewspaperPage />} />
             <Route path="anonymous-message" element={<AnonymousMessagePage />} />
+            <Route path="team" element={<TeamPage />} />
+            <Route path="membership" element={<MembershipPage />} />
+            <Route path="projects" element={<ProjectsPage />} />
             <Route path="blog/:slug" element={<DynamicPage />} />
             <Route path="gallery" element={<GalleryPage />} />
             <Route path="contact" element={<ContactPage />} />

@@ -11,7 +11,7 @@ const authenticateToken = require('../auth');
 router.put('/:table', authenticateToken, validate(reorderSchema), async (req: Request, res: Response) => {
     const table = req.params.table as string;
     const { orders } = req.body;
-    const allowedTables = ['academics', 'experiences', 'trainings', 'skills', 'publications', 'social_links', 'research_interests', 'gallery', 'gallery_categories', 'conferences', 'newspapers'];
+    const allowedTables = ['academics', 'experiences', 'trainings', 'skills', 'publications', 'social_links', 'research_interests', 'gallery', 'gallery_categories', 'conferences', 'newspapers', 'team_members', 'memberships', 'projects'];
 
     if (!allowedTables.includes(table)) {
         res.status(400).json({ error: 'Invalid table' });

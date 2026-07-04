@@ -25,6 +25,9 @@ const ko = {
         toggleMenu: '메뉴 열기',
         newspaper: '신문',
         anonymousMessage: '익명 메시지',
+        membership: '회원',
+        projects: '프로젝트',
+        team: '팀',
         more: '더 보기'
     },
     hero: {
@@ -132,6 +135,38 @@ const ko = {
         authors: '저자',
         date: '날짜',
         viewProceedings: '프로시딩 보기'
+    },
+    team: {
+        kicker: '우리 팀',
+        titleMain: '우리의',
+        titleAccent: '팀',
+        emptyTitleMain: '아직 등록된',
+        emptyTitleAccent: '팀원이',
+        emptyTitleSuffix: '없습니다',
+        researchers: '연구원',
+        students: '학생'
+    },
+    membership: {
+        kicker: '소속',
+        titleMain: '전문',
+        titleAccent: '회원',
+        emptyTitleMain: '아직 등록된',
+        emptyTitleAccent: '회원이',
+        emptyTitleSuffix: '없습니다',
+        societyMembers: '학회 회원',
+        editorialBoard: '저널 편집위원',
+        fundingOrganization: '기관',
+        duration: '기간'
+    },
+    projects: {
+        kicker: '현재 연구',
+        titleMain: '연구',
+        titleAccent: '프로젝트',
+        emptyTitleMain: '아직 등록된',
+        emptyTitleAccent: '프로젝트가',
+        emptyTitleSuffix: '없습니다',
+        fundingOrganization: '지원 기관',
+        duration: '연구 기간'
     },
     anonymous: {
         kicker: '안전 및 개인정보 보호',

@@ -219,6 +219,60 @@ CREATE INDEX IF NOT EXISTS idx_anonymous_messages_created_at ON anonymous_messag
 CREATE INDEX IF NOT EXISTS idx_users_lower_username ON users(LOWER(username));
 CREATE INDEX IF NOT EXISTS idx_users_lower_email ON users(LOWER(email));
 
+-- 18. Team Members Table
+CREATE TABLE IF NOT EXISTS team_members (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT '',
+    name_bn TEXT DEFAULT '',
+    name_ko TEXT DEFAULT '',
+    photo_url TEXT DEFAULT '',
+    research_area TEXT DEFAULT '',
+    research_area_bn TEXT DEFAULT '',
+    research_area_ko TEXT DEFAULT '',
+    phone TEXT DEFAULT '',
+    email TEXT DEFAULT '',
+    academic_level TEXT DEFAULT '',
+    academic_level_bn TEXT DEFAULT '',
+    academic_level_ko TEXT DEFAULT '',
+    member_type TEXT DEFAULT '',
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 19. Memberships Table
+CREATE TABLE IF NOT EXISTS memberships (
+    id SERIAL PRIMARY KEY,
+    membership_type TEXT NOT NULL DEFAULT '',
+    name TEXT NOT NULL DEFAULT '',
+    name_bn TEXT DEFAULT '',
+    name_ko TEXT DEFAULT '',
+    url TEXT DEFAULT '',
+    position TEXT DEFAULT '',
+    position_bn TEXT DEFAULT '',
+    position_ko TEXT DEFAULT '',
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 20. Projects Table
+CREATE TABLE IF NOT EXISTS projects (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT '',
+    title_bn TEXT DEFAULT '',
+    title_ko TEXT DEFAULT '',
+    funding_organization TEXT DEFAULT '',
+    funding_organization_bn TEXT DEFAULT '',
+    funding_organization_ko TEXT DEFAULT '',
+    duration TEXT DEFAULT '',
+    duration_bn TEXT DEFAULT '',
+    duration_ko TEXT DEFAULT '',
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- --- Seed Admin User Credentials ---
 -- Username: admin
 -- Email: tasvesamir15471@gmail.com

@@ -25,6 +25,9 @@ const en = {
         toggleMenu: 'Toggle menu',
         newspaper: 'Newspaper',
         anonymousMessage: 'Anon. Message',
+        membership: 'Membership',
+        projects: 'Projects',
+        team: 'Team',
         more: 'More'
     },
     hero: {
@@ -132,6 +135,38 @@ const en = {
         authors: 'Authors',
         date: 'Date',
         viewProceedings: 'View Proceedings'
+    },
+    team: {
+        kicker: 'Our People',
+        titleMain: 'Our',
+        titleAccent: 'Team',
+        emptyTitleMain: 'No',
+        emptyTitleAccent: 'Team Members',
+        emptyTitleSuffix: 'Yet',
+        researchers: 'Researchers',
+        students: 'Students'
+    },
+    membership: {
+        kicker: 'Affiliations',
+        titleMain: 'Professional',
+        titleAccent: 'Memberships',
+        emptyTitleMain: 'No',
+        emptyTitleAccent: 'Memberships',
+        emptyTitleSuffix: 'Yet',
+        societyMembers: 'Society Memberships',
+        editorialBoard: 'Journal Editorial Board',
+        fundingOrganization: 'Funding Org',
+        duration: 'Duration'
+    },
+    projects: {
+        kicker: 'Current Work',
+        titleMain: 'Research',
+        titleAccent: 'Projects',
+        emptyTitleMain: 'No',
+        emptyTitleAccent: 'Projects',
+        emptyTitleSuffix: 'Yet',
+        fundingOrganization: 'Funding Organization',
+        duration: 'Duration'
     },
     anonymous: {
         kicker: 'Secure & Private',

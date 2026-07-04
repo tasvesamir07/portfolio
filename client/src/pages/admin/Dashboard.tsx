@@ -11,6 +11,9 @@ const AdminSkills = lazy(() => import('./tabs/AdminSkills'));
 const AdminResearchInterests = lazy(() => import('./tabs/AdminResearchInterests'));
 const AdminPublications = lazy(() => import('./tabs/AdminPublications'));
 const AdminConferences = lazy(() => import('./tabs/AdminConferences'));
+const AdminTeamMembers = lazy(() => import('./tabs/AdminTeamMembers'));
+const AdminMemberships = lazy(() => import('./tabs/AdminMemberships'));
+const AdminProjects = lazy(() => import('./tabs/AdminProjects'));
 const AdminBlog = lazy(() => import('./tabs/AdminBlog'));
 const AdminGallery = lazy(() => import('./tabs/AdminGallery'));
 const AdminMessages = lazy(() => import('./tabs/AdminMessages'));
@@ -22,7 +25,7 @@ const AdminAnonymousMessages = lazy(() => import('./tabs/AdminAnonymousMessages'
 const Dashboard = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const VALID_TABS = ['about', 'profile', 'academics', 'experiences', 'trainings', 'skills', 'research-interests', 'publications', 'conferences', 'blog', 'gallery', 'messages', 'anonymous-messages', 'social', 'newspaper', 'translations'];
+    const VALID_TABS = ['about', 'profile', 'academics', 'experiences', 'trainings', 'skills', 'research-interests', 'publications', 'conferences', 'team', 'membership', 'projects', 'blog', 'gallery', 'messages', 'anonymous-messages', 'social', 'newspaper', 'translations'];
     const rawTab = searchParams.get('tab') || 'about';
     const activeTab = VALID_TABS.includes(rawTab) ? rawTab : 'about';
 
@@ -60,6 +63,12 @@ const Dashboard = () => {
                 return <AdminPublications />;
             case 'conferences':
                 return <AdminConferences />;
+            case 'team':
+                return <AdminTeamMembers />;
+            case 'membership':
+                return <AdminMemberships />;
+            case 'projects':
+                return <AdminProjects />;
             case 'blog':
                 return <AdminBlog />;
             case 'gallery':

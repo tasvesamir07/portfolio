@@ -25,6 +25,9 @@ const bn = {
         toggleMenu: 'মেনু খুলুন',
         newspaper: 'পত্রিকা',
         anonymousMessage: 'বেনামী বার্তা',
+        membership: 'সদস্যপদ',
+        projects: 'প্রকল্প',
+        team: 'টিম',
         more: 'আরও'
     },
     hero: {
@@ -132,6 +135,38 @@ const bn = {
         authors: 'লেখকবৃন্দ',
         date: 'তারিখ',
         viewProceedings: 'কার্যবিবরণী দেখুন'
+    },
+    team: {
+        kicker: 'আমাদের দল',
+        titleMain: 'আমাদের',
+        titleAccent: 'দল',
+        emptyTitleMain: 'এখনও কোনো',
+        emptyTitleAccent: 'দলের সদস্য',
+        emptyTitleSuffix: 'নেই',
+        researchers: 'গবেষক',
+        students: 'শিক্ষার্থী'
+    },
+    membership: {
+        kicker: 'অধিভুক্তি',
+        titleMain: 'পেশাগত',
+        titleAccent: 'সদস্যপদ',
+        emptyTitleMain: 'এখনও কোনো',
+        emptyTitleAccent: 'সদস্যপদ',
+        emptyTitleSuffix: 'নেই',
+        societyMembers: 'সোসাইটি সদস্যপদ',
+        editorialBoard: 'জার্নাল সম্পাদকীয় বোর্ড',
+        fundingOrganization: 'তহবিল',
+        duration: 'মেয়াদ'
+    },
+    projects: {
+        kicker: 'চলমান কাজ',
+        titleMain: 'গবেষণা',
+        titleAccent: 'প্রকল্প',
+        emptyTitleMain: 'এখনও কোনো',
+        emptyTitleAccent: 'প্রকল্প',
+        emptyTitleSuffix: 'নেই',
+        fundingOrganization: 'তহবিল প্রদানকারী সংস্থা',
+        duration: 'মেয়াদকাল'
     },
     anonymous: {
         kicker: 'নিরাপদ ও গোপনীয়',
