@@ -7,6 +7,7 @@ import api from '../api';
 import { useI18n } from '../i18n/I18nContext';
 import { getLocalizedField } from '../i18n/localize';
 import { getNoDataLabel } from '../utils/publicSectionState';
+import { RenderInlineHtml } from '../utils/htmlRenderer';
 import PublicationsSkeleton from '../pages/skeletons/PublicationsSkeleton';
 
 const Team = () => {
@@ -57,6 +58,7 @@ const Team = () => {
                                     initial: { opacity: 0, y: 30 },
                                     whileInView: { opacity: 1, y: 0 },
                                     viewport: { once: true },
+                                    whileHover: { scale: 1.02, y: -6 },
                                     transition: { duration: 0.5 }
                                 } : {})}
                                 className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-center"
@@ -72,15 +74,15 @@ const Team = () => {
                                         <span className="text-3xl font-bold text-gray-400">{name?.charAt(0) || '?'}</span>
                                     </div>
                                 )}
-                                <h3 className="text-lg font-bold text-gray-900 mb-1">{name}</h3>
+                                <h3 className="text-lg font-bold text-gray-900 mb-1"><RenderInlineHtml html={name} /></h3>
                                 {academicLevel && (
                                     <p className="text-sm text-gray-500 mb-3 flex items-center justify-center gap-1">
-                                        <GraduationCap size={14} /> {academicLevel}
+                                        <GraduationCap size={14} /> <RenderInlineHtml html={academicLevel} />
                                     </p>
                                 )}
                                 {researchArea && (
                                     <p className="text-sm text-gray-600 mb-3 flex items-center justify-center gap-1">
-                                        <FlaskConical size={14} className="text-brand-gold" /> {researchArea}
+                                        <FlaskConical size={14} className="text-brand-gold" /> <RenderInlineHtml html={researchArea} />
                                     </p>
                                 )}
                                 <div className="flex justify-center gap-3 text-xs">
