@@ -141,7 +141,7 @@ const ko = {
         titleMain: '우리의',
         titleAccent: '팀',
         emptyTitleMain: '아직 등록된',
-        emptyTitleAccent: '팀원이',
+        emptyTitleAccent: '팀원이 없습니다',
         emptyTitleSuffix: '없습니다',
         researchers: '연구원',
         students: '학생'
@@ -151,7 +151,7 @@ const ko = {
         titleMain: '전문',
         titleAccent: '회원',
         emptyTitleMain: '아직 등록된',
-        emptyTitleAccent: '회원이',
+        emptyTitleAccent: '회원이 없습니다',
         emptyTitleSuffix: '없습니다',
         societyMembers: '학회 회원',
         editorialBoard: '저널 편집위원',
@@ -163,7 +163,7 @@ const ko = {
         titleMain: '연구',
         titleAccent: '프로젝트',
         emptyTitleMain: '아직 등록된',
-        emptyTitleAccent: '프로젝트가',
+        emptyTitleAccent: '프로젝트가 없습니다',
         emptyTitleSuffix: '없습니다',
         fundingOrganization: '지원 기관',
         duration: '연구 기간'
