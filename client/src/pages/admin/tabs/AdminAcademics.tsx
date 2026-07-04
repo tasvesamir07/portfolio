@@ -79,7 +79,7 @@ const AdminAcademics = () => {
 
     const getAdminDetailsPreview = (item: any = {}) => {
         const structuredPreview = buildStructuredPreview(item.details_json || '');
-        return structuredPreview || item.details || item.degree || 'No details';
+        return structuredPreview || item.degree || 'No details';
     };
 
     const columns = [

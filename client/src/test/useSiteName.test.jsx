@@ -39,9 +39,9 @@ describe('useSiteName and useSiteIdentity Hooks', () => {
             about: {
                 name: 'Samir <b>Tasve</b>',
                 site_name: 'My <i>Portfolio</i>',
-                bio_short: 'A short bio&nbsp;here',
+                sub_bio: 'A short bio&nbsp;here',
                 logo_url: 'https://logo.png',
-                author_names: 'Samir &amp; team'
+                name: 'Samir &amp; team'
             }
         };
         api.get.mockResolvedValueOnce({ data: mockData });
@@ -88,9 +88,9 @@ describe('useSiteName and useSiteIdentity Hooks', () => {
             about: {
                 name: 'Samir <b>Tasve</b>',
                 site_name: 'My <i>Portfolio</i>',
-                bio_short: 'A short bio&nbsp;here',
+                sub_bio: 'A short bio&nbsp;here',
                 logo_url: 'https://logo.png',
-                author_names: 'Samir'
+                name: 'Samir'
             }
         };
         api.get.mockResolvedValue({ data: mockData });
@@ -105,7 +105,7 @@ describe('useSiteName and useSiteIdentity Hooks', () => {
         expect(result.current.siteName).toBe('My Portfolio');
         expect(result.current.description).toBe('A short bio here');
         expect(result.current.logoUrl).toBe('https://logo.png');
-        expect(result.current.authorNames).toBe('Samir');
+        expect(result.current.authorNames).toBe('Samir Tasve');
     });
 
     it('should provide default fallbacks for useSiteIdentity when about fields are missing', async () => {

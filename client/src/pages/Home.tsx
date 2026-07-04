@@ -16,7 +16,7 @@ const Home = () => {
         <div className="bg-[#fcfaf7] min-h-screen">
             <SEO 
                 title={aboutData ? `${aboutData.name || name} | ${aboutData.site_name || siteName}` : `${name} | ${siteName}`}
-                description={aboutData?.bio_short || `${name} - ${siteName}`}
+                description={aboutData?.sub_bio || aboutData?.bio_text || `${name} - ${siteName}`}
                 ogImage={aboutData?.logo_url}
             />
             <Hero data={aboutData} socialLinks={socialLinks} />

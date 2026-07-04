@@ -85,7 +85,7 @@ const AdminExperiences = () => {
 
     const getAdminDetailsPreview = (item: any = {}) => {
         const structuredPreview = buildStructuredPreview(item.details_json || '');
-        return structuredPreview || item.details || item.position || item.description || 'No details';
+        return structuredPreview || item.position || item.description || 'No details';
     };
 
     const columns = [

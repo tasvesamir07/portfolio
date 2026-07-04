@@ -47,9 +47,9 @@ export const useSiteIdentity = (): SiteIdentity => {
   return {
     name: stripHtml(String(about.name || 'Portfolio')),
     siteName: stripHtml(String(about.site_name || about.name || 'Portfolio')),
-    description: stripHtml(String(about.bio_short || '')),
+    description: stripHtml(String(about.sub_bio || about.bio_text || '')),
     logoUrl: String(about.logo_url || ''),
-    authorNames: stripHtml(String(about.author_names || about.name || 'Portfolio')),
+    authorNames: stripHtml(String(about.name || 'Portfolio')),
     isLoading
   };
 };

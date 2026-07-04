@@ -86,7 +86,7 @@ const AdminTrainings = () => {
 
     const getAdminDetailsPreview = (item: any = {}) => {
         const structuredPreview = buildStructuredPreview(item.details_json || '');
-        return structuredPreview || item.details || item.topic || 'No details';
+        return structuredPreview || item.topic || 'No details';
     };
 
     const columns = [
