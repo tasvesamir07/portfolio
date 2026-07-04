@@ -3,7 +3,8 @@
   "buildCommand": "cd server && npx tsc",
   "functions": {
     "api/index.js": {
-      "includeFiles": "server/migrations/*.sql"
+      "includeFiles": "server/migrations/*.sql",
+      "maxDuration": 30
     }
   },
   "builds": [
