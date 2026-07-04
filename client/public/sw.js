@@ -4,7 +4,7 @@ if (workbox) {
   // Force development logs off in production
   workbox.setConfig({ debug: false });
 
-  const CACHE_VERSION = '20260705';
+  const CACHE_VERSION = '20260705-2';
 
   // Precache basic layouts (truly static, unhashed assets)
   workbox.precaching.precacheAndRoute([

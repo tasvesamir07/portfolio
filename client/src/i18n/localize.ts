@@ -42,6 +42,9 @@ const knownNavLabelKeys = {
     blog: 'nav.blog',
     newspaper: 'nav.newspaper',
     'anon. message': 'nav.anonymousMessage',
+    membership: 'nav.membership',
+    projects: 'nav.projects',
+    team: 'nav.team',
     more: 'nav.more'
 };
 

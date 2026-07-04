@@ -89,7 +89,9 @@ const SKIP_TRANSLATION_KEYS = new Set([
     'token',
     'password_hash',
     'custom_nav',
-    'custom_sidebar_order'
+    'custom_sidebar_order',
+    'member_type',
+    'membership_type'
 ]);
 
 const HTML_REGEX = /<[a-z][\s\S]*>/i;
