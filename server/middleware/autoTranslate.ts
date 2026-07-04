@@ -516,19 +516,10 @@ const localizeDataObject = (data: unknown, language = 'en'): unknown => {
             }
         });
 
-        Object.keys(result).forEach(key => {
-            if (typeof result[key] === 'string' && (result[key] as string).trim()) {
-                if (key !== 'details_json' && !key.endsWith('_url') && !SKIP_TRANSLATION_KEYS.has(key)) {
-                    result[key] = applyGlossaryToText(result[key] as string, language);
-                }
-            }
-        });
-
+        // Glossary application here is removed because it corrupts original database strings
+        // before the autoTranslate middleware can look up their full translations in the database.
+        // The glossary is already correctly applied during the translateTexts pipeline.
         return result;
-    }
-
-    if (typeof data === 'string') {
-        return applyGlossaryToText(data, language);
     }
 
     return data;
