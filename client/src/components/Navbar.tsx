@@ -169,7 +169,7 @@ const Navbar = () => {
 
         if (moreItems.length > 0) {
             mainItems.push({
-                name: t('nav.more'),
+                name: t('nav.contact'),
                 dropdown: moreItems
             });
         }
