@@ -423,3 +423,6 @@ if (process.env.SENTRY_DSN) {
 }
 
 export = app;
+
+// Trigger Vercel rebuild to purge CDN cache and restart function instance
+
