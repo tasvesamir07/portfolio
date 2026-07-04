@@ -4,7 +4,7 @@ if (workbox) {
   // Force development logs off in production
   workbox.setConfig({ debug: false });
 
-  const CACHE_VERSION = '20260622';
+  const CACHE_VERSION = '20260705';
 
   // Precache basic layouts (truly static, unhashed assets)
   workbox.precaching.precacheAndRoute([
@@ -39,10 +39,8 @@ if (workbox) {
       caches.keys().then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName.startsWith('portfolio-images-')) {
-              console.log('[Service Worker] Deleting stale cache:', cacheName);
-              return caches.delete(cacheName);
-            }
+            console.log('[Service Worker] Deleting cache:', cacheName);
+            return caches.delete(cacheName);
           })
         );
       }).then(() => self.clients.claim())
