@@ -11,8 +11,42 @@ const { localizeDataObject } = require('../middleware/autoTranslate');
 
 const LANGUAGE_HEADER = 'x-translate-language';
 
+let tableEnsured = false;
+
+const ensureTable = async () => {
+    if (tableEnsured) return;
+    try {
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS conferences (
+                id SERIAL PRIMARY KEY,
+                title TEXT NOT NULL DEFAULT '',
+                title_bn TEXT DEFAULT '',
+                title_ko TEXT DEFAULT '',
+                main_author TEXT DEFAULT '',
+                main_author_bn TEXT DEFAULT '',
+                main_author_ko TEXT DEFAULT '',
+                authors TEXT DEFAULT '',
+                authors_bn TEXT DEFAULT '',
+                authors_ko TEXT DEFAULT '',
+                conference_date TEXT DEFAULT '',
+                description TEXT DEFAULT '',
+                description_bn TEXT DEFAULT '',
+                description_ko TEXT DEFAULT '',
+                link_url TEXT DEFAULT '',
+                sort_order INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        tableEnsured = true;
+    } catch (err: unknown) {
+        logger.error({ err }, 'Failed to ensure conferences table');
+    }
+};
+
 router.get('/', async (req: Request, res: Response) => {
     try {
+        await ensureTable();
         const limit = Number(req.query.limit) || 100;
         const offset = Number(req.query.offset) || 0;
         const result = await db.query('SELECT * FROM conferences ORDER BY sort_order ASC, created_at DESC LIMIT $1 OFFSET $2', [limit, offset]);
@@ -38,6 +72,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.post('/', authenticateToken, validate(conferencesSchema), async (req: Request, res: Response) => {
     const { title, main_author, authors, conference_date, description, link_url, sort_order } = req.body;
     try {
+        await ensureTable();
         const result = await db.query(
             'INSERT INTO conferences (title, main_author, authors, conference_date, description, link_url, sort_order) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
             [title||'', main_author||'', authors||'', conference_date||'', description||'', link_url||'', sort_order != null ? sort_order : 0]
@@ -53,6 +88,7 @@ router.post('/', authenticateToken, validate(conferencesSchema), async (req: Req
 router.put('/:id', authenticateToken, validate(conferencesSchema), async (req: Request, res: Response) => {
     const { title, main_author, authors, conference_date, description, link_url, sort_order } = req.body;
     try {
+        await ensureTable();
         const result = await db.query(
             'UPDATE conferences SET title=$1,main_author=$2,authors=$3,conference_date=$4,description=$5,link_url=$6,sort_order=$7 WHERE id=$8 RETURNING *',
             [title||'', main_author||'', authors||'', conference_date||'', description||'', link_url||'', sort_order != null ? sort_order : 0, req.params.id]
@@ -67,6 +103,7 @@ router.put('/:id', authenticateToken, validate(conferencesSchema), async (req: R
 
 router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
     try {
+        await ensureTable();
         await db.query('DELETE FROM conferences WHERE id=$1', [req.params.id]);
         res.sendStatus(204);
     } catch (err: unknown) {
