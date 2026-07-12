@@ -1,0 +1,2 @@
+ALTER TABLE publications 
+ADD COLUMN IF NOT EXISTS quartile TEXT DEFAULT '';

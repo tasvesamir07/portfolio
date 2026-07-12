@@ -36,11 +36,11 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 router.post('/', authenticateToken, validate(publicationsSchema), async (req: Request, res: Response) => {
-    const { title, thumbnail_url, journal_name, pub_year, authors, main_author, volume, issue, introduction, methods, link_url, file_url, details_json, doi_url, journal_url, doi, pages, impact_factor } = req.body;
+    const { title, thumbnail_url, journal_name, pub_year, authors, main_author, volume, issue, introduction, methods, link_url, file_url, details_json, doi_url, journal_url, doi, pages, impact_factor, quartile } = req.body;
     try {
         const result = await db.query(
-            'INSERT INTO publications (title,thumbnail_url,journal_name,pub_year,authors,main_author,volume,issue,introduction,methods,link_url,file_url,details_json,doi_url,journal_url,doi,pages,impact_factor) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *',
-            [title||'', thumbnail_url||'', journal_name||'', pub_year||'', authors||'', main_author||'', volume||'', issue||'', introduction||'', methods||'', link_url||'', file_url||'', details_json||'', doi_url||'', journal_url||'', doi||'', pages||'', impact_factor||'']
+            'INSERT INTO publications (title,thumbnail_url,journal_name,pub_year,authors,main_author,volume,issue,introduction,methods,link_url,file_url,details_json,doi_url,journal_url,doi,pages,impact_factor,quartile) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) RETURNING *',
+            [title||'', thumbnail_url||'', journal_name||'', pub_year||'', authors||'', main_author||'', volume||'', issue||'', introduction||'', methods||'', link_url||'', file_url||'', details_json||'', doi_url||'', journal_url||'', doi||'', pages||'', impact_factor||'', quartile||'']
         );
         const { translateOnSave } = require('../utils/translateOnSave');
         translateOnSave('publications', req.body).catch((err: any) => logger.error({ err }, 'Translation background error'));
@@ -51,11 +51,11 @@ router.post('/', authenticateToken, validate(publicationsSchema), async (req: Re
 });
 
 router.put('/:id', authenticateToken, validate(publicationsSchema), async (req: Request, res: Response) => {
-    const { title, thumbnail_url, journal_name, pub_year, authors, main_author, volume, issue, introduction, methods, link_url, file_url, details_json, doi_url, journal_url, doi, pages, impact_factor } = req.body;
+    const { title, thumbnail_url, journal_name, pub_year, authors, main_author, volume, issue, introduction, methods, link_url, file_url, details_json, doi_url, journal_url, doi, pages, impact_factor, quartile } = req.body;
     try {
         const result = await db.query(
-            'UPDATE publications SET title=$1,thumbnail_url=$2,journal_name=$3,pub_year=$4,authors=$5,main_author=$6,volume=$7,issue=$8,introduction=$9,methods=$10,link_url=$11,file_url=$12,details_json=$13,doi_url=$14,journal_url=$15,doi=$16,pages=$17,impact_factor=$18 WHERE id=$19 RETURNING *',
-            [title||'',thumbnail_url||'',journal_name||'',pub_year||'',authors||'',main_author||'',volume||'',issue||'',introduction||'',methods||'',link_url||'',file_url||'',details_json||'',doi_url||'',journal_url||'',doi||'',pages||'',impact_factor||'', req.params.id]
+            'UPDATE publications SET title=$1,thumbnail_url=$2,journal_name=$3,pub_year=$4,authors=$5,main_author=$6,volume=$7,issue=$8,introduction=$9,methods=$10,link_url=$11,file_url=$12,details_json=$13,doi_url=$14,journal_url=$15,doi=$16,pages=$17,impact_factor=$18,quartile=$19 WHERE id=$20 RETURNING *',
+            [title||'',thumbnail_url||'',journal_name||'',pub_year||'',authors||'',main_author||'',volume||'',issue||'',introduction||'',methods||'',link_url||'',file_url||'',details_json||'',doi_url||'',journal_url||'',doi||'',pages||'',impact_factor||'',quartile||'', req.params.id]
         );
         const { translateOnSave } = require('../utils/translateOnSave');
         translateOnSave('publications', req.body).catch((err: any) => logger.error({ err }, 'Translation background error'));

@@ -73,6 +73,7 @@ const Publications = () => {
                         const issue = item.issue;
                         const pages = item.pages;
                         const impactFactor = item.impact_factor;
+                        const quartile = item.quartile;
                         const introduction = getLocalizedField(item, 'introduction', language, item.introduction);
                         const methods = getLocalizedField(item, 'methods', language, item.methods);
  
@@ -159,7 +160,7 @@ const Publications = () => {
                                                         )}
                                                     </p>
                                                 )}
-                                                {(!isFieldEmpty(journalName) || !isFieldEmpty(item.pub_year) || !isFieldEmpty(volume) || !isFieldEmpty(issue) || !isFieldEmpty(pages) || !isFieldEmpty(impactFactor)) && (
+                                                {(!isFieldEmpty(journalName) || !isFieldEmpty(item.pub_year) || !isFieldEmpty(volume) || !isFieldEmpty(issue) || !isFieldEmpty(pages) || !isFieldEmpty(impactFactor) || !isFieldEmpty(quartile)) && (
                                                     <p className="leading-relaxed text-xs sm:text-sm text-gray-600">
                                                         {!isFieldEmpty(journalName) && (
                                                             <>
@@ -199,27 +200,35 @@ const Publications = () => {
                                                                 )}
                                                             </>
                                                         )}
-                                                        {!isFieldEmpty(impactFactor) && (
+                                                        {(!isFieldEmpty(quartile) || !isFieldEmpty(impactFactor)) && (
                                                             <>
                                                                 {(() => {
-                                                                    const cleanIF = impactFactor.trim();
-                                                                    const hasLabelOrBrackets = cleanIF.toLowerCase().includes('if:') || 
-                                                                                               cleanIF.startsWith('[') || 
-                                                                                               /q[1-4]/i.test(cleanIF);
-                                                                    if (hasLabelOrBrackets) {
-                                                                        const formatted = cleanIF.startsWith('[') && cleanIF.endsWith(']') ? cleanIF : `[${cleanIF}]`;
-                                                                        return (
-                                                                            <span className="font-semibold text-brand-gold ml-1.5 [&_p]:inline [&_div]:inline">
-                                                                                {' '}<RenderInlineHtml html={localizeNumbers(formatted, language)} />
-                                                                            </span>
-                                                                        );
-                                                                    } else {
-                                                                        return (
-                                                                            <span className="font-semibold text-brand-gold ml-1.5 [&_p]:inline [&_div]:inline">
-                                                                                {' '}[IF: <RenderInlineHtml html={localizeNumbers(cleanIF, language)} />]
-                                                                            </span>
-                                                                        );
+                                                                    const qStr = !isFieldEmpty(quartile) ? quartile.trim() : '';
+                                                                    const ifStr = !isFieldEmpty(impactFactor) ? impactFactor.trim() : '';
+                                                                    
+                                                                    let bracketContent = '';
+                                                                    if (qStr && ifStr) {
+                                                                        bracketContent = `${qStr}; IF: ${ifStr}`;
+                                                                    } else if (qStr) {
+                                                                        bracketContent = qStr;
+                                                                    } else if (ifStr) {
+                                                                        if (ifStr.toLowerCase().includes('if:')) {
+                                                                            bracketContent = ifStr;
+                                                                        } else {
+                                                                            bracketContent = `IF: ${ifStr}`;
+                                                                        }
                                                                     }
+                                                                    
+                                                                    let formatted = bracketContent;
+                                                                    if (!formatted.startsWith('[') && !formatted.endsWith(']')) {
+                                                                        formatted = `[${formatted}]`;
+                                                                    }
+                                                                    
+                                                                    return (
+                                                                        <span className="font-semibold text-brand-gold ml-1.5 [&_p]:inline [&_div]:inline">
+                                                                            {' '}<RenderInlineHtml html={localizeNumbers(formatted, language)} />
+                                                                        </span>
+                                                                    );
                                                                 })()}
                                                             </>
                                                         )}

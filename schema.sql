@@ -126,7 +126,8 @@ CREATE TABLE IF NOT EXISTS publications (
     journal_url TEXT DEFAULT '',
     doi TEXT DEFAULT '',
     pages TEXT DEFAULT '',
-    impact_factor TEXT DEFAULT ''
+    impact_factor TEXT DEFAULT '',
+    quartile TEXT DEFAULT ''
 );
 
 -- 11. Gallery Categories Table

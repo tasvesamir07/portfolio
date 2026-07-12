@@ -98,6 +98,7 @@ const AdminPublications = () => {
             issue: formData.issue || '',
             pages: formData.pages || '',
             impact_factor: formData.impact_factor || '',
+            quartile: formData.quartile || '',
             link_url: formData.link_url || '',
             file_url: formData.file_url || '',
             introduction: formData.introduction || '',
@@ -163,7 +164,10 @@ const AdminPublications = () => {
                     <input type="text" className="input" value={formData.pages || ''} onChange={e => setFormData({...formData, pages: e.target.value})} placeholder="e.g. 123-130" />
                 </Field>
                 <Field label="Impact Factor (IF)">
-                    <input type="text" className="input" value={formData.impact_factor || ''} onChange={e => setFormData({...formData, impact_factor: e.target.value})} placeholder="e.g. 4.5" />
+                    <input type="text" className="input" value={formData.impact_factor || ''} onChange={e => setFormData({...formData, impact_factor: e.target.value})} placeholder="e.g. 5.3" />
+                </Field>
+                <Field label="Journal Quartile (e.g. Q1)">
+                    <input type="text" className="input" value={formData.quartile || ''} onChange={e => setFormData({...formData, quartile: e.target.value})} placeholder="e.g. Q1" />
                 </Field>
             </div>
 

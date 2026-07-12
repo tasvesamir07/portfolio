@@ -112,6 +112,7 @@ export interface PublicationRow {
   doi: string | null;
   pages: string | null;
   impact_factor: string | null;
+  quartile: string | null;
   details_json: string | null;
   sort_order: number;
   created_at: string;
