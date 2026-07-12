@@ -185,7 +185,7 @@ const Publications = () => {
                                                             <>
                                                                 {(!isFieldEmpty(journalName) || !isFieldEmpty(item.pub_year)) && '; '}
                                                                 {!isFieldEmpty(volume) && (
-                                                                    <span className="font-bold text-gray-900 [&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(volume, language)} /></span>
+                                                                    <span className="text-gray-600 [&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(volume, language)} /></span>
                                                                 )}
                                                                 {!isFieldEmpty(issue) && (
                                                                     <span className="text-gray-600 [&_p]:inline [&_div]:inline">
