@@ -141,7 +141,7 @@ const Publications = () => {
                                         )}
                                         <div className="text-left flex-grow flex flex-col justify-center">
                                             <h3 className="text-xl sm:text-2xl font-black text-gray-900 leading-snug mb-4 flex items-start gap-2.5">
-                                                <span className="text-[#8c2626] font-bold text-base sm:text-lg select-none shrink-0 pt-1">
+                                                <span className="text-[#8c2626] font-bold text-xs sm:text-sm select-none shrink-0 pt-1">
                                                     [{localizeNumbers(pubNumber, language)}]
                                                 </span>
                                                 <span className="flex-1">
