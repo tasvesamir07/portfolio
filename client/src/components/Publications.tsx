@@ -108,56 +108,6 @@ const Publications = () => {
                             detailItems = legacyItems;
                         }
  
-                        const detailParts: React.ReactNode[] = [];
-                        if (!isFieldEmpty(item.pub_year)) {
-                            detailParts.push(
-                                <span key="year" className="inline">
-                                    <span className="font-bold text-gray-900">{t('publications.publicationYear') || 'Year'}:</span>{' '}
-                                    <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(item.pub_year, language)} /></span>
-                                </span>
-                            );
-                        }
-                        if (!isFieldEmpty(volume)) {
-                            detailParts.push(
-                                <span key="volume" className="inline">
-                                    <span className="font-bold text-gray-900">{t('publications.volume') || 'Volume'}:</span>{' '}
-                                    <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(volume, language)} /></span>
-                                </span>
-                            );
-                        }
-                        if (!isFieldEmpty(issue)) {
-                            detailParts.push(
-                                <span key="issue" className="inline">
-                                    <span className="font-bold text-gray-900">{t('publications.issue') || 'Issue'}:</span>{' '}
-                                    <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(issue, language)} /></span>
-                                </span>
-                            );
-                        }
-                        if (!isFieldEmpty(pages)) {
-                            detailParts.push(
-                                <span key="pages" className="inline">
-                                    <span className="font-bold text-gray-900">{t('publications.pages') || 'Page'}:</span>{' '}
-                                    <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(pages, language)} /></span>
-                                </span>
-                            );
-                        }
-                        if (!isFieldEmpty(impactFactor)) {
-                            detailParts.push(
-                                <span key="impactFactor" className="inline">
-                                    <span className="font-bold text-gray-900">{t('publications.impactFactor') || 'IF'}:</span>{' '}
-                                    <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(impactFactor, language)} /></span>
-                                </span>
-                            );
-                        }
-
-                        const renderedDetails: React.ReactNode[] = [];
-                        detailParts.forEach((part, index) => {
-                            if (index > 0) {
-                                renderedDetails.push(', ');
-                            }
-                            renderedDetails.push(part);
-                        });
- 
                         return (
                             <motion.article
                                 key={item.id}
@@ -209,23 +159,70 @@ const Publications = () => {
                                                         )}
                                                     </p>
                                                 )}
-                                                {(!isFieldEmpty(journalName) || detailParts.length > 0) && (
-                                                    <p className="leading-relaxed">
+                                                {(!isFieldEmpty(journalName) || !isFieldEmpty(item.pub_year) || !isFieldEmpty(volume) || !isFieldEmpty(issue) || !isFieldEmpty(pages) || !isFieldEmpty(impactFactor)) && (
+                                                    <p className="leading-relaxed text-xs sm:text-sm text-gray-600">
                                                         {!isFieldEmpty(journalName) && (
                                                             <>
                                                                 {item.journal_url ? (
-                                                                    <a href={item.journal_url} target="_blank" rel="noopener noreferrer" className="text-[#3a96b7] hover:underline font-semibold">
+                                                                    <a href={item.journal_url} target="_blank" rel="noopener noreferrer" className="text-[#3a96b7] hover:underline font-semibold italic">
                                                                         <RenderInlineHtml html={journalName} />
                                                                     </a>
                                                                 ) : (
-                                                                    <span className="text-[#3a96b7] font-semibold">
+                                                                    <span className="text-[#3a96b7] font-semibold italic">
                                                                         <RenderInlineHtml html={journalName} />
                                                                     </span>
                                                                 )}
-                                                                {detailParts.length > 0 && '. '}
                                                             </>
                                                         )}
-                                                        {renderedDetails}
+                                                        {!isFieldEmpty(item.pub_year) && (
+                                                            <>
+                                                                {!isFieldEmpty(journalName) && ' '}
+                                                                <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(item.pub_year, language)} /></span>
+                                                            </>
+                                                        )}
+                                                        {(!isFieldEmpty(volume) || !isFieldEmpty(issue) || !isFieldEmpty(pages)) && (
+                                                            <>
+                                                                {(!isFieldEmpty(journalName) || !isFieldEmpty(item.pub_year)) && '; '}
+                                                                {!isFieldEmpty(volume) && (
+                                                                    <span className="font-bold text-gray-900 [&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(volume, language)} /></span>
+                                                                )}
+                                                                {!isFieldEmpty(issue) && (
+                                                                    <span className="text-gray-600 [&_p]:inline [&_div]:inline">
+                                                                        {!isFieldEmpty(volume) && ' '}(<RenderInlineHtml html={localizeNumbers(issue, language)} />)
+                                                                    </span>
+                                                                )}
+                                                                {!isFieldEmpty(pages) && (
+                                                                    <>
+                                                                        {(!isFieldEmpty(volume) || !isFieldEmpty(issue)) && ': '}
+                                                                        <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(pages, language)} /></span>
+                                                                    </>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                        {!isFieldEmpty(impactFactor) && (
+                                                            <>
+                                                                {(() => {
+                                                                    const cleanIF = impactFactor.trim();
+                                                                    const hasLabelOrBrackets = cleanIF.toLowerCase().includes('if:') || 
+                                                                                               cleanIF.startsWith('[') || 
+                                                                                               /q[1-4]/i.test(cleanIF);
+                                                                    if (hasLabelOrBrackets) {
+                                                                        const formatted = cleanIF.startsWith('[') && cleanIF.endsWith(']') ? cleanIF : `[${cleanIF}]`;
+                                                                        return (
+                                                                            <span className="font-semibold text-brand-gold ml-1.5 [&_p]:inline [&_div]:inline">
+                                                                                {' '}<RenderInlineHtml html={localizeNumbers(formatted, language)} />
+                                                                            </span>
+                                                                        );
+                                                                    } else {
+                                                                        return (
+                                                                            <span className="font-semibold text-brand-gold ml-1.5 [&_p]:inline [&_div]:inline">
+                                                                                {' '}[IF: <RenderInlineHtml html={localizeNumbers(cleanIF, language)} />]
+                                                                            </span>
+                                                                        );
+                                                                    }
+                                                                })()}
+                                                            </>
+                                                        )}
                                                     </p>
                                                 )}
                                                 {(!isFieldEmpty(item.doi) || !isFieldEmpty(item.doi_url)) && (
