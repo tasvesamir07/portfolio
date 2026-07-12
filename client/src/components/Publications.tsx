@@ -63,7 +63,8 @@ const Publications = () => {
                 <div className="w-32 h-[1px] bg-gray-200 mx-auto mb-16" />
                 
                 <div className="grid grid-cols-1 gap-6 md:gap-9 max-w-7xl mx-auto w-full">
-                    {publications.map((item) => {
+                    {publications.map((item, index) => {
+                        const pubNumber = publications.length - index;
                         let detailItems: any[] = parseStructuredItems(getLocalizedFirstField(item, ['details_json'], language, ''));
                         const title = getLocalizedField(item, 'title', language, item.title);
                         const journalName = getLocalizedField(item, 'journal_name', language, item.journal_name);
@@ -139,8 +140,13 @@ const Publications = () => {
                                             </div>
                                         )}
                                         <div className="text-left flex-grow flex flex-col justify-center">
-                                            <h3 className="text-xl sm:text-2xl font-black text-gray-900 leading-snug mb-4">
-                                                <RenderInlineHtml html={title} />
+                                            <h3 className="text-xl sm:text-2xl font-black text-gray-900 leading-snug mb-4 flex items-start gap-2.5">
+                                                <span className="text-[#8c2626] font-sans font-extrabold text-xl sm:text-2xl select-none leading-none pt-0.5 shrink-0">
+                                                    [{localizeNumbers(pubNumber, language)}]
+                                                </span>
+                                                <span className="flex-1">
+                                                    <RenderInlineHtml html={title} />
+                                                </span>
                                             </h3>
  
                                             <div className="space-y-2 text-xs sm:text-sm text-gray-600">
