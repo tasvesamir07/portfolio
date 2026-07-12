@@ -124,7 +124,9 @@ CREATE TABLE IF NOT EXISTS publications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     doi_url TEXT DEFAULT '',
     journal_url TEXT DEFAULT '',
-    doi TEXT DEFAULT ''
+    doi TEXT DEFAULT '',
+    pages TEXT DEFAULT '',
+    impact_factor TEXT DEFAULT ''
 );
 
 -- 11. Gallery Categories Table

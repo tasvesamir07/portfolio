@@ -71,6 +71,8 @@ const Publications = () => {
                         const mainAuthor = getLocalizedField(item, 'main_author', language, item.main_author);
                         const volume = item.volume;
                         const issue = item.issue;
+                        const pages = item.pages;
+                        const impactFactor = item.impact_factor;
                         const introduction = getLocalizedField(item, 'introduction', language, item.introduction);
                         const methods = getLocalizedField(item, 'methods', language, item.methods);
  
@@ -105,6 +107,56 @@ const Publications = () => {
  
                             detailItems = legacyItems;
                         }
+ 
+                        const detailParts: React.ReactNode[] = [];
+                        if (!isFieldEmpty(item.pub_year)) {
+                            detailParts.push(
+                                <span key="year" className="inline">
+                                    <span className="font-bold text-gray-900">{t('publications.publicationYear') || 'Year'}:</span>{' '}
+                                    <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(item.pub_year, language)} /></span>
+                                </span>
+                            );
+                        }
+                        if (!isFieldEmpty(volume)) {
+                            detailParts.push(
+                                <span key="volume" className="inline">
+                                    <span className="font-bold text-gray-900">{t('publications.volume') || 'Volume'}:</span>{' '}
+                                    <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(volume, language)} /></span>
+                                </span>
+                            );
+                        }
+                        if (!isFieldEmpty(issue)) {
+                            detailParts.push(
+                                <span key="issue" className="inline">
+                                    <span className="font-bold text-gray-900">{t('publications.issue') || 'Issue'}:</span>{' '}
+                                    <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(issue, language)} /></span>
+                                </span>
+                            );
+                        }
+                        if (!isFieldEmpty(pages)) {
+                            detailParts.push(
+                                <span key="pages" className="inline">
+                                    <span className="font-bold text-gray-900">{t('publications.pages') || 'Page'}:</span>{' '}
+                                    <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(pages, language)} /></span>
+                                </span>
+                            );
+                        }
+                        if (!isFieldEmpty(impactFactor)) {
+                            detailParts.push(
+                                <span key="impactFactor" className="inline">
+                                    <span className="font-bold text-gray-900">{t('publications.impactFactor') || 'IF'}:</span>{' '}
+                                    <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(impactFactor, language)} /></span>
+                                </span>
+                            );
+                        }
+
+                        const renderedDetails: React.ReactNode[] = [];
+                        detailParts.forEach((part, index) => {
+                            if (index > 0) {
+                                renderedDetails.push(', ');
+                            }
+                            renderedDetails.push(part);
+                        });
  
                         return (
                             <motion.article
@@ -157,7 +209,7 @@ const Publications = () => {
                                                         )}
                                                     </p>
                                                 )}
-                                                {(!isFieldEmpty(journalName) || !isFieldEmpty(volume) || !isFieldEmpty(issue) || !isFieldEmpty(item.pub_year)) && (
+                                                {(!isFieldEmpty(journalName) || detailParts.length > 0) && (
                                                     <p className="leading-relaxed">
                                                         {!isFieldEmpty(journalName) && (
                                                             <>
@@ -170,25 +222,10 @@ const Publications = () => {
                                                                         <RenderInlineHtml html={journalName} />
                                                                     </span>
                                                                 )}
-                                                                {(!isFieldEmpty(volume) || !isFieldEmpty(issue) || !isFieldEmpty(item.pub_year)) && '. '}
+                                                                {detailParts.length > 0 && '. '}
                                                             </>
                                                         )}
-                                                        {!isFieldEmpty(volume) && (
-                                                            <>
-                                                                <span className="font-bold text-gray-900">{t('publications.volume') || 'Volume'}:</span>{' '}
-                                                                <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(volume, language)} /></span>
-                                                                {!isFieldEmpty(issue) ? ', ' : ''}
-                                                            </>
-                                                        )}
-                                                        {!isFieldEmpty(issue) && (
-                                                            <>
-                                                                <span className="font-bold text-gray-900">{t('publications.issue') || 'Issue'}:</span>{' '}
-                                                                <span className="[&_p]:inline [&_div]:inline"><RenderInlineHtml html={localizeNumbers(issue, language)} /></span>
-                                                            </>
-                                                        )}
-                                                        {!isFieldEmpty(item.pub_year) && (
-                                                            <> <span className="text-gray-600 font-medium">(<RenderInlineHtml html={localizeNumbers(item.pub_year, language)} />)</span></>
-                                                        )}
+                                                        {renderedDetails}
                                                     </p>
                                                 )}
                                                 {(!isFieldEmpty(item.doi) || !isFieldEmpty(item.doi_url)) && (

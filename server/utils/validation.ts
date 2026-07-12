@@ -134,7 +134,9 @@ export const publicationsSchema = z.object({
     details_json: optString,
     doi_url: optString,
     journal_url: optString,
-    doi: optString
+    doi: optString,
+    pages: optString,
+    impact_factor: optString
 });
 
 export const researchInterestsSchema = z.object({

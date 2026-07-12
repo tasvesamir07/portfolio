@@ -87,6 +87,8 @@ const en = {
         authors: 'Authors',
         volume: 'Volume',
         issue: 'Issue',
+        pages: 'Page',
+        impactFactor: 'IF',
         doi: 'DOI',
         readFullArticle: 'Read Full Article',
         downloadPdf: 'Download PDF'

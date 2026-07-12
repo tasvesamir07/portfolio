@@ -87,6 +87,8 @@ const bn = {
         authors: 'লেখকবৃন্দ',
         volume: 'ভলিউম',
         issue: 'সংখ্যা',
+        pages: 'পৃষ্ঠা',
+        impactFactor: 'IF',
         doi: 'DOI',
         readFullArticle: 'পূর্ণ প্রবন্ধ পড়ুন',
         downloadPdf: 'PDF ডাউনলোড'

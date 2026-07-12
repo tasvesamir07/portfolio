@@ -87,6 +87,8 @@ const ko = {
         authors: '저자',
         volume: '볼륨',
         issue: '호',
+        pages: '페이지',
+        impactFactor: 'IF',
         doi: 'DOI',
         readFullArticle: '전체 논문 보기',
         downloadPdf: 'PDF 다운로드'

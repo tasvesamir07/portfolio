@@ -96,6 +96,8 @@ const AdminPublications = () => {
             main_author: formData.main_author || '',
             volume: formData.volume || '',
             issue: formData.issue || '',
+            pages: formData.pages || '',
+            impact_factor: formData.impact_factor || '',
             link_url: formData.link_url || '',
             file_url: formData.file_url || '',
             introduction: formData.introduction || '',
@@ -156,6 +158,12 @@ const AdminPublications = () => {
                 </Field>
                 <Field label="Issue">
                     <input type="text" className="input" value={formData.issue || ''} onChange={e => setFormData({...formData, issue: e.target.value})} placeholder="e.g. 3" />
+                </Field>
+                <Field label="Page(s)">
+                    <input type="text" className="input" value={formData.pages || ''} onChange={e => setFormData({...formData, pages: e.target.value})} placeholder="e.g. 123-130" />
+                </Field>
+                <Field label="Impact Factor (IF)">
+                    <input type="text" className="input" value={formData.impact_factor || ''} onChange={e => setFormData({...formData, impact_factor: e.target.value})} placeholder="e.g. 4.5" />
                 </Field>
             </div>
 
